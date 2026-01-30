@@ -1,18 +1,17 @@
-import React from "react";
 import {
-  X,
-  ShieldAlert,
-  History,
-  Users,
-  ShieldCheck,
-  Network,
-  Workflow,
-  CheckCircle2,
   BarChart3,
-  Settings2,
-  Puzzle,
+  CheckCircle2,
+  History,
   LayoutGrid,
+  Network,
+  Puzzle,
   Send,
+  Settings2,
+  ShieldAlert,
+  ShieldCheck,
+  Users,
+  Workflow,
+  X,
 } from "lucide-react";
 
 const CreateRole = ({ isOpen, onClose }) => {

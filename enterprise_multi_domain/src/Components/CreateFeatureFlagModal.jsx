@@ -26,7 +26,7 @@ const CreateFeatureFlagModal = ({ isOpen, onClose }) => {
         <div className="flex flex-col gap-2 p-8 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#101922]">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <h1 className="text-slate-900 dark:text-white text-3xl font-extrabold tracking-tight">
+              <h1 className="text-slate-900 dark:text-white text-4xl font-extrabold tracking-tight">
                 Create Feature Flag
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-base">

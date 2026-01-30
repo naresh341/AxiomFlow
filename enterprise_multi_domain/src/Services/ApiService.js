@@ -11,3 +11,15 @@ export const Login = async ({ username, password }) => {
     throw error;
   }
 };
+
+export const WorkflowData = async (status = "active") => {
+  try {
+    const response = await axios.get("/workflows/fetchAll", {
+      params: { status },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(error, "Error While fetching Workflow Data");
+    throw error;
+  }
+};

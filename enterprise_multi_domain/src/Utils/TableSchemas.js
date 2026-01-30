@@ -15,4 +15,15 @@ export const TableSchemas = {
     { label: "Status", key: "status" },
     { label: "Date", key: "Date" },
   ],
+
+  workflows: [
+    { header: "ID", field: "id" },
+    { header: "Workflow Name", field: "name" },
+    { header: "Trigger", field: "trigger" },
+    { header: "Owner", field: "owner_id" },
+    { header: "Version", field: "version" },
+    { header: "Status", field: "status" },
+    { header: "Created At", field: "created_at" },
+    { header: "Action", field: "action" },
+  ],
 };

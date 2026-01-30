@@ -1,47 +1,46 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
-import APIDocumentation from "./Components/APIDocumentation";
 import CreateCustomDocumentation from "./Components/CreateCustomDocumentation";
-import CustomIntegrationBuilder from "./Components/CustomIntegrationBuilder";
-import DocumentationContent from "./Components/DocumentationContent";
 import UpdgradePlan from "./Components/UpdgradePlan";
 import MainLayout from "./MainLayout/MainLayout";
-import Admin from "./Pages/Admin";
+import Admin from "./Pages/Admin_And_Government/Admin";
+import AuditLogs from "./Pages/Admin_And_Government/AuditLogs";
+import Compliance from "./Pages/Admin_And_Government/Compliance";
+import FeatureFlags from "./Pages/Admin_And_Government/FeatureFlags";
+import Governance from "./Pages/Admin_And_Government/Governance";
+import Organization from "./Pages/Admin_And_Government/Organization";
+import Security from "./Pages/Admin_And_Government/Security";
 import Analytics from "./Pages/Analytics";
-import ApprovalDetail from "./Pages/ApprovalDetail";
-import ApprovalHistory from "./Pages/ApprovalHistory";
-import Approvals from "./Pages/Approvals";
-import AuditLogs from "./Pages/AuditLogs";
-import Compliance from "./Pages/Compliance";
-import Configure from "./Pages/Configure";
+import ApprovalHistory from "./Pages/Approval/ApprovalHistory";
+import Approvals from "./Pages/Approval/Approvals";
+import PendingApprovals from "./Pages/Approval/PendingApprovals";
 import Dashboard from "./Pages/Dashboard";
-import ExecutionDetail from "./Pages/ExecutionDetail";
-import FeatureFlags from "./Pages/FeatureFlags";
-import ForgotPassword from "./Pages/ForgotPassword";
-import Governance from "./Pages/Governance";
-import IndustryModules from "./Pages/IndustryModules";
 import Integrations from "./Pages/Integrations";
-import Login from "./Pages/Login";
-import Organization from "./Pages/Organization";
-import OrganizationSettings from "./Pages/OrganizationSettings";
-import PendingApprovals from "./Pages/PendingApprovals";
-import RolesAndPermissions from "./Pages/RolesAndPermission";
-import Security from "./Pages/Security";
-import SignUp from "./Pages/SignUp";
+import APIDocumentation from "./Pages/Integrations/APIDocumentation";
+import Configure from "./Pages/Integrations/Configure";
+import CustomIntegrationBuilder from "./Pages/Integrations/CustomIntegrationBuilder";
+import DocumentationContent from "./Pages/Integrations/DocumentationContent";
+import ForgotPassword from "./Pages/Login/ForgotPassword";
+import Login from "./Pages/Login/Login";
+import SignUp from "./Pages/Login/SignUp";
 import Support from "./Pages/Support";
-import Tasks from "./Pages/Tasks";
-import TeamsManagement from "./Pages/TeamsManagement";
-import Users from "./Pages/Users";
-import UsersAndOrg from "./Pages/UsersAndOrg";
-import VersionDetail from "./Pages/VersionDetail";
-import WorkflowApprovals from "./Pages/WorkflowApprovals";
-import WorkflowBuilder from "./Pages/WorkflowBuilder";
-import WorkflowDetailLayout from "./Pages/WorkflowDetailLayout";
-import WorkflowExecution from "./Pages/WorkflowExecution";
-import WorkflowOverview from "./Pages/WorkflowOverview";
-import WorkFlows from "./Pages/WorkFlows";
-import WorkflowTasks from "./Pages/WorkflowTasks";
-import WorkflowVersions from "./Pages/WorkflowVersions";
+import Tasks from "./Pages/Task/Tasks";
+import OrganizationSettings from "./Pages/User_And_Organization/OrganizationSettings";
+import RolesAndPermissions from "./Pages/User_And_Organization/RolesAndPermission";
+import TeamsManagement from "./Pages/User_And_Organization/TeamsManagement";
+import Users from "./Pages/User_And_Organization/Users";
+import UsersAndOrg from "./Pages/User_And_Organization/UsersAndOrg";
+import WorkflowBuilder from "./Pages/WorkFlow//WorkflowBuilder";
+import WorkflowDetailLayout from "./Pages/WorkFlow//WorkflowDetailLayout";
+import WorkflowExecution from "./Pages/WorkFlow//WorkflowExecution";
+import WorkflowOverview from "./Pages/WorkFlow//WorkflowOverview";
+import WorkFlowApprovalDetail from "./Pages/WorkFlow/WorkFlowApprovalDetail";
+import WorkFlowExecutionDetail from "./Pages/WorkFlow/WorkFlowExecutionDetail";
+import WorkFlowVersionDetail from "./Pages/WorkFlow/WorkFlowVersionDetail";
+import WorkFlows from "./Pages/WorkFlow/WorkFlows";
+import WorkflowApprovals from "./Pages/WorkFlow/WorkflowApprovals";
+import WorkflowTasks from "./Pages/WorkFlow/WorkflowTasks";
+import WorkflowVersions from "./Pages/WorkFlow/WorkflowVersions";
 
 function App() {
   return (
@@ -89,18 +88,16 @@ function App() {
           />
           <Route
             path="/workflows/:workflowId/approvals/:approvalId"
-            element={<ApprovalDetail />}
+            element={<WorkFlowApprovalDetail />}
           />
           <Route
             path="/workflows/:workflowId/execution/:executionId"
-            element={<ExecutionDetail />}
+            element={<WorkFlowExecutionDetail />}
           />
           <Route
             path="/workflows/:workflowId/version/:versionId"
-            element={<VersionDetail />}
+            element={<WorkFlowVersionDetail />}
           />
-
-          {/* Create workflow */}
           <Route path="/workflows/create" element={<WorkflowBuilder />} />
 
           {/* ================= TASKS (GLOBAL) ================= */}
@@ -119,10 +116,7 @@ function App() {
           </Route>
 
           <Route path="/UsersAndOraganization" element={<UsersAndOrg />}>
-            {/* Default sub-route */}
             <Route index element={<Navigate to="users" replace />} />
-
-            {/* Sub-tab routes */}
             <Route path="users" element={<Users />} />
             <Route path="roles-permissions" element={<RolesAndPermissions />} />
             <Route path="teams" element={<TeamsManagement />} />
@@ -146,7 +140,6 @@ function App() {
           <Route path="Admin/governance" element={<Governance />} />
 
           <Route path="/Analytics" element={<Analytics />} />
-          <Route path="/IndustryModules" element={<IndustryModules />} />
           <Route path="/Integrations" element={<Integrations />} />
           <Route
             path="/Integrations/documentation"

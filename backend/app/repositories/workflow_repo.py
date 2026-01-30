@@ -1,0 +1,27 @@
+from sqlalchemy.orm import Session
+
+from app.model.workflow import Workflow
+from app.repositories.base import BaseRepository
+
+
+class WorkflowRepository(BaseRepository):
+    def __init__(self, db: Session):
+        self.db = db
+
+    def create(self, workflow: Workflow):
+        self.db.add(workflow)
+        self.db.commit()
+        self.db.refresh(workflow)
+        return workflow
+
+    def get_by_id(self, workflow_id: int):
+        return self.db.query(Workflow).filter(workflow_id == workflow_id).first()
+
+    def list_all(self):
+        return self.db.query(Workflow).all()
+
+    def update_status(self, workflow: Workflow, status: str):
+        workflow.status = status
+        self.db.commit()
+        self.db.refresh(workflow)
+        return workflow

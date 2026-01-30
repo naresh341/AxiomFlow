@@ -230,7 +230,7 @@ const SystemLogs = () => {
                   {selectedLog?.id}
                 </span>
               </div>
-              <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+              <h3 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
                 {selectedLog?.event}
               </h3>
               <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed italic border-l-4 border-slate-200 dark:border-[#2d3a4b] pl-4">

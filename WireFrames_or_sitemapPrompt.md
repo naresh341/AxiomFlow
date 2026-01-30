@@ -826,3 +826,312 @@ OUTPUT REQUIREMENTS
 • Use consistent spacing and grid alignment
 • No lorem ipsum text — use functional labels only
 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Executive Dashboard
+├─ KPI Overview
+│  ├─ Total users
+│  ├─ Active organizations
+│  ├─ Running workflows
+│  ├─ Pending approvals
+│  └─ System alerts
+│
+├─ Usage Trends
+│  ├─ User growth chart
+│  ├─ Workflow execution trend
+│  └─ Integration usage summary
+│
+├─ Recent Activity
+│  ├─ User logins
+│  ├─ Workflow runs
+│  └─ Admin actions
+│
+└─ Risk & Compliance Snapshot
+   ├─ Security warnings
+   ├─ Failed logins
+   └─ Compliance status
+
+
+
+
+Analytics
+├─ Global Filters
+│  ├─ Date range
+│  ├─ Organization
+│  ├─ Team
+│  └─ User role
+│
+├─ Usage Analytics
+│  ├─ Active users
+│  ├─ Feature adoption
+│  └─ Session duration
+│
+├─ Workflow Analytics
+│  ├─ Success vs failure
+│  ├─ Avg execution time
+│  └─ Bottleneck detection
+│
+├─ Approval Analytics
+│  ├─ Approval delay
+│  ├─ Rejection rate
+│  └─ Escalation count
+│
+└─ Export
+   ├─ CSV
+   ├─ PDF
+   └─ Scheduled reports
+
+
+
+
+
+
+/users-and-organization
+├── /users                     (DEFAULT TAB)
+│   ├── /list
+│   ├── /invite
+│   └── /:userId
+│
+├── /roles-permissions
+│   ├── /list
+│   └── /:roleId
+│
+├── /teams
+│   ├── /list
+│   └── /:teamId
+│
+└── /organization-settings
+
+
+
+Admin & Governance
+├─ Organization Settings
+│  ├─ Org profile
+│  ├─ Subscription plan
+│  ├─ Industry type
+│  ├─ Region & timezone
+│  └─ Data retention
+│
+├─ Security Controls
+│  ├─ MFA enforcement
+│  ├─ Password policy
+│  ├─ Session timeout
+│  └─ IP allow / deny list
+│
+├─ Audit Logs
+│  ├─ User actions
+│  ├─ Admin actions
+│  ├─ Workflow changes
+│  └─ API access logs
+│
+├─ Compliance Center
+│  ├─ SOC2 / ISO status
+│  ├─ Policy documents
+│  ├─ Evidence tracker
+│  └─ Risk assessments
+│
+├─ Feature Flags
+│  ├─ Enable modules
+│  └─ Beta feature access
+│
+└─ Governance Controls
+   ├─ Org-wide overrides
+   ├─ Role enforcement
+   └─ Emergency access
+
+
+
+
+Workflows
+├─ Workflow List
+│  ├─ Active workflows
+│  ├─ Draft workflows
+│  └─ Archived workflows
+│
+├─ Workflow Builder
+│  ├─ Triggers
+│  ├─ Conditions
+│  ├─ Actions
+│  └─ Branching logic
+│
+├─ Execution History
+│  ├─ Success runs
+│  ├─ Failed runs
+│  └─ Retry logs
+│
+└─ Version Control
+   ├─ Version history
+   ├─ Rollback
+   └─ Change notes
+
+
+
+Tasks
+├─ My Tasks
+│  ├─ Assigned tasks
+│  ├─ Due today
+│  └─ Overdue
+│
+├─ Task Details
+│  ├─ Description
+│  ├─ Attachments
+│  ├─ Comments
+│  └─ Activity log
+│
+└─ Task Management
+   ├─ Reassign
+   ├─ Change status
+   └─ Priority update
+
+
+
+
+Approvals
+├─ Pending Approvals
+│  ├─ Awaiting action
+│  └─ Escalated approvals
+│
+├─ Approval History
+│  ├─ Approved
+│  ├─ Rejected
+│  └─ Delegated
+│
+└─ Approval Rules
+   ├─ Approval chains
+   ├─ Escalation rules
+   └─ Delegation setup
+
+
+
+
+
+Integrations
+├─ Integration Marketplace
+│  ├─ CRM
+│  ├─ Communication
+│  ├─ Developer tools
+│  └─ Finance & Billing
+│
+├─ Installed Integrations
+│  ├─ Connection status
+│  ├─ Sync health
+│  └─ Error logs
+│
+├─ Integration Configuration
+│  ├─ Authentication
+│  ├─ Field mapping
+│  ├─ Sync rules
+│  └─ Test connection
+│
+└─ API Documentation
+   ├─ Authentication
+   ├─ REST endpoints
+   ├─ Webhooks
+   └─ Rate limits
+
+
+
+
+
+Reports
+├─ Standard Reports
+│  ├─ User activity
+│  ├─ Workflow usage
+│  └─ Approval metrics
+│
+├─ Compliance Reports
+│  ├─ Audit report
+│  ├─ Access report
+│  └─ Security report
+│
+└─ Export & Schedule
+   ├─ Download
+   ├─ Email schedule
+   └─ Report history
+
+
+
+
+
+
+Settings
+├─ Profile
+│  ├─ Personal info
+│  └─ Avatar
+│
+├─ Security
+│  ├─ Password
+│  ├─ MFA
+│  └─ Active sessions
+│
+├─ Notifications
+│  ├─ Email alerts
+│  ├─ In-app alerts
+│  └─ Digest frequency
+│
+└─ API Keys
+   ├─ Create key
+   ├─ Rotate key
+   └─ Revoke key
+
+
+
+Workings 
+Sidebar
+ ├── Workflows
+ │     └── Workflow Overview
+ │            ├── Tasks tab → /tasks?workflowId=123
+ │            ├── Approvals tab → /approvals?workflowId=123
+ │            └── Audit tab
+ │
+ ├── Approvals → /approvals
+ └── Tasks → /tasks
+
+
+
+
+ ////////////////////////////////////////////////BACKEND ////////////////////////////////////////
+
+ app/
+│
+├── main.py
+│
+├── core/                 # App-wide things
+│   ├── config.py
+│   ├── database.py
+│   ├── security.py
+│   └── dependencies.py
+│
+├── auth/
+│   ├── routes.py
+│   ├── schemas.py
+│   ├── service.py
+│   └── utils.py
+│
+├── workflows/
+│   ├── routes.py
+│   ├── schemas.py
+│   ├── service.py
+│   └── repository.py
+│
+├── tasks/
+│   ├── routes.py
+│   ├── schemas.py
+│   ├── service.py
+│   └── repository.py
+│
+├── approvals/
+│   ├── routes.py
+│   ├── schemas.py
+│   ├── service.py
+│   └── repository.py
+│
+├── executions/
+│   ├── routes.py
+│   ├── schemas.py
+│   └── service.py
+│
+└── common/
+    ├── exceptions.py
+    ├── responses.py
+    └── enums.py

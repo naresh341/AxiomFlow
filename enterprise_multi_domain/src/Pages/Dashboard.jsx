@@ -99,7 +99,7 @@ const Dashboard = () => {
       <main className="mx-auto w-full px-4 lg:px-10 py-8 space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+            <h1 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white">
               Executive Dashboard
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
@@ -124,13 +124,13 @@ const Dashboard = () => {
               className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-300 dark:border-slate-800 shadow-md"
             >
               <div className="flex justify-between items-start mb-4">
-                <span className="text-lg font-semibold text-slate-600 dark:text-slate-400 uppercase">
+                <span className="text-lg font-semibold text-slate-600 dark:text-white uppercase">
                   {item.label}
                 </span>
               </div>
 
               <div className="flex items-baseline gap-2">
-                <h3 className="text-3xl font-bold">{item.value}</h3>
+                <h3 className="text-4xl font-bold">{item.value}</h3>
                 <span
                   className={`text-md font-medium ${
                     item.icon === "up"

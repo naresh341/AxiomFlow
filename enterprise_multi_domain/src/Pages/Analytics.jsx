@@ -118,7 +118,7 @@ const Analytics = () => {
         {/* Header Section */}
         <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
           <div className="flex flex-col gap-1">
-            <h1 className="text-[#111618] dark:text-white text-3xl lg:text-4xl font-black leading-tight tracking-tight">
+            <h1 className="text-[#111618] dark:text-white text-4xl lg:text-4xl font-black leading-tight tracking-tight">
               Analytics Overview
             </h1>
             <p className="text-[#617c89] dark:text-gray-400 text-base font-normal">
@@ -351,7 +351,7 @@ const Analytics = () => {
               </p>
               <div className="space-y-2">
                 <div className="flex items-center gap-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                  <div className="text-3xl font-black text-[#13a4ec]">
+                  <div className="text-4xl font-black text-[#13a4ec]">
                     1,402
                   </div>
                   <div>
@@ -364,7 +364,7 @@ const Analytics = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                  <div className="text-3xl font-black text-emerald-600">
+                  <div className="text-4xl font-black text-emerald-600">
                     94%
                   </div>
                   <div>

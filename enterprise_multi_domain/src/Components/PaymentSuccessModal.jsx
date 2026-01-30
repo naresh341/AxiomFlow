@@ -31,7 +31,7 @@ const PaymentSuccessModal = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          <h1 className="text-3xl font-black tracking-tight mb-2 text-slate-900 dark:text-white">
+          <h1 className="text-4xl font-black tracking-tight mb-2 text-slate-900 dark:text-white">
             Payment Successful!
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-lg mb-10 leading-relaxed">

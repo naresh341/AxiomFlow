@@ -1,14 +1,14 @@
-import React, { useState } from "react";
 import {
-  X,
-  User,
-  Timer,
-  CheckCircle,
-  XCircle,
   ArrowRight,
-  Send,
+  CheckCircle,
   Info,
+  Send,
+  Timer,
+  User,
+  X,
+  XCircle,
 } from "lucide-react";
+import { useState } from "react";
 
 const ApprovalDecisionModal = ({ isOpen, onClose, onRejectTrigger }) => {
   const [decision, setDecision] = useState("Approve");
