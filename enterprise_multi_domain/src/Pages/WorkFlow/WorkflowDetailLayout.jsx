@@ -1,40 +1,19 @@
 import { ChevronRight, Edit3, Play } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
 import RunWorkflowModal from "../../Components/RunWorkflowModal";
 import WorkflowSuccessfullModal from "../../Components/WorkflowSuccessfullModal";
-
-const allWorkflows = [
-  {
-    id: "1",
-    name: "User Onboarding V2",
-    status: "Active",
-    owner: "John Doe",
-    modified: "2 hours ago",
-  },
-  {
-    id: "2",
-    name: "Quarterly Compliance Audit",
-    status: "Draft",
-    owner: "Sarah Reed",
-    modified: "Yesterday",
-  },
-  {
-    id: "3",
-    name: "Threat Detection Response",
-    status: "Active",
-    owner: "Mark Tech",
-    modified: "3 days ago",
-  },
-];
+import { getWorkflowById } from "../../RTKThunk/AsyncThunk";
 
 const WorkflowDetailLayout = () => {
-  const { workflowId } = useParams();
+  const { workflow_id_str } = useParams();
+  const dispatch = useDispatch();
+  const { currentWorkflow, loading, currentWorkflowExecutions } = useSelector(
+    (state) => state.workflows,
+  );
   const [lastExecutionId, setLastExecutionId] = useState("");
   const [activeModal, setActiveModal] = useState(null);
-  const currentWorkflow =
-    allWorkflows.find((wf) => wf.id === workflowId) || allWorkflows[0];
-
   const tabs = [
     { name: "Overview", path: "" },
     { name: "Tasks", path: "tasks" },
@@ -43,12 +22,26 @@ const WorkflowDetailLayout = () => {
     { name: "Version", path: "version" },
   ];
 
+  useEffect(() => {
+    if (workflow_id_str) {
+      dispatch(getWorkflowById(workflow_id_str));
+    }
+  }, [dispatch, workflow_id_str]);
+
+  if (loading || !currentWorkflow) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="text-xl font-bold animate-pulse text-blue-600">
+          Loading Workflow Details...
+        </div>
+      </div>
+    );
+  }
+
   const handleRunWorkflow = () => {
-    // 1. Simulate API Call logic here
-    const mockId = `EXEC-${Math.floor(10000 + Math.random() * 90000)}-${currentWorkflow.id}`;
+    const mockId = `EXEC-${Math.floor(10000 + Math.random() * 90000)}-${currentWorkflow.workflow_id_str}`;
     setLastExecutionId(mockId);
 
-    // 2. Switch to Success Modal
     setActiveModal("success");
   };
 
@@ -88,8 +81,10 @@ const WorkflowDetailLayout = () => {
                 </span>
               </div>
               <p className="text-slate-500 text-sm">
-                ID: {currentWorkflow.id} • Owner:{" "}
-                <span className="font-semibold">{currentWorkflow.owner}</span>
+                ID: {currentWorkflow.workflow_id_str} • Owner:{" "}
+                <span className="font-semibold">
+                  {currentWorkflow.owner_name}
+                </span>
               </p>
             </div>
 
@@ -129,13 +124,14 @@ const WorkflowDetailLayout = () => {
           </div>
 
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <Outlet context={{ currentWorkflow }} />
+            <Outlet context={{ currentWorkflow, currentWorkflowExecutions }} />
           </div>
         </div>
       </main>
+
       <RunWorkflowModal
         isOpen={activeModal === "config"}
-        activeId={currentWorkflow.id}
+        activeId={currentWorkflow.workflow_id_str}
         onClose={() => setActiveModal(null)}
         onRun={handleRunWorkflow}
       />

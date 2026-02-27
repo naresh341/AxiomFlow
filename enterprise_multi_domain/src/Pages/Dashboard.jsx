@@ -6,18 +6,25 @@ import { TableSchemas } from "../Utils/TableSchemas";
 import { useEffect, useState } from "react";
 import Paginator from "../Components/Paginator";
 import Linechart from "../Components/LineChart";
+import { getApprovalList } from "../RTKThunk/AsyncThunk";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
   const [first, setFirst] = useState(0); // starting index
-  const [rows, setRows] = useState(5); // rows per page
+  const rows = 5; // rows per page
   const totalRecords = 1; // ← later this comes from backend
 
-  const tabledata = useSelector(
-    (state) => state?.table?.TableData?.["dashboard"] || [],
-  );
+  const { loading, data } = useSelector((state) => state.approval);
 
-  const paginatedData = tabledata.slice(first, first + rows);
+  const tabledata = data.data || [];
+
+  useEffect(() => {
+    dispatch(getApprovalList());
+  }, [dispatch]);
+
+  const handlePageChange = (event) => {
+    setFirst(event + 1) * rows;
+  };
   const handleCustomPageChange = (selectedPage) => {
     const newFirst = selectedPage * rows;
     setFirst(newFirst);
@@ -27,11 +34,6 @@ const Dashboard = () => {
     dispatch(setTableData({ schemakey: "dashboard", data: tabledata }));
   }, [dispatch, tabledata]);
 
-  const columns = TableSchemas["dashboard"].map((col) => ({
-    field: col.key,
-    header: col.label,
-    sortable: col.sortable,
-  }));
   const DashboardData = [
     { label: "Total Users", value: 1500, icon: "up", data: "+5% this month" },
     {
@@ -187,14 +189,19 @@ const Dashboard = () => {
               </h4>
             </div>
             <div className="p-4 text-slate-500 dark:text-slate-400 ">
-              <DynamicTable tableData={paginatedData} tableHead={columns} />
+              <DynamicTable
+                tableData={tabledata}
+                tableHead={TableSchemas.approval}
+                first={first}
+                rows={rows}
+              />
             </div>
 
             <Paginator
-              totalRecords={totalRecords}
+              totalRecords={tabledata.length}
               rows={rows}
               first={first}
-              onPageChange={handleCustomPageChange}
+              onPageChange={handlePageChange}
             />
           </div>
 

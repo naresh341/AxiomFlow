@@ -14,11 +14,14 @@ class WorkflowRepository(BaseRepository):
         self.db.refresh(workflow)
         return workflow
 
-    def get_by_id(self, workflow_id: int):
-        return self.db.query(Workflow).filter(workflow_id == workflow_id).first()
+    def list_all(self, status: str = None):
+        query = self.db.query(Workflow)
+        if status:
+            query = query.filter(Workflow.status == status.upper())
+        return query.all()
 
-    def list_all(self):
-        return self.db.query(Workflow).all()
+    def get_by_id(self, workflow_id: int):
+        return self.db.query(Workflow).filter(Workflow.id == workflow_id).first()
 
     def update_status(self, workflow: Workflow, status: str):
         workflow.status = status

@@ -21,7 +21,7 @@ const RunWorkflowModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/40 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white dark:bg-[#1a242e] border border-slate-200 dark:border-[#283039] w-full max-w-2xl rounded-xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in duration-200">
         {/* Header */}
         <div className="p-6 border-b border-slate-100 dark:border-[#283039] flex justify-between items-start">

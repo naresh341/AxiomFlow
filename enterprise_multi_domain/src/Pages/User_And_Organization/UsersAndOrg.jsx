@@ -13,7 +13,7 @@ const UsersAndOrg = () => {
   const [activeModal, setActiveModal] = useState(null);
 
   const tabConfig = {
-    "/UsersAndOraganization/users": {
+    "/users": {
       title: "Users & Organization",
       subtitle:
         "Manage users, roles, teams, and access across your organization.",
@@ -22,7 +22,7 @@ const UsersAndOrg = () => {
         { label: "Invite User", icon: <UserPlus size={18} />, primary: true },
       ],
     },
-    "/UsersAndOraganization/roles-permissions": {
+    "/roles-permissions": {
       title: "Roles & Permissions",
       subtitle:
         "Define and manage granular access levels for your organization members.",
@@ -30,7 +30,7 @@ const UsersAndOrg = () => {
         { label: "Add Role", icon: <Shield size={18} />, primary: true },
       ],
     },
-    "/UsersAndOraganization/teams": {
+    "/teams": {
       title: "Teams Management",
       subtitle:
         "Organize your workforce into departments and functional groups.",
@@ -38,7 +38,7 @@ const UsersAndOrg = () => {
         { label: "Create Team", icon: <Users size={18} />, primary: true },
       ],
     },
-    "/UsersAndOraganization/organization-settings": {
+    "/organization-settings": {
       title: " Organization Settings",
       subtitle:
         "Manage your organization's general information, localization, and security preferences",
@@ -48,7 +48,7 @@ const UsersAndOrg = () => {
 
   const currentPath = location.pathname;
   const current =
-    tabConfig[currentPath] || tabConfig["/UsersAndOraganization/users"];
+    tabConfig[currentPath] || tabConfig["/users"];
 
   const tabs = [
     { name: "Users", path: "users" },

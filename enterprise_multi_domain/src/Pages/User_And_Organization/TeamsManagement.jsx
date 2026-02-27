@@ -1,11 +1,10 @@
-import {
-  Box,
-  Megaphone,
-  MoreVertical,
-  Palette,
-  Plus,
-  Terminal,
-} from "lucide-react";
+import { Box, Megaphone, MoreVertical, Palette, Terminal } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { get_teams } from "../../RTKThunk/AsyncThunk";
+import DynamicTable from "../../Components/DynamicTable";
+import { TableSchemas } from "../../Utils/TableSchemas";
+import Paginator from "../../Components/Paginator";
 
 const TEAMS_DATA = [
   {
@@ -59,12 +58,24 @@ const TEAMS_DATA = [
 ];
 
 const TeamsManagement = () => {
+  const dispatch = useDispatch();
+  const { loading, data } = useSelector((state) => state.teams);
+  const [first, setFirst] = useState(0);
+  const rows = 10;
+
+  useEffect(() => {
+    dispatch(get_teams());
+  }, [dispatch]);
+
+  const handleCustomPageChange = (page) => {
+    setFirst(page * rows);
+  };
   return (
     <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950">
       {/* Teams Table */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          {/* <table className="w-full text-left">
             <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -160,7 +171,29 @@ const TeamsManagement = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table> */}
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          ) : (
+            <DynamicTable
+              tableHead={TableSchemas.team}
+              tableData={data}
+              first={first}
+              rows={rows}
+            />
+          )}
+        </div>
+        <div className="px-6 py-4 border-t border-slate-100 dark:border-gray-800  dark:bg-gray-900 flex items-center justify-center bg-slate-50/30">
+          <div className="p-4 border-t border-gray-200 dark:border-gray-800 dark:bg-gray-900">
+            <Paginator
+              first={first}
+              rows={rows}
+              totalRecords={data.length}
+              onPageChange={handleCustomPageChange}
+            />
+          </div>
         </div>
       </div>
 

@@ -1,17 +1,16 @@
-import React from "react";
-import { AlertTriangle, ChevronLeft, Trash2, Info } from "lucide-react";
+import { AlertTriangle, ChevronLeft, Trash2 } from "lucide-react";
 
 const RejectConfirmationModal = ({ isOpen, onClose, onConfirm, data }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-md"
         onClick={onClose}
       />
 
-      <div className="relative z-10 w-full max-w-[580px] bg-[#1e1414] rounded-xl border border-[#392828] shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
+      <div className="relative z-10 w-full max-w-145 bg-[#1e1414] rounded-xl border border-[#392828] shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
         {/* Warning Icon & Headline */}
         <div className="px-6 pt-8 pb-4 text-center">
           <div className="inline-flex items-center justify-center size-16 bg-[#ec1313]/10 rounded-full mb-4">
@@ -29,7 +28,10 @@ const RejectConfirmationModal = ({ isOpen, onClose, onConfirm, data }) => {
               <span className="text-[#b99d9d] text-xs font-semibold uppercase">
                 Approval ID
               </span>
-              <span className="text-white font-bold">{data?.id || "N/A"}</span>
+              <span className="text-white font-bold">
+                {data?.approval_key || "N/A"}
+                {console.log(data)}
+              </span>
             </div>
             <div className="p-4">
               <span className="text-[#b99d9d] text-xs font-semibold uppercase block mb-1">

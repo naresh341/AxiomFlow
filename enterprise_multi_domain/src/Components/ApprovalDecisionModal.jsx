@@ -10,7 +10,12 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-const ApprovalDecisionModal = ({ isOpen, onClose, onRejectTrigger }) => {
+const ApprovalDecisionModal = ({
+  isOpen,
+  onClose,
+  onRejectTrigger,
+  activeId,
+}) => {
   const [decision, setDecision] = useState("Approve");
   const [comment, setComment] = useState("");
 
@@ -18,10 +23,9 @@ const ApprovalDecisionModal = ({ isOpen, onClose, onRejectTrigger }) => {
 
   const handleSubmit = () => {
     if (decision === "Reject") {
-      onRejectTrigger({ id: "APP-9021-X", comment });
+      onRejectTrigger("REJECTED", comment);
     } else {
-      console.log("Approved with comment:", comment);
-      onClose();
+      onRejectTrigger("APPROVED", comment);
     }
   };
 
@@ -32,7 +36,7 @@ const ApprovalDecisionModal = ({ isOpen, onClose, onRejectTrigger }) => {
         onClick={onClose}
       />
 
-      <div className="relative z-10 w-full max-w-[640px] bg-white dark:bg-[#1a2130] rounded-xl shadow-2xl overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800">
+      <div className="relative z-10 w-full max-w-160 bg-white dark:bg-[#1a2130] rounded-xl shadow-2xl overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800">
         {/* Header */}
         <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-start">
           <div className="flex flex-col gap-1">
@@ -42,10 +46,9 @@ const ApprovalDecisionModal = ({ isOpen, onClose, onRejectTrigger }) => {
             <p className="text-[#616f89] dark:text-gray-400 text-sm">
               Approval ID:{" "}
               <span className="font-mono text-[#0f49bd] dark:text-blue-400">
-                APP-9021-X
+                {activeId.approval_key}
               </span>{" "}
-              | Workflow:{" "}
-              <span className="font-medium">User Onboarding v3.4</span>
+              | Workflow: <span className="font-medium">{activeId.stage}</span>
             </p>
           </div>
           <button
@@ -69,7 +72,7 @@ const ApprovalDecisionModal = ({ isOpen, onClose, onRejectTrigger }) => {
                     Request Type: User Provisioning
                   </p>
                   <p className="text-[#616f89] dark:text-gray-400 text-sm font-medium flex items-center gap-1">
-                    <User size={14} /> Sarah Jenkins
+                    <User size={14} /> {activeId.requester_name}
                   </p>
                 </div>
                 <div className="w-32 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-md border border-gray-200 dark:border-gray-600 flex items-center justify-center">
@@ -84,7 +87,7 @@ const ApprovalDecisionModal = ({ isOpen, onClose, onRejectTrigger }) => {
                     <Timer size={12} /> SLA Status
                   </span>
                   <span className="text-xs font-semibold dark:text-white">
-                    18h remaining
+                    {activeId.sla_hours} hrs remaining
                   </span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
@@ -137,7 +140,7 @@ const ApprovalDecisionModal = ({ isOpen, onClose, onRejectTrigger }) => {
                 )}
               </label>
               <textarea
-                className="w-full rounded-lg border-gray-200 dark:border-gray-700 dark:bg-[#1a2130] dark:text-white text-sm p-3 min-h-[100px] focus:ring-2 focus:ring-[#0f49bd]"
+                className="w-full rounded-lg border border-gray-300 shadow-md outline-0 dark:border-gray-700 dark:bg-[#1a2130] dark:text-white text-sm p-3 min-h-25 focus:ring-2 focus:ring-[#0f49bd]"
                 placeholder={
                   decision === "Approve"
                     ? "Optional context..."
@@ -147,7 +150,7 @@ const ApprovalDecisionModal = ({ isOpen, onClose, onRejectTrigger }) => {
                 onChange={(e) => setComment(e.target.value)}
               />
             </div>
-            {decision === "Approve" && (
+            {/* {decision === "Approve" && (
               <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg">
                 <ArrowRight className="text-[#0f49bd]" size={20} />
                 <div>
@@ -159,7 +162,7 @@ const ApprovalDecisionModal = ({ isOpen, onClose, onRejectTrigger }) => {
                   </p>
                 </div>
               </div>
-            )}
+            )} */}
           </div>
         </div>
 

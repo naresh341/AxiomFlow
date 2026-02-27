@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from .data import WORKFLOWS
-from .schemas import WorflowSchema, WorkflowResponse
+from ..schemas.Workflowschema import WorflowSchema, WorkflowResponse
 
 router = APIRouter(prefix="/workflows", tags=["WorkFlows"])
 

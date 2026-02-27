@@ -3,83 +3,118 @@ import {
   Calendar,
   CheckCircle,
   ChevronDown,
-  ChevronLeft,
   ChevronRight,
   Clock,
   Download,
   Plus,
-  RefreshCcw,
   Search,
   TrendingUp,
+  X,
 } from "lucide-react";
+import { Menu } from "primereact/menu";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
+import DynamicTable from "../../Components/DynamicTable";
+import FilterButton from "../../Components/MiniComponent/FilterButton";
+import Paginator from "../../Components/Paginator";
+import { get_Workflow_Executions } from "../../RTKThunk/AsyncThunk";
+import { TableSchemas } from "../../Utils/TableSchemas";
 
 const WorkflowExecution = () => {
+  const rows = 10;
   const navigate = useNavigate();
   const { workflowId } = useParams();
+  const dispatch = useDispatch();
 
   const handleRowClick = (executionId) => {
-    navigate(`${executionId}?workflowId=${workflowId}`);
+    const id = executionId.data.execution_id_str || " ";
+    if (id) {
+      navigate(`/workflows/${workflowId}/execution/${id}`);
+    }
   };
 
-  const executions = [
+  const menuStatus = useRef(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState({
+    status: "All",
+    priority: "All",
+  });
+  const [first, setfirst] = useState(0);
+  const { loading, currentWorkflowExecutions } = useSelector(
+    (state) => state.workflows,
+  );
+  useEffect(() => {
+    dispatch(get_Workflow_Executions(workflowId));
+  }, [dispatch, workflowId]);
+
+  const executionData = currentWorkflowExecutions || [];
+
+  const onPageChange = (page) => {
+    setfirst((page + 1) * rows);
+  };
+
+  const statusItems = [
     {
-      id: "ex-8271-bf-01",
-      source: "API Gateway",
-      status: "Running",
-      time: "2023-11-24 14:12:05",
-      duration: "12s",
-      failure: "—",
+      label: "All",
+      className: filters.status === "All" ? "font-bold text-blue-600" : "",
+      command: () => setFilters((prev) => ({ ...prev, status: "All" })),
     },
     {
-      id: "ex-8269-ac-92",
-      source: "Schedule (Cron)",
-      status: "Success",
-      time: "2023-11-24 13:45:00",
-      duration: "4m 12s",
-      failure: "—",
+      label: "Running",
+      command: () => setFilters((prev) => ({ ...prev, status: "RUNNING" })),
     },
     {
-      id: "ex-8265-cc-11",
-      source: "Webhook",
-      status: "Failed",
-      time: "2023-11-24 12:30:11",
-      duration: "22s",
-      failure: "InventoryCheckNode",
+      label: "Success",
+      command: () => setFilters((prev) => ({ ...prev, status: "SUCCESS" })),
     },
     {
-      id: "ex-8260-xd-45",
-      source: "Manual",
-      status: "Success",
-      time: "2023-11-24 11:15:00",
-      duration: "1m 05s",
-      failure: "—",
-    },
-    {
-      id: "ex-8255-wa-22",
-      source: "API Gateway",
-      status: "Success",
-      time: "2023-11-24 10:05:42",
-      duration: "58s",
-      failure: "—",
+      label: "Failed",
+      command: () => setFilters((prev) => ({ ...prev, status: "FAILED" })),
     },
   ];
 
+  const filteredData = executionData.filter((item) => {
+    const matchesSearch =
+      !searchQuery ||
+      item.execution_id_str?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus =
+      filters.status === "All" ||
+      item.status?.toLowerCase() === filters.status.toLowerCase();
+
+    // 2. Priority Filter (Mapping numeric 1-10 to High/Medium/Low)
+    const p = Number(item.priority);
+    let itemPriorityBucket = "Low";
+    if (p >= 8) itemPriorityBucket = "High";
+    else if (p >= 5) itemPriorityBucket = "Medium";
+
+    const matchesPriority =
+      filters.priority === "All" || itemPriorityBucket === filters.priority;
+
+    return matchesStatus && matchesPriority && matchesSearch;
+  });
+
   return (
     <div className="min-h-screen bg-[#f6f6f8] dark:bg-[#101622] text-[#111318] dark:text-white font-display">
-      <nav className="flex items-center gap-2 mb-6 text-sm font-medium text-slate-500">
-        <NavLink
-          to="/workflows"
-          className="hover:text-blue-600 transition-colors"
-        >
-          Workflows
-        </NavLink>
-        <ChevronRight size={14} />
-        <span className="text-slate-900 dark:text-white">{workflowId}</span>
-        <ChevronRight size={14} />
-        <span className="text-slate-900 dark:text-white">Execution</span>
-      </nav>
       <main className=" mx-auto p-8 flex flex-col gap-6">
+        <nav className="flex items-center gap-2 mb-6 text-sm font-medium text-slate-500">
+          <NavLink
+            to="/workflows"
+            className="hover:text-blue-600 transition-colors"
+          >
+            Workflows
+          </NavLink>
+          <ChevronRight size={14} />
+          <NavLink
+            to={`/workflows/${workflowId}`}
+            className="text-slate-900 dark:text-white hover:text-blue-600 transition-colors"
+          >
+            {workflowId}
+          </NavLink>
+          <ChevronRight size={14} />
+          <span className="text-slate-900 dark:text-white">Execution</span>
+        </nav>
         {/* Header Section */}
         <div className="flex flex-wrap justify-between items-start gap-4">
           <div className="flex flex-col gap-1">
@@ -129,87 +164,107 @@ const WorkflowExecution = () => {
           {/* Toolbar */}
           <div className="p-4 border-b border-[#f0f2f4] dark:border-[#2d333d] flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-2">
-              <FilterDropdown label="All Statuses" />
+              <Menu
+                model={statusItems}
+                popup
+                ref={menuStatus}
+                id="status_menu"
+                className="cursor-pointer p-2 border-none shadow-2xl rounded-2xl bg-white dark:bg-gray-900 w-48"
+                pt={{
+                  list: { className: "flex flex-col gap-1" },
+                  action: {
+                    className:
+                      "hover:bg-blue-100 dark:hover:bg-gray-800 rounded-lg transition-colors p-3",
+                  },
+                  label: {
+                    className:
+                      "text-sm font-bold text-gray-700 dark:text-gray-200",
+                  },
+                }}
+              />
+
+              {/* Status Filter Button */}
+              <FilterButton
+                label="Status"
+                value={filters.status}
+                isActive={filters.status !== "All"}
+                icon={<ChevronDown size={14} />}
+                onClick={(e) => menuStatus.current.toggle(e)}
+              />
               <FilterDropdown
                 label="Last 7 Days"
                 icon={<Calendar size={14} />}
               />
+
+              {(filters.status !== "All" || filters.priority !== "All") && (
+                <>
+                  <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2"></div>
+                  <button
+                    onClick={() =>
+                      setFilters({
+                        status: "All",
+                        priority: "All",
+                      })
+                    }
+                    className="text-[#135bec] text-xs font-black uppercase tracking-tight hover:text-blue-700 cursor-pointer transition-colors"
+                  >
+                    Clear All
+                  </button>
+                </>
+              )}
             </div>
 
-            <div className="flex items-center gap-3 flex-1 min-w-[240px] max-w-md">
+            <div className="flex items-center gap-3 flex-1 min-w-60 max-w-md">
               <div className="relative w-full">
                 <Search
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-[#616f89]"
                   size={18}
                 />
                 <input
-                  className="w-full h-10 pl-10 pr-4 rounded-lg bg-[#f0f2f4] dark:bg-[#2d333d] border-none text-sm focus:ring-2 focus:ring-[#135bec]/50 outline-none placeholder-[#616f89]"
-                  placeholder="Search Execution ID..."
+                  className="w-full h-10 pl-10 pr-4 rounded-lg bg-[#f0f2f4] dark:bg-[#2d333d] border border-gray-300 shadow-md text-sm focus:ring-2 focus:ring-[#135bec]/50 outline-none placeholder-[#616f89]"
+                  placeholder="Search Execution ID... "
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </div>
-              <button className="p-2.5 bg-[#f0f2f4] dark:bg-[#2d333d] text-[#111318] dark:text-white rounded-lg hover:bg-gray-200 dark:hover:bg-[#384152] transition-colors">
-                <RefreshCcw size={18} />
-              </button>
             </div>
           </div>
 
           {/* Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-[#f8f9fa] dark:bg-[#252c38] text-[11px] font-bold text-[#616f89] uppercase tracking-widest border-b border-[#e5e7eb] dark:border-[#2d333d]">
-                <tr>
-                  <th className="px-6 py-4">Execution ID</th>
-                  <th className="px-6 py-4">Trigger Source</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Started At</th>
-                  <th className="px-6 py-4">Duration</th>
-                  <th className="px-6 py-4">Failure Step</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#e5e7eb] dark:divide-[#2d333d]">
-                {executions.map((ex) => (
-                  <tr
-                    key={ex.id}
-                    onClick={() => handleRowClick(ex.id)}
-                    className="hover:bg-[#f6f6f8] dark:hover:bg-[#252c38] transition-colors cursor-pointer group"
-                  >
-                    <td className="px-6 py-4 text-sm font-mono text-[#135bec] font-bold tracking-tight">
-                      {ex.id}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-[#616f89] dark:text-[#a1aab9]">
-                      {ex.source}
-                    </td>
-                    <td className="px-6 py-4">
-                      <StatusBadge status={ex.status} />
-                    </td>
-                    <td className="px-6 py-4 text-sm text-[#616f89] dark:text-[#a1aab9]">
-                      {ex.time}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-[#616f89] dark:text-[#a1aab9]">
-                      {ex.duration}
-                    </td>
-                    <td
-                      className={`px-6 py-4 text-sm font-medium ${ex.status === "Failed" ? "text-red-500" : "text-[#616f89] dark:text-[#a1aab9]"}`}
-                    >
-                      {ex.failure}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {loading ? (
+              <>
+                <div>Loading.....</div>
+              </>
+            ) : (
+              <>
+                <DynamicTable
+                  tableHead={TableSchemas.execution}
+                  first={first}
+                  rows={rows}
+                  tableData={filteredData}
+                  handleRowClick={handleRowClick}
+                />
+              </>
+            )}
           </div>
 
           {/* Pagination */}
-          <div className="px-6 py-4 bg-[#f8f9fa] dark:bg-[#252c38] border-t border-[#e5e7eb] dark:border-[#2d333d] flex items-center justify-between">
-            <span className="text-sm text-[#616f89] dark:text-[#a1aab9] font-medium">
-              Showing 1 to 5 of 2,482 executions
-            </span>
-            <div className="flex items-center gap-2">
-              <PaginationBtn icon={<ChevronLeft size={18} />} disabled />
-              <PaginationBtn label="1" active />
-              <PaginationBtn label="2" />
-              <PaginationBtn icon={<ChevronRight size={18} />} />
-            </div>
+          <div className="px-6 py-4 bg-[#f8f9fa] dark:bg-[#252c38] border-t border-[#e5e7eb] dark:border-[#2d333d] flex items-center justify-center">
+            <Paginator
+              first={first}
+              rows={rows}
+              totalRecords={filteredData.length}
+              onPageChange={onPageChange}
+            />
           </div>
         </div>
       </main>

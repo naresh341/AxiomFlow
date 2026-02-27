@@ -4,13 +4,14 @@ from app.model.base import Base
 from sqlalchemy.orm import relationship
 
 
-
-
 class Workflow(Base):
     __tablename__ = "workflows"
     id = Column(Integer, primary_key=True)
+    workflow_id_str = Column(String, nullable=False, unique=True)
     name = Column(String, nullable=False)
-    status = Column(Enum("ACTIVE", "DRAFT", "ARCHIVED",name="workflow_status"), default="DRAFT")
+    status = Column(
+        Enum("ACTIVE", "DRAFT", "ARCHIVED", name="workflow_status"), default="ACTIVE"
+    )
     trigger = Column(String)
     owner_id = Column(Integer)
     created_at = Column(

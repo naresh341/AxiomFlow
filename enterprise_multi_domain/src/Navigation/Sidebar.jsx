@@ -67,10 +67,10 @@ const Sidebar = () => {
           </div>
           {!isCollapsed && (
             <div className="flex flex-col overflow-hidden whitespace-nowrap">
-              <h1 className="text-sm font-bold leading-none text-[#111418] dark:text-white">
+              <h1 className="text-md font-bold leading-none text-[#111418] dark:text-white">
                 Enterprise
               </h1>
-              <p className="text-[10px] text-[#617589] dark:text-slate-400 uppercase tracking-wider mt-1 font-bold">
+              <p className="text-[12px] text-[#617589] dark:text-slate-400 uppercase tracking-wider mt-1 font-bold">
                 Workflow SaaS
               </p>
             </div>
@@ -81,7 +81,7 @@ const Sidebar = () => {
             onClick={() => setIsCollapsed(true)}
             className="text-[#617589] hover:text-[#137fec] dark:hover:text-white transition-colors p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-[#1a242f]"
           >
-            <PanelLeftClose size={18} />
+            <PanelLeftClose size={25} />
           </button>
         )}
       </div>
@@ -92,7 +92,7 @@ const Sidebar = () => {
             onClick={() => setIsCollapsed(false)}
             className="text-[#617589] hover:text-[#137fec] dark:hover:text-white transition-colors p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-[#1a242f]"
           >
-            <PanelRightClose size={18} />
+            <PanelRightClose size={23} />
           </button>
         </div>
       )}

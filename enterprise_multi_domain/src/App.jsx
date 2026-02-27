@@ -56,16 +56,11 @@ function App() {
 
           {/* ================= WORKFLOWS ================= */}
 
-          <Route path="/workflows" element={<WorkFlows />}>
-            {/* Workflow list tabs */}
-            {/* <Route index element={<WorkflowActiveList />} />
-            <Route path="active" element={<WorkflowActiveList />} />
-            <Route path="draft" element={<WorkflowDraftList />} />
-            <Route path="archived" element={<WorkflowArchivedList />} /> */}
-          </Route>
+          <Route path="/workflows" element={<WorkFlows />} />
+          <Route path="/workflows/:status" element={<WorkFlows />} />
 
           <Route
-            path="/workflows/:workflowId"
+            path="/workflows/:workflow_id_str"
             element={<WorkflowDetailLayout />}
           >
             <Route index element={<WorkflowOverview />} />
@@ -74,18 +69,24 @@ function App() {
             path="/workflows/:workflowId/tasks"
             element={<WorkflowTasks />}
           />
+          
           <Route
             path="/workflows/:workflowId/execution"
             element={<WorkflowExecution />}
           />
+
+          <Route path="/workflows/execution" element={<WorkflowExecution />} />
+
           <Route
             path="/workflows/:workflowId/approvals"
             element={<WorkflowApprovals />}
           />
+
           <Route
             path="workflows/:workflowId/version"
             element={<WorkflowVersions />}
           />
+
           <Route
             path="/workflows/:workflowId/approvals/:approvalId"
             element={<WorkFlowApprovalDetail />}
@@ -98,20 +99,24 @@ function App() {
             path="/workflows/:workflowId/version/:versionId"
             element={<WorkFlowVersionDetail />}
           />
+
           <Route path="/workflows/create" element={<WorkflowBuilder />} />
+
+          <Route
+            path="/workflows/builder/:workflowId"
+            element={<WorkflowBuilder />}
+          />
 
           {/* ================= TASKS (GLOBAL) ================= */}
 
-          <Route path="/tasks" element={<Tasks />}>
-            {/* <Route index element={<MyTasks />} />
-            <Route path="assigned" element={<MyTasks />} />
-            <Route path="overdue" element={<OverdueTasks />} /> */}
-          </Route>
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/tasks/:status" element={<Tasks />} />
 
           {/* ================= APPROVALS (GLOBAL) ================= */}
 
           <Route path="/approvals" element={<Approvals />}>
             <Route index element={<PendingApprovals />} />
+            <Route path="/approvals/:status" element={<PendingApprovals />} />
             <Route path="history" element={<ApprovalHistory />} />
           </Route>
 

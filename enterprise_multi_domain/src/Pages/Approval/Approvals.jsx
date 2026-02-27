@@ -1,11 +1,16 @@
-import { Download, Filter } from "lucide-react";
-import { useState } from "react";
+import { Download } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, Outlet, useLocation } from "react-router-dom";
-
+import { getApprovalList } from "../../RTKThunk/AsyncThunk";
 const Approvals = () => {
   const location = useLocation();
+  const dispatch = useDispatch();
+  const [first, setfirst] = useState(0);
+  const rows = 10;
 
-  const [isDrawerOpen, setIsDrawerOpen] = useState(true);
+  const { loading, error, data } = useSelector((state) => state.approval);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const isActive = (path) => {
     if (path === "/approvals" && location.pathname === "/approvals")
@@ -14,6 +19,18 @@ const Approvals = () => {
   };
 
   const isPendingPage = isActive("/approvals");
+
+  const onPageChange = (pageindex) => {
+    setfirst(pageindex * rows);
+  };
+
+  useEffect(() => {
+    if (location.pathname.includes("history")) {
+      dispatch(getApprovalList("HISTORY"));
+    } else {
+      dispatch(getApprovalList("PENDING"));
+    }
+  }, [dispatch, location.pathname]);
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[#f6f6f8] dark:bg-[#101622] overflow-hidden">
@@ -31,9 +48,6 @@ const Approvals = () => {
         </div>
 
         <div className="flex gap-3">
-          <button className="flex items-center gap-2 rounded-lg h-10 px-4 bg-white dark:bg-gray-800 border border-[#dbdfe6] dark:border-gray-700 text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors">
-            <Filter size={18} /> <span>Filter</span>
-          </button>
           <button className="flex items-center gap-2 rounded-lg h-10 px-4 bg-white dark:bg-gray-800 border border-[#dbdfe6] dark:border-gray-700 text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors">
             <Download size={18} /> <span>Export</span>
           </button>
@@ -59,8 +73,19 @@ const Approvals = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        <Outlet context={{ isDrawerOpen, setIsDrawerOpen }} />
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <Outlet
+          context={{
+            isDrawerOpen,
+            setIsDrawerOpen,
+            approvalData: data.data || [],
+            loading,
+            error,
+            first,
+            rows,
+            onPageChange,
+          }}
+        />
       </div>
     </div>
   );

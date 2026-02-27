@@ -3,223 +3,334 @@ import {
   CheckCircle,
   ChevronDown,
   History,
-  MoreVertical,
   ShieldCheck,
   X,
   XCircle,
 } from "lucide-react";
+import { Calendar as PrimeCalendar } from "primereact/calendar";
+import { Menu } from "primereact/menu";
+import { useRef } from "react";
 import { useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { useOutletContext, useParams } from "react-router-dom";
 import ApprovalDecisionModal from "../../Components/ApprovalDecisionModal";
+import DynamicTable from "../../Components/DynamicTable";
+import Paginator from "../../Components/Paginator";
 import RejectConfirmationModal from "../../Components/RejectConfirmationModal";
+import { TableSchemas } from "../../Utils/TableSchemas";
+import { approve_reject } from "../../RTKThunk/AsyncThunk";
+import FilterButton from "../../Components/MiniComponent/FilterButton";
 
 const PendingApprovals = () => {
-  // Logic to track which row is clicked to show in the sidebar
-  const [activeId, setActiveId] = useState("APP-9042");
-  const [selectedIds, setSelectedIds] = useState(["APP-9042", "APP-8831"]);
-  const { isDrawerOpen, setIsDrawerOpen } = useOutletContext();
-
-  const [modalStep, setModalStep] = useState(null); // 'decision' | 'confirm-reject' | null
+  const { status } = useParams();
+  const [activeId, setActiveId] = useState(status);
+  const [notes, setNotes] = useState("");
+  const {
+    isDrawerOpen,
+    setIsDrawerOpen,
+    approvalData,
+    loading,
+    first,
+    rows,
+    onPageChange,
+  } = useOutletContext();
+  const [modalStep, setModalStep] = useState(null);
   const [rejectionData, setRejectionData] = useState(null);
+  const menuStatus = useRef(null);
+  const menuPriority = useRef(null);
+  const calendarRef = useRef(null);
+  const [filters, setFilters] = useState({
+    status: "All",
+    priority: "All",
+    dateRange: null,
+  });
+  const dispatch = useDispatch();
+  const activeApproval = approvalData.find(
+    (item) => item.approval_key?.trim() == activeId?.trim(),
+  );
 
-  const handleRejectTrigger = (data) => {
-    setRejectionData(data);
-    setModalStep("confirm-reject");
+  const handleApproveTrigger = async (decisionStatus) => {
+    const payload = {
+      approval_id: activeApproval.id,
+      comment: notes,
+      action_by_name: "Naresh",
+      action_taken: decisionStatus,
+    };
+    if (decisionStatus === "APPROVED") {
+      setModalStep("decision");
+      return;
+    }
+    if (decisionStatus === "REJECTED") {
+      setRejectionData(payload);
+      setModalStep("confirm-reject");
+      return;
+    }
+    try {
+      await dispatch(approve_reject(payload)).unwrap();
+      handleFinalSuccess();
+    } catch (error) {
+      console.error("Error while processing approval decision", error);
+    }
+  };
+
+  const handleFinalReject = async () => {
+    try {
+      await dispatch(approve_reject(rejectionData)).unwrap();
+      handleFinalSuccess();
+    } catch (error) {
+      console.error("Rejection failed", error);
+    }
   };
 
   const handleFinalSuccess = () => {
     setModalStep(null);
     setIsDrawerOpen(false);
-    // Add toast or refresh logic here
-    console.log("Workflow Updated Successfully");
   };
-  const handleRowClick = (id) => {
-    setActiveId(id);
+
+  const handleRowClick = (rowData) => {
+    setActiveId(rowData.data.approval_key);
     setIsDrawerOpen(true);
   };
-  const approvals = [
+
+  const statusItems = [
     {
-      id: "APP-9042",
-      workflow: "Purchase Order",
-      step: "Dept Head Review",
-      requester: "John Smith",
-      priority: "High",
-      status: "Awaiting",
-      date: "2023-11-25",
-      amount: "$4,250.00",
+      label: "All",
+      className: filters.status === "All" ? "font-bold text-blue-600" : "",
+      command: () => setFilters((prev) => ({ ...prev, status: "All" })),
     },
     {
-      id: "APP-8831",
-      workflow: "Expense Claim",
-      step: "Finance Audit",
-      requester: "Sarah Chen",
-      priority: "Medium",
-      status: "Escalated",
-      date: "2023-11-24",
-      amount: "$1,120.00",
+      label: "Escalated",
+      command: () => setFilters((prev) => ({ ...prev, status: "ESCALATED" })),
     },
     {
-      id: "APP-9105",
-      workflow: "Access Request",
-      step: "Security Review",
-      requester: "Mike Ross",
-      priority: "High",
-      status: "Awaiting",
-      date: "2023-11-26",
-      amount: "N/A",
-    },
-    {
-      id: "APP-9150",
-      workflow: "Contract Renewal",
-      step: "Legal Signing",
-      requester: "Harvey Specter",
-      priority: "Low",
-      status: "Awaiting",
-      date: "2023-11-28",
-      amount: "$12,000.00",
+      label: "Pending",
+      command: () => setFilters((prev) => ({ ...prev, status: "PENDING" })),
     },
   ];
 
+  const priorityItems = [
+    {
+      label: "All Priority",
+      command: () => setFilters((f) => ({ ...f, priority: "All" })),
+    },
+    {
+      label: "High (8-10)",
+      template: (item) => (
+        <div className="flex items-center gap-2 p-2 text-red-600 font-bold">
+          <div className="size-2 rounded-full bg-red-500" />
+          {item.label}
+        </div>
+      ),
+      command: () => setFilters((f) => ({ ...f, priority: "High" })),
+    },
+    {
+      label: "Medium (5-7)",
+      template: (item) => (
+        <div className="flex items-center gap-2 p-2 text-amber-600 font-bold">
+          <div className="size-2 rounded-full bg-amber-500" />
+          {item.label}
+        </div>
+      ),
+      command: () => setFilters((f) => ({ ...f, priority: "Medium" })),
+    },
+    {
+      label: "Low (1-4)",
+      template: (item) => (
+        <div className="flex items-center gap-2 p-2 text-emerald-600 font-bold">
+          <div className="size-2 rounded-full bg-emerald-500" />
+          {item.label}
+        </div>
+      ),
+      command: () => setFilters((f) => ({ ...f, priority: "Low" })),
+    },
+  ];
+
+  const getDateLabel = () => {
+    if (!filters.dateRange) return "All Time";
+    return new Date(filters.dateRange).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const filteredData = approvalData.filter((item) => {
+    // 1. Status Filter
+    const matchesStatus =
+      filters.status === "All" ||
+      item.status?.toLowerCase() === filters.status.toLowerCase();
+
+    // 2. Priority Filter (Mapping numeric 1-10 to High/Medium/Low)
+    const p = Number(item.priority);
+    let itemPriorityBucket = "Low";
+    if (p >= 8) itemPriorityBucket = "High";
+    else if (p >= 5) itemPriorityBucket = "Medium";
+
+    const matchesPriority =
+      filters.priority === "All" || itemPriorityBucket === filters.priority;
+
+    let matchesDate = true;
+    if (filters.dateRange) {
+      const itemDate = new Date(item.created_at);
+      const selectedDate = new Date(filters.dateRange);
+
+      matchesDate =
+        itemDate.getDate() === selectedDate.getDate() &&
+        itemDate.getMonth() === selectedDate.getMonth() &&
+        itemDate.getFullYear() === selectedDate.getFullYear();
+    }
+
+    return matchesStatus && matchesPriority && matchesDate;
+  });
+
   return (
-    <div className=" flex w-full h-[calc(100vh-160px)] overflow-hidden bg-[#f6f6f8] dark:bg-[#101622] animate-in fade-in duration-500">
+    <div className=" flex w-full h-[calc(100vh-160px)] overflow-hidden overflow-y-scroll bg-[#f6f6f8] dark:bg-[#101622] animate-in fade-in duration-500">
       <div
-        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out ${isDrawerOpen ? "mr-[420px]" : "mr-0"}`}
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out ${isDrawerOpen ? "mr-105" : "mr-0"}`}
       >
-        <div className="    flex gap-3 py-3 flex-wrap items-center mb-4">
+        <div className="flex gap-3 py-3 flex-wrap items-center mb-4">
+          <Menu
+            model={statusItems}
+            popup
+            ref={menuStatus}
+            id="status_menu"
+            className="cursor-pointer p-2 border-none shadow-2xl rounded-2xl bg-white dark:bg-gray-900 w-48"
+            pt={{
+              list: { className: "flex flex-col gap-1" },
+              action: {
+                className:
+                  "hover:bg-blue-100 dark:hover:bg-gray-800 rounded-lg transition-colors p-3",
+              },
+              label: {
+                className: "text-sm font-bold text-gray-700 dark:text-gray-200",
+              },
+            }}
+          />
+
+          {/* Status Filter Button */}
           <FilterButton
             label="Status"
-            value="Awaiting, Escalated"
+            value={filters.status}
+            isActive={filters.status !== "All"}
             icon={<ChevronDown size={14} />}
+            onClick={(e) => menuStatus.current.toggle(e)}
           />
-          <FilterButton
-            label="Workflow"
-            value="All"
-            icon={<ChevronDown size={14} />}
+          <Menu
+            model={priorityItems}
+            popup
+            ref={menuPriority}
+            className="cursor-pointer p-2 border-none shadow-2xl rounded-2xl bg-white dark:bg-gray-900 w-48"
+            pt={{
+              list: { className: "flex flex-col gap-1" },
+              action: {
+                className:
+                  "hover:bg-blue-100 dark:hover:bg-gray-800 rounded-lg transition-colors p-3",
+              },
+              label: {
+                className: "text-sm font-bold text-gray-700 dark:text-gray-200",
+              },
+            }}
           />
           <FilterButton
             label="Priority"
-            value="All"
+            value={filters.priority}
+            isActive={filters.priority !== "All"}
             icon={<ChevronDown size={14} />}
+            onClick={(e) => menuPriority.current.toggle(e)}
           />
           <FilterButton
-            label="Date Range"
-            value="Last 30 Days"
+            label="Date"
+            value={getDateLabel()}
+            isActive={filters.dateRange}
             icon={<Calendar size={14} />}
+            onClick={() => calendarRef.current.show()}
           />
-          <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2"></div>
-          <button className="text-[#135bec] text-xs font-bold hover:underline">
-            Clear All
-          </button>
+
+          {/* The Calendar Component */}
+          <div className="relative">
+            <PrimeCalendar
+              ref={calendarRef}
+              value={filters.dateRange}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, dateRange: e.value }))
+              }
+              selectionMode="single"
+              readOnlyInput
+              hideOnDateTimeSelect={true}
+              className="absolute opacity-0 pointer-events-none -top-10"
+              panelClassName="custom-calendar-panel"
+              pt={{
+                root: { className: "border-none" },
+                panel: {
+                  className:
+                    "bg-white dark:bg-[#1a2233] border border-[#dbdfe6] dark:border-gray-700 shadow-2xl rounded-2xl p-2 mt-2",
+                },
+                header: {
+                  className:
+                    "bg-transparent border-b border-gray-100 dark:border-gray-800 pb-2 mb-2",
+                },
+                title: {
+                  className:
+                    "text-sm font-bold text-gray-700 dark:text-gray-200",
+                },
+                dayLabel: {
+                  className: "text-xs font-bold text-gray-400 uppercase",
+                },
+                day: ({ context }) => ({
+                  className: `
+          rounded-lg transition-all text-sm
+          ${context.selected ? "bg-[#135bec] text-white" : "hover:bg-blue-50 dark:hover:bg-gray-800"}
+          ${context.disabled ? "opacity-20" : ""}
+        `,
+                }),
+              }}
+            />
+          </div>
+          {(filters.status !== "All" ||
+            filters.priority !== "All" ||
+            filters.dateRange) && (
+            <>
+              <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2"></div>
+              <button
+                onClick={() =>
+                  setFilters({
+                    status: "All",
+                    priority: "All",
+                    dateRange: null,
+                  })
+                }
+                className="text-[#135bec] text-xs font-black uppercase tracking-tight hover:text-blue-700 cursor-pointer transition-colors"
+              >
+                Clear All
+              </button>
+            </>
+          )}
         </div>
 
         {/* Table Container - Scrollable */}
         <div className="flex-1 flex flex-col bg-white dark:bg-gray-900 border border-[#dbdfe6] dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
-          {/* Bulk Action Bar */}
-          <div className="bg-[#135bec]/5 border-b border-[#dbdfe6] dark:border-gray-800 px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <input
-                type="checkbox"
-                checked
-                className="rounded border-gray-300 text-[#135bec] size-4"
-                readOnly
+          <div className="overflow-y-auto">
+            {loading ? (
+              <p>Loading ...</p>
+            ) : (
+              <DynamicTable
+                tableData={filteredData}
+                first={first}
+                rows={rows}
+                tableHead={TableSchemas.approval}
+                handleRowClick={handleRowClick}
               />
-              <span className="text-sm font-bold text-[#135bec]">
-                {selectedIds.length} items selected
-              </span>
+            )}
+            <div className="px-6 py-4 border-t border-slate-100 dark:border-gray-800  dark:bg-gray-900 flex items-center justify-center bg-slate-50/30">
+              <div className="p-4 border-t border-gray-200 dark:border-gray-800 dark:bg-gray-900">
+                <Paginator
+                  first={first}
+                  rows={rows}
+                  totalRecords={filteredData.length}
+                  onPageChange={onPageChange}
+                />
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setModalStep("decision")}
-                className="bg-[#135bec] text-white px-5 py-2 rounded-lg text-xs font-bold shadow-md hover:bg-blue-700 transition-colors"
-              >
-                Approve Selected
-              </button>
-              <button
-                onClick={() => setModalStep("decision")}
-                className="bg-white dark:bg-gray-800 text-red-600 border border-red-200 px-5 py-2 rounded-lg text-xs font-bold hover:bg-red-50"
-              >
-                Reject Selected
-              </button>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-auto">
-            <table className="w-full text-left border-collapse min-w-[800px]">
-              <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800/90 backdrop-blur-sm">
-                <tr>
-                  <th className="p-4 w-12 pl-6"></th>
-                  <th className="p-4 text-[11px] font-black text-[#616f89] uppercase tracking-widest">
-                    Approval ID
-                  </th>
-                  <th className="p-4 text-[11px] font-black text-[#616f89] uppercase tracking-widest">
-                    Workflow & Step
-                  </th>
-                  <th className="p-4 text-[11px] font-black text-[#616f89] uppercase tracking-widest">
-                    Requested By
-                  </th>
-                  <th className="p-4 text-[11px] font-black text-[#616f89] uppercase tracking-widest text-center">
-                    Priority
-                  </th>
-                  <th className="p-4 text-[11px] font-black text-[#616f89] uppercase tracking-widest">
-                    Status
-                  </th>
-                  <th className="p-4 text-[11px] font-black text-[#616f89] uppercase tracking-widest text-right pr-6">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {approvals.map((row) => (
-                  <tr
-                    key={row.id}
-                    onClick={() => handleRowClick(row.id)}
-                    className={`${activeId === row.id ? "bg-[#135bec]/5" : ""} hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer group`}
-                  >
-                    <td
-                      className="p-4 pl-6"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(row.id)}
-                        className="rounded border-gray-300 text-[#135bec]"
-                        readOnly
-                      />
-                    </td>
-                    <td
-                      className={`p-4 text-sm font-bold font-mono ${activeId === row.id ? "text-[#135bec]" : "text-[#111318] dark:text-white"}`}
-                    >
-                      {row.id}
-                    </td>
-                    <td className="p-4">
-                      <div className="text-sm font-bold">{row.workflow}</div>
-                      <div className="text-xs text-[#616f89]">{row.step}</div>
-                    </td>
-                    <td className="p-4 text-sm font-medium">{row.requester}</td>
-                    <td className="p-4 text-center">
-                      <PriorityBadge level={row.priority} />
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`size-2 rounded-full ${row.status === "Escalated" ? "bg-red-500 animate-pulse" : "bg-blue-500"}`}
-                        ></div>
-                        <span
-                          className={`text-sm font-bold ${row.status === "Escalated" ? "text-red-600" : "text-gray-600 dark:text-gray-300"}`}
-                        >
-                          {row.status}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-right pr-6">
-                      <button className="text-gray-400 group-hover:text-[#135bec] transition-colors">
-                        <MoreVertical size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </div>
       </div>
@@ -233,11 +344,11 @@ const PendingApprovals = () => {
         {/* --- FIXED HEADER --- */}
         <div className="p-6 border-b border-[#dbdfe6] dark:border-gray-800 flex justify-between items-start shrink-0 bg-white dark:bg-gray-900">
           <div className="flex flex-col gap-1">
-            <span className="text-[#135bec] text-[10px] font-black uppercase tracking-[0.2em] font-mono">
-              {activeId || "REQ-001"}
+            <span className="text-[#135bec] text-[15px] font-black uppercase tracking-[0.2em] font-mono">
+              {activeApproval?.approval_key || "No ID Selected"}
             </span>
             <h3 className="text-xl font-black text-[#111318] dark:text-white tracking-tight leading-tight">
-              Review Purchase Order
+              {activeApproval?.stage || "Review Request"}
             </h3>
           </div>
           <button
@@ -256,9 +367,20 @@ const PendingApprovals = () => {
               <ShieldCheck size={14} /> Approval Summary
             </h4>
             <div className="bg-[#f6f6f8] dark:bg-gray-800/50 p-5 rounded-xl space-y-4 border border-gray-100 dark:border-gray-800">
-              <SummaryRow label="Request Type" value="Hardware Procurement" />
-              <SummaryRow label="Amount" value="$4,250.00" highlight />
-              <SummaryRow label="Project Code" value="PRJ-2023-ALPHA" isMono />
+              <SummaryRow
+                label="Workflow Stage"
+                value={activeApproval?.stage}
+              />
+              <SummaryRow
+                label="SLA Remaining"
+                value={`${activeApproval?.sla_hours} Hours`}
+                highlight
+              />
+              <SummaryRow
+                label="Status"
+                value={activeApproval?.status}
+                isMono
+              />
             </div>
           </section>
 
@@ -269,14 +391,15 @@ const PendingApprovals = () => {
             </h4>
             <div className="flex items-center gap-4">
               <div className="size-10 rounded-full bg-[#135bec]/10 flex items-center justify-center text-[#135bec] font-black text-sm border border-[#135bec]/20">
-                JS
+                {activeApproval?.requester_id}
               </div>
               <div className="flex flex-col">
                 <span className="text-sm font-black text-gray-900 dark:text-white">
-                  John Smith
+                  Requester ID: {activeApproval?.requester_name}
                 </span>
-                <span className="text-[11px] text-gray-500 font-medium">
-                  Submitted on Nov 20, 2023 • 10:45 AM
+                <span className="text-[12px] text-gray-500 font-medium">
+                  Submitted on:{" "}
+                  {new Date(activeApproval?.created_at).toLocaleDateString()}
                 </span>
               </div>
             </div>
@@ -323,6 +446,8 @@ const PendingApprovals = () => {
                 className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-[#135bec]/20 focus:border-[#135bec] text-sm p-4 outline-none border transition-all resize-none text-gray-900 dark:text-white"
                 placeholder="Optional comments for the requester..."
                 rows="3"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
               ></textarea>
             </div>
           </section>
@@ -332,16 +457,30 @@ const PendingApprovals = () => {
         <div className="p-6 bg-white dark:bg-gray-900 border-t border-[#dbdfe6] dark:border-gray-800 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] shrink-0">
           <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={() => setModalStep("decision")}
+              disabled={loading}
+              onClick={() => handleApproveTrigger("APPROVED")}
               className="bg-[#135bec] text-white h-12 rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-blue-700 shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
             >
-              <CheckCircle size={18} /> Approve
+              {loading ? (
+                "Approving..."
+              ) : (
+                <>
+                  <CheckCircle size={18} /> Approve
+                </>
+              )}
             </button>
             <button
-              onClick={() => setModalStep("decision")}
+              disabled={loading}
+              onClick={() => handleApproveTrigger("REJECTED")}
               className="bg-white dark:bg-gray-800 border-2 border-red-100 dark:border-red-900/30 text-red-600 h-12 rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-95 transition-all"
             >
-              <XCircle size={18} /> Reject
+              {loading ? (
+                "Rejecting..."
+              ) : (
+                <>
+                  <XCircle size={18} /> Reject
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -349,17 +488,19 @@ const PendingApprovals = () => {
 
       <ApprovalDecisionModal
         isOpen={modalStep === "decision"}
-        activeId={activeId}
+        activeId={activeApproval}
         onClose={() => setModalStep(null)}
-        onRejectTrigger={handleRejectTrigger}
+        onRejectTrigger={(status, modalComment) => {
+          setNotes(modalComment);
+          handleApproveTrigger(status);
+        }}
       />
 
-      {/* MODAL 2: CONFIRMATION */}
       <RejectConfirmationModal
         isOpen={modalStep === "confirm-reject"}
         data={rejectionData}
         onClose={() => setModalStep("decision")} // Go back to decision modal
-        onConfirm={handleFinalSuccess}
+        onConfirm={handleFinalReject}
       />
     </div>
   );
@@ -392,32 +533,6 @@ const TimelineItem = ({ title, time, dotColor, isActive }) => (
       <span className="text-[11px] text-gray-400 font-medium">{time}</span>
     </div>
   </div>
-);
-
-const PriorityBadge = ({ level }) => {
-  const styles = {
-    High: "bg-orange-100 text-orange-700 border-orange-200",
-    Medium: "bg-blue-100 text-blue-700 border-blue-200",
-    Low: "bg-gray-100 text-gray-600 border-gray-200",
-  };
-  return (
-    <span
-      className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border inline-block ${styles[level]}`}
-    >
-      {level}
-    </span>
-  );
-};
-
-const FilterButton = ({ label, value, icon }) => (
-  <button className="flex h-10 items-center gap-x-3 rounded-xl bg-white dark:bg-gray-800 border border-[#dbdfe6] dark:border-gray-700 px-4 shadow-sm hover:border-[#135bec] transition-all group">
-    <p className="text-[#111318] dark:text-white text-xs font-bold">
-      {label}: <span className="text-gray-400 font-medium">{value}</span>
-    </p>
-    <span className="text-gray-400 group-hover:text-[#135bec] transition-colors">
-      {icon}
-    </span>
-  </button>
 );
 
 export default PendingApprovals;

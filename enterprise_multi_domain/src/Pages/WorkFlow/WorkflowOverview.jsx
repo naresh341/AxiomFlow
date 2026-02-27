@@ -1,21 +1,50 @@
 import {
-  Bolt,
   CheckCircle2,
   Clock,
   Download,
-  Eye,
   GitBranch,
   Info,
-  Mail,
   Maximize2,
   TrendingUp,
 } from "lucide-react";
-import { useOutletContext } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import DynamicTable from "../../Components/DynamicTable";
+import Paginator from "../../Components/Paginator";
+import WorkflowNode from "../../Components/WorkflowNode";
+import { TableSchemas } from "../../Utils/TableSchemas";
+import { get_Workflow_Executions } from "../../RTKThunk/AsyncThunk";
 
 const WorkflowOverview = () => {
-  // Access data passed from WorkflowDetailLayout via the Outlet
   const { currentWorkflow } = useOutletContext();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [first, setFirst] = useState(0);
+  const rows = 10;
+  const { loading, currentWorkflowExecutions } = useSelector(
+    (state) => state.workflows,
+  );
+  // currentWorkflowExecutions || {};
+  // const executions = currentWorkflowExecutions || [];
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "Date not set";
+    const date = new Date(dateString);
 
+    const formatDate = date.toLocaleDateString("en-IN", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    const formatTime = date.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    return ` ${formatDate} ${formatTime}`;
+  };
   const stats = [
     {
       label: "Total Runs",
@@ -47,35 +76,24 @@ const WorkflowOverview = () => {
     },
   ];
 
-  const recentExecutions = [
-    {
-      id: "EXE-10294",
-      source: "System Trigger",
-      status: "Success",
-      time: "Oct 24, 14:02:11",
-      duration: "42s",
-    },
-    {
-      id: "EXE-10293",
-      source: "John Doe (Admin)",
-      status: "Failed",
-      time: "Oct 24, 13:45:02",
-      duration: "12s",
-    },
-    {
-      id: "EXE-10292",
-      source: "System Trigger",
-      status: "Success",
-      time: "Oct 24, 12:30:45",
-      duration: "51s",
-    },
-  ];
+  const onPageChange = (pageIndex) => {
+    setFirst(pageIndex * rows);
+  };
+  // const workflowId = currentWorkflow?.workflow_id_str;
+  // useEffect(() => {
+  //   if (workflowId) {
+  //     dispatch(get_Workflow_Executions());
+  //   }
+  // }, [dispatch, ]);
 
+  // const executions = useMemo(() => {
+  //   return Array.isArray(currentWorkflowExecutions)
+  //     ? currentWorkflowExecutions
+  //     : [];
+  // }, [currentWorkflowExecutions]);
   return (
     <div className="grid grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* LEFT COLUMN: Main Dashboard Content */}
       <div className="col-span-12 lg:col-span-9 space-y-6">
-        {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((stat, i) => (
             <div
@@ -105,99 +123,88 @@ const WorkflowOverview = () => {
         {/* Workflow Diagram Preview Card */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-transparent">
-            <h3 className="font-bold text-sm text-slate-700 dark:text-slate-200">
+            <h3 className="font-bold text-md text-slate-700 dark:text-slate-200">
               Workflow Logic Preview
             </h3>
-            <button className="text-blue-600 text-xs font-black flex items-center gap-1.5 hover:underline uppercase tracking-tighter">
+            <button
+              type="button"
+              onClick={() =>
+                navigate(
+                  `/workflows/builder/${currentWorkflow?.workflow_id_str}`,
+                )
+              }
+              className="text-blue-600 text-sm font-black flex items-center gap-1.5 hover:underline uppercase tracking-tighter"
+            >
               <Maximize2 size={14} />
               Open Canvas
             </button>
           </div>
 
           <div className="p-12 bg-slate-50 dark:bg-slate-900/50 flex flex-col items-center">
-            <DiagramNode
-              icon={<Bolt className="text-blue-600" />}
-              label="Trigger"
-              sub="User Created"
-              primary
-            />
-            <Connector />
-            <DiagramNode
-              icon={<GitBranch className="text-amber-600" />}
-              label="Condition"
-              sub="Role == 'Admin'"
-            />
-            <Connector />
-            <DiagramNode
-              icon={<Mail className="text-indigo-600" />}
-              label="Action"
-              sub="Send Welcome Email"
-            />
-            <Connector />
-            <div className="px-6 py-2 bg-slate-200 dark:bg-slate-700 rounded-full border border-slate-300 dark:border-slate-600">
-              <p className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400">
-                End Pipeline
-              </p>
-            </div>
+            {currentWorkflow?.version?.[0]?.definition?.nodes?.length > 0 ? (
+              currentWorkflow?.versions[0].definition?.nodes
+                ?.slice(0, 4)
+                .map((node, index, array) => (
+                  <div key={node.id} className="flex flex-col items-center">
+                    <WorkflowNode
+                      data={node.data}
+                      type={node.type}
+                      selected={index == 0}
+                    />
+                    {index < array.length - 1 && (
+                      <div className="h-8 w-0.5 bg-slate-300 dark:bg-slate-700 my-1"></div>
+                    )}
+                  </div>
+                ))
+            ) : (
+              <div className="text-center space-y-4">
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-full shadow-sm inline-block">
+                  <GitBranch size={32} className="text-slate-300" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-700 dark:text-slate-200">
+                    No Logic Defined
+                  </h4>
+                  <p className="text-xs text-slate-500 max-w-50 mx-auto mt-1">
+                    This workflow doesn't have any steps yet. Use the Canvas to
+                    build your logic.
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    navigate(
+                      `/workflows/builder/${currentWorkflow.workflow_id_str}`,
+                    )
+                  }
+                  className="px-4 py-2 bg-blue-600 text-white text-xs font-black uppercase rounded-lg hover:bg-blue-700 transition-all"
+                >
+                  Configure Workflow
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Recent Executions Table */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
-            <h3 className="font-bold text-sm text-slate-700 dark:text-slate-200">
+            <h3 className="font-bold text-md text-slate-700 dark:text-slate-200">
               Recent Executions
             </h3>
-            <button className="text-blue-600 text-xs font-bold hover:underline">
+            <button
+              onClick={() => navigate("/workflows/execution")}
+              className="text-blue-600 text-sm font-bold hover:underline"
+            >
               Full History
             </button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50 dark:bg-slate-900/50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                <tr>
-                  <th className="px-6 py-4">Execution ID</th>
-                  <th className="px-6 py-4">Triggered By</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Start Time</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                {recentExecutions.map((exe) => (
-                  <tr
-                    key={exe.id}
-                    
-                    className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
-                  >
-                    <td className="px-6 py-4 text-sm font-bold text-blue-600">
-                      {exe.id}
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium">
-                      {exe.source}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`flex items-center gap-2 text-[10px] font-black uppercase ${exe.status === "Success" ? "text-emerald-600" : "text-red-500"}`}
-                      >
-                        <span
-                          className={`size-2 rounded-full ${exe.status === "Success" ? "bg-emerald-500" : "bg-red-500"}`}
-                        ></span>
-                        {exe.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-xs text-slate-500 font-medium">
-                      {exe.time}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button className="p-2 text-slate-400 hover:text-blue-600 transition-colors">
-                        <Eye size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DynamicTable
+              tableHead={TableSchemas.execution}
+              // tableData={executions}
+            />
+            <div className="flex justify-end">
+              <Paginator />
+            </div>
           </div>
         </div>
       </div>
@@ -213,17 +220,20 @@ const WorkflowOverview = () => {
           <div className="space-y-6">
             <MetaItem
               label="Created By"
-              value={currentWorkflow.owner}
-              avatar={currentWorkflow.owner
+              value={currentWorkflow.owner_name}
+              avatar={currentWorkflow.owner_name
                 .split(" ")
                 .map((n) => n[0])
                 .join("")}
               color="bg-blue-100 text-blue-700"
             />
-            <MetaItem label="Created On" value="Jan 12, 2024 • 09:30 AM" />
+            <MetaItem
+              label="Created On"
+              value={formatDateTime(currentWorkflow?.created_at)}
+            />
             <MetaItem
               label="Last Modified"
-              value={currentWorkflow.modified}
+              value={formatDateTime(currentWorkflow?.updated_at)}
               avatar="SM"
               color="bg-amber-100 text-amber-700"
             />
@@ -234,7 +244,7 @@ const WorkflowOverview = () => {
               </label>
               <div className="flex items-center gap-2">
                 <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-900 text-xs font-bold border border-slate-200 dark:border-slate-700">
-                  v2.4.1
+                  v{currentWorkflow.versions?.[0]?.version}
                 </span>
                 <button className="text-blue-600 text-[10px] font-black uppercase hover:underline">
                   Changelog
@@ -270,32 +280,6 @@ const WorkflowOverview = () => {
 };
 
 // --- INTERNAL SUB-COMPONENTS ---
-
-const DiagramNode = ({ icon, label, sub, primary = false }) => (
-  <div
-    className={`w-64 p-4 bg-white dark:bg-slate-800 border-2 rounded-2xl shadow-sm flex items-center gap-4 transition-transform hover:scale-105 cursor-pointer ${primary ? "border-blue-600" : "border-slate-100 dark:border-slate-700"}`}
-  >
-    <div
-      className={`p-2 rounded-lg ${primary ? "bg-blue-50 dark:bg-blue-900/30" : "bg-slate-50 dark:bg-slate-900"}`}
-    >
-      {icon}
-    </div>
-    <div>
-      <p
-        className={`text-[9px] uppercase font-black tracking-widest ${primary ? "text-blue-600" : "text-slate-400"}`}
-      >
-        {label}
-      </p>
-      <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
-        {sub}
-      </p>
-    </div>
-  </div>
-);
-
-const Connector = () => (
-  <div className="h-8 w-0.5 bg-slate-300 dark:bg-slate-700 my-1"></div>
-);
 
 const MetaItem = ({ label, value, avatar, color }) => (
   <div className="flex flex-col gap-1">

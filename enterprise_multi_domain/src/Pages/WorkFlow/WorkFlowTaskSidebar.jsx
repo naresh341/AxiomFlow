@@ -1,4 +1,5 @@
 import { Info, ShieldCheck, Terminal, X } from "lucide-react";
+import PriorityBadge from "../../Components/MiniComponent/PriorityBadge";
 
 const WorkFlowTaskSidebar = ({ task, onClose }) => {
   if (!task) return null;
@@ -18,7 +19,7 @@ const WorkFlowTaskSidebar = ({ task, onClose }) => {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <ShieldCheck size={16} className="text-blue-600" />
-                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                <span className="text-[15px] font-black uppercase text-slate-400 tracking-widest">
                   Task Details
                 </span>
               </div>
@@ -37,10 +38,10 @@ const WorkFlowTaskSidebar = ({ task, onClose }) => {
             {/* Status Section */}
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">
+                <p className="text-[13px] font-black text-slate-400 uppercase mb-1">
                   Current Status
                 </p>
-                <p className="text-sm font-bold flex items-center gap-2">
+                <p className="text-md font-bold flex items-center gap-2">
                   <span
                     className={`size-2 rounded-full ${task.status === "Completed" ? "bg-emerald-500" : "bg-blue-500"}`}
                   />
@@ -48,24 +49,26 @@ const WorkFlowTaskSidebar = ({ task, onClose }) => {
                 </p>
               </div>
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                <p className="text-[10px] font-black text-slate-400 uppercase mb-1">
-                  Duration
+                <p className="text-[13px] font-black text-slate-400 uppercase mb-1">
+                  Priority
                 </p>
-                <p className="text-sm font-bold">{task.duration}</p>
+                <p className="text-sm font-bold">
+                  <PriorityBadge value={task.priority} />
+                </p>
               </div>
             </div>
 
             {/* Metadata */}
             <div className="space-y-4">
-              <h3 className="text-xs font-black uppercase text-slate-400 flex items-center gap-2">
-                <Info size={14} /> Information
+              <h3 className="text-md font-black uppercase text-slate-400 flex items-center gap-2">
+                <Info size={18} /> Information
               </h3>
               <div className="space-y-3">
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-md">
                   <span className="text-slate-500">Task Type</span>
                   <span className="font-bold">{task.type}</span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-md">
                   <span className="text-slate-500">Execution ID</span>
                   <span className="font-mono font-bold text-blue-600">
                     {task.id}
@@ -76,10 +79,10 @@ const WorkFlowTaskSidebar = ({ task, onClose }) => {
 
             {/* Logs Section */}
             <div className="space-y-4">
-              <h3 className="text-xs font-black uppercase text-slate-400 flex items-center gap-2">
-                <Terminal size={14} /> Execution Logs
+              <h3 className="text-md font-black uppercase text-slate-400 flex items-center gap-2">
+                <Terminal size={18} /> Execution Logs
               </h3>
-              <div className="p-4 bg-slate-900 rounded-xl font-mono text-xs text-emerald-400 leading-relaxed border border-slate-800 shadow-inner">
+              <div className="p-4 bg-slate-900 rounded-xl font-mono text-sm text-emerald-400 leading-relaxed border border-slate-800 shadow-inner">
                 <p className="text-slate-500 mb-2">{task.id}</p>
                 {task.logs}
                 <div className="mt-2 text-white">
@@ -99,7 +102,7 @@ const WorkFlowTaskSidebar = ({ task, onClose }) => {
             </button>
           </div>
         </div>
-      </div>
+      </div>  
     </>
   );
 };

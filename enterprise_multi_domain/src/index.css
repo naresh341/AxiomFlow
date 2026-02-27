@@ -34,3 +34,26 @@
 body {
     font-family: var(--font-sans);
 }
+
+/* Dark Mode overrides for React Flow UI */
+.dark .react-flow__controls button {
+    background-color: #1e293b;
+    /* slate-800 */
+    fill: #f1f5f9;
+    /* slate-100 */
+    border-bottom: 1px solid #334155;
+    /* slate-700 */
+}
+
+.dark .react-flow__controls button:hover {
+    background-color: #334155;
+}
+
+.dark .react-flow__minimap {
+    background-color: #101922;
+    border: 1px solid #334155;
+}
+
+.dark .react-flow__minimap-mask {
+    fill: rgba(0, 0, 0, 0.4);
+}

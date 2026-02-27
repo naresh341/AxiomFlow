@@ -18,6 +18,20 @@ class Execution(Base):
 
     id = Column(Integer, primary_key=True)
 
+    task_id = Column(Integer, ForeignKey("tasks.id"))
+
+    workflow_version_id = Column(Integer, ForeignKey("workflow_versions.id"))
+    # 1. Human-readable Execution ID (EXEC-001)
+    execution_id_str = Column(String(50), unique=True, nullable=False)
+
+    # 2. Workflow ID String (e.g., WRKFLW-001)
+    workflow_id_str = Column(String(50), nullable=False)
+
+    # 3. Keys for task and approval tracking
+    task_key = Column(String(100), nullable=True)
+
+    approval_key = Column(String(100), nullable=True)
+
     workflow_id = Column(
         Integer,
         ForeignKey("workflows.id", ondelete="CASCADE"),
@@ -61,6 +75,14 @@ class Execution(Base):
         "Workflow",
         back_populates="executions",
     )
+
+    tasks = relationship(
+        "Task",
+        back_populates="execution",
+        foreign_keys="Task.execution_id",
+    )
+
+    workflow_version = relationship("WorkflowVersion", back_populates="executions")
 
 
 # Helpful index for analytics & dashboards

@@ -1,75 +1,100 @@
-import {
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  Plus,
-  Search,
-  Waypoints,
-} from "lucide-react";
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { ChevronRight, Download, Plus, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
 import CreateTaskModal from "../../Components/CreateTaskModal";
+import DynamicTable from "../../Components/DynamicTable";
+import Paginator from "../../Components/Paginator";
+import { getTaskList } from "../../RTKThunk/AsyncThunk";
+import { TableSchemas } from "../../Utils/TableSchemas";
 
 const Tasks = () => {
-  const [activeTab, setActiveTab] = useState("My Tasks");
+  const { status } = useParams();
+  const activeTab = status || "MyTasks";
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [first, setFirst] = useState(0);
+  const rows = 10;
+  const { loading, error, data } = useSelector((state) => state.task);
 
-  const tasks = [
+  useEffect(() => {
+    const apiResponse = activeTab === "MyTasks" ? "MyTasks" : activeTab;
+    dispatch(getTaskList(apiResponse));
+  }, [activeTab, dispatch]);
+
+  const onPageChange = (pageIndex) => {
+    setFirst(pageIndex * rows);
+  };
+
+  const Tabs = [
+    { label: "My Tasks", key: "MyTasks" },
+    { label: "OverDue", key: "OverDue" },
     {
-      id: "T-101",
-      name: "Quarterly Financial Audit",
-      status: "In Progress",
-      priority: "High",
-      assignee: {
-        name: "John Doe",
-        img: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
-      },
-      dueDate: "Oct 24, 2023",
-      source: "Finance Workflow",
-      workflowId: "WF-9921",
-    },
-    {
-      id: "T-102",
-      name: "Compliance Document Review",
-      status: "In Progress",
-      priority: "Med",
-      assignee: {
-        name: "Sarah Smith",
-        img: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-      },
-      dueDate: "Oct 25, 2023",
-      source: "Legal Workflow",
-      workflowId: "WF-8842",
-    },
-    {
-      id: "T-103",
-      name: "Onboarding Package Setup",
-      status: "Completed",
-      priority: "Low",
-      assignee: {
-        name: "Mike Ross",
-        img: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike",
-      },
-      dueDate: "Oct 20, 2023",
-      source: "Manual",
-      workflowId: null,
-    },
-    {
-      id: "T-104",
-      name: "Vendor Security Assessment",
-      status: "Overdue",
-      priority: "High",
-      assignee: {
-        name: "Emily Chen",
-        img: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emily",
-      },
-      dueDate: "Oct 22, 2023",
-      source: "IT Security Workflow",
-      workflowId: "WF-7731",
+      label: "Due Today",
+      key: "DueToday",
     },
   ];
+  const handleTabChange = (key) => {
+    // 5. Instead of setActiveTab, update the URL
+    navigate(`/tasks/${key}`);
+  };
+
+  // const tasks = [
+  //   {
+  //     id: "T-101",
+  //     name: "Quarterly Financial Audit",
+  //     status: "In Progress",
+  //     priority: "High",
+  //     assignee: {
+  //       name: "John Doe",
+  //       img: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
+  //     },
+  //     dueDate: "Oct 24, 2023",
+  //     source: "Finance Workflow",
+  //     workflowId: "WF-9921",
+  //   },
+  //   {
+  //     id: "T-102",
+  //     name: "Compliance Document Review",
+  //     status: "In Progress",
+  //     priority: "Med",
+  //     assignee: {
+  //       name: "Sarah Smith",
+  //       img: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
+  //     },
+  //     dueDate: "Oct 25, 2023",
+  //     source: "Legal Workflow",
+  //     workflowId: "WF-8842",
+  //   },
+  //   {
+  //     id: "T-103",
+  //     name: "Onboarding Package Setup",
+  //     status: "Completed",
+  //     priority: "Low",
+  //     assignee: {
+  //       name: "Mike Ross",
+  //       img: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike",
+  //     },
+  //     dueDate: "Oct 20, 2023",
+  //     source: "Manual",
+  //     workflowId: null,
+  //   },
+  //   {
+  //     id: "T-104",
+  //     name: "Vendor Security Assessment",
+  //     status: "Overdue",
+  //     priority: "High",
+  //     assignee: {
+  //       name: "Emily Chen",
+  //       img: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emily",
+  //     },
+  //     dueDate: "Oct 22, 2023",
+  //     source: "IT Security Workflow",
+  //     workflowId: "WF-7731",
+  //   },
+  // ];
 
   return (
     <div className="flex-1 flex flex-col bg-[#f6f6f8] dark:bg-[#101622] min-h-screen">
@@ -103,17 +128,17 @@ const Tasks = () => {
         <div className="bg-white dark:bg-[#101622] rounded-2xl shadow-sm border border-[#dbdfe6] dark:border-gray-800 overflow-hidden">
           {/* Tabs */}
           <div className="border-b border-[#dbdfe6] dark:border-gray-800 px-6 flex gap-8">
-            {["My Tasks", "Due Today", "Overdue"].map((tab) => (
+            {Tabs.map((tab, index) => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
+                key={index}
+                onClick={() => handleTabChange(tab.key)}
                 className={`pb-4 pt-5 text-md font-black transition-all border-b-2 ${
-                  activeTab === tab
+                  activeTab === tab.key
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-slate-400 hover:text-slate-600"
                 }`}
               >
-                {tab}
+                {tab.label}
               </button>
             ))}
           </div>
@@ -148,7 +173,7 @@ const Tasks = () => {
 
           {/* Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            {/* <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 dark:bg-gray-900/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-y border-slate-200 dark:border-gray-800">
                   <th className="px-6 py-4">Task Name</th>
@@ -259,21 +284,30 @@ const Tasks = () => {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table> */}
+            {loading ? (
+              <p> Data is Loading</p>
+            ) : (
+              <DynamicTable
+                tableData={data?.data || []}
+                first={first}
+                tableHead={TableSchemas.task}
+              />
+            )}
           </div>
 
           {/* Pagination */}
           <div className="px-6 py-4 border-t border-slate-100 dark:border-gray-800 flex items-center justify-between bg-slate-50/30">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-              Showing 4 of 24 tasks
+              Showing {data?.data?.length || 0} Tasks
             </p>
             <div className="flex gap-2">
-              <button className="p-2 border border-slate-200 dark:border-gray-700 rounded-xl hover:bg-white transition-all">
-                <ChevronLeft size={18} />
-              </button>
-              <button className="p-2 border border-slate-200 dark:border-gray-700 rounded-xl hover:bg-white transition-all">
-                <ChevronRight size={18} />
-              </button>
+              <Paginator
+                rows={rows}
+                first={first}
+                onPageChange={onPageChange}
+                totalRecords={data.length}
+              />
             </div>
           </div>
         </div>

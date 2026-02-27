@@ -1,89 +1,128 @@
-import React from "react";
 import {
-  CheckCircle2,
-  ChevronDown,
-  ExternalLink,
-  MoreHorizontal,
-  Zap,
-  Search,
-  Settings,
-  Bell,
-  ArrowUpRight,
   ArrowDownRight,
-  ShieldCheck,
-  Filter,
-  Eye,
-  Link,
-  Bolt,
+  ArrowUpRight,
+  ChevronDown,
   ChevronRight,
+  Search,
+  ShieldCheck,
+  X,
+  Zap,
 } from "lucide-react";
+import { Menu } from "primereact/menu";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
-
+import DynamicTable from "../../Components/DynamicTable";
+import FilterButton from "../../Components/MiniComponent/FilterButton";
+import Paginator from "../../Components/Paginator";
+import { get_Workflow_Approvals } from "../../RTKThunk/AsyncThunk";
+import { TableSchemas } from "../../Utils/TableSchemas";
 const WorkflowApprovals = () => {
   const navigate = useNavigate();
+  const rows = 10;
   const { workflowId } = useParams();
+  const dispatch = useDispatch();
+  const menuStatus = useRef(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const menuPriority = useRef(null);
+  const [filters, setFilters] = useState({
+    status: "All",
+    priority: "All",
+  });
+  const [first, setfirst] = useState(0);
+  const { loading, currentWorkflowApprovals } = useSelector(
+    (state) => state.workflows,
+  );
+  useEffect(() => {
+    dispatch(get_Workflow_Approvals(workflowId));
+  }, [dispatch, workflowId]);
+
+  const approvalData = currentWorkflowApprovals || [];
 
   const handleRowClick = (approvalId) => {
-    navigate(`${approvalId}?workflowId=${workflowId}`);
+    const id = approvalId.data.approval_key || " ";
+    if (id) {
+      navigate(`/workflows/${workflowId}/approvals/${id}`);
+    }
   };
 
-  const approvals = [
+  const onPageChange = (page) => {
+    setfirst((page + 1) * rows);
+  };
+
+  const statusItems = [
     {
-      id: "APP-9021-X",
-      type: "Budget Expansion",
-      dept: "Q3 Marketing Dept",
-      requester: {
-        name: "Alex Rivera",
-        img: "https://lh3.googleusercontent.com/aida-public/AB6AXuByF5nVZZIq0yKnZj9tuldcuZsikGFvGxIWjlwpLwWud6bxYLr2N3xoTYjfYbI13I-00AAyRfnuMSZgh457iNFjBUuBOt5voNnUWiSF5JIoRqU4sMvmINKqzRxep8DKer6g7YS6aY3f2GAHswse5nO6VHjfHWfD1aMyx5qgxe1MzhyDJ0plRKGO1zsxzai1rX5Eh86NBbt7gMwQ5Y0HcBwfgeKZ36RTypWFLr2waZLzUuUj5JwhgfLAAXUJ0pS0W81Sf8fOQQ6OMBg",
-      },
-      approver: {
-        name: "Marcus Chen",
-        img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBoybTxWG70LEfzYfWhxUSw6yaVUbpXy0OFq3WN3VFZ788fYtEJrUK2ZVyLaLQmNDZ8KwyQF0NGljrd_NDsJkQMy71YQ09PCh-vWAU8JZskz5bDdT0FwcV_3KfFdTqZwusHSYdudGb6v_2k4aSBunKSyQZjUcI-XFw6uGMQzT3pX22Xp1mjc_MXEZOpixgy2QEauL_EYvOrRXXvT-JMybec6RhClXOtLqv7Vk7tktUMOPAZ_xnFkfirWPCB2-GirzYBgtJG7sUBW3Q",
-      },
-      status: "Pending",
-      stage: "Finance Review",
-      sla: 75,
-      timeText: "18h / 24h",
-      lastAction: "2h ago by System",
-      statusStyles: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+      label: "All",
+      className: filters.status === "All" ? "font-bold text-blue-600" : "",
+      command: () => setFilters((prev) => ({ ...prev, status: "All" })),
     },
     {
-      id: "APP-9055-Z",
-      type: "New Hire Access",
-      dept: "Engineering - Senior L6",
-      requester: {
-        name: "Sarah Jenkins",
-        img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB-JEhL_Fl83PKv_-wFtWGxLKZNFbPMgDum_cJsFxILYvKN1CHe7T254wVz467SrxsrA1A6sQZbXmYfsVNyKJe_dp9i4MljGzYy1nvEFudK7wFuGXj8U7tS3Qr99yqHpps9MBVUZ28Ly-qGiazx9G_I4T7U2fFQX40_672aUGpW6652zq92qCQrWsM4HPlEH-juJXXIxRQGpP2Q9ESivpTWCxMkI9zPoAni-OtManbkgq7gP5Sd_2_bnbCmfM1bbrgkbEYHylzhKNM",
-      },
-      approver: {
-        name: "Linda Wu",
-        img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCFUSkuBdMU6wScsjrJ7Rm9dUw-eJoQY1Y1QO_adW9V71Bx-AKfVOLqCRLBkpYUKe_CHPqmxLkh7nS8qouJoVJrNQi6QT6Xg86dSwMFXp7iCerhvKFpTZSQ3LgbmLhRJp-nZ5X0pFGkqgQGYHT9JmnbYudMsWQJ0jLQIoPB3aHpDa3IJWmANQokhSv6pEE6qNw06-7ciZA7F8BAsUclJxRAehKJOkR9CIHtPBMmnvDLOvXUUX3SR3oq2nylhJIxW9bWmMnhAARTUv0",
-      },
-      status: "Escalated",
-      stage: "Security Provisioning",
-      sla: 100,
-      timeText: "32h / 24h",
-      lastAction: "8h ago by Auto-Bot",
-      statusStyles: "bg-amber-500/10 text-amber-500",
-      slaCritical: true,
+      label: "Escalated",
+      command: () => setFilters((prev) => ({ ...prev, status: "ESCALATED" })),
     },
     {
-      id: "APP-8992-B",
-      type: "Policy Exception",
-      dept: "Travel & Expenses",
-      requester: {
-        name: "David G.",
-        img: "https://lh3.googleusercontent.com/aida-public/AB6AXuD7N4IGxGpzdXnEbQxgv07BDTYalFrvaGsCldFbTNYuhfmbFxs-eHw7hyN8VXNbR1UKN04qTnoOJHt2epIFhCi3yETq82LBnLACX4zTe5f_JaawDvAOzjCMIn7t5f9qNLdjVtFVgFEWjNiFmgHwZ9Ieqd6VUMwNtqu-P-Tc8TrEqSob4GcdaRKmqm1TZDggcv8hKX9Aaey19bDT7g2UFjrkd7EeB4zHZeIV4RSiP1mSGTjIDewQZFWDa0reaThfklZLzQDxu-fg2QY",
-      },
-      approver: null,
-      status: "Approved",
-      stage: "Archived",
-      sla: 15,
-      timeText: "4h / 24h",
-      lastAction: "1d ago by Marcus Chen",
-      statusStyles: "bg-emerald-500/10 text-emerald-600",
+      label: "Pending",
+      command: () => setFilters((prev) => ({ ...prev, status: "PENDING" })),
     },
   ];
+
+  const priorityItems = [
+    {
+      label: "All Priority",
+      command: () => setFilters((f) => ({ ...f, priority: "All" })),
+    },
+    {
+      label: "High (8-10)",
+      template: (item) => (
+        <div className="flex items-center gap-2 p-2 text-red-600 font-bold">
+          <div className="size-2 rounded-full bg-red-500" />
+          {item.label}
+        </div>
+      ),
+      command: () => setFilters((f) => ({ ...f, priority: "High" })),
+    },
+    {
+      label: "Medium (5-7)",
+      template: (item) => (
+        <div className="flex items-center gap-2 p-2 text-amber-600 font-bold">
+          <div className="size-2 rounded-full bg-amber-500" />
+          {item.label}
+        </div>
+      ),
+      command: () => setFilters((f) => ({ ...f, priority: "Medium" })),
+    },
+    {
+      label: "Low (1-4)",
+      template: (item) => (
+        <div className="flex items-center gap-2 p-2 text-emerald-600 font-bold">
+          <div className="size-2 rounded-full bg-emerald-500" />
+          {item.label}
+        </div>
+      ),
+      command: () => setFilters((f) => ({ ...f, priority: "Low" })),
+    },
+  ];
+
+  const filteredData = approvalData.filter((item) => {
+    const matchesSearch =
+      !searchQuery ||
+      item.approval_key?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus =
+      filters.status === "All" ||
+      item.status?.toLowerCase() === filters.status.toLowerCase();
+
+    // 2. Priority Filter (Mapping numeric 1-10 to High/Medium/Low)
+    const p = Number(item.priority);
+    let itemPriorityBucket = "Low";
+    if (p >= 8) itemPriorityBucket = "High";
+    else if (p >= 5) itemPriorityBucket = "Medium";
+
+    const matchesPriority =
+      filters.priority === "All" || itemPriorityBucket === filters.priority;
+
+    return matchesStatus && matchesPriority && matchesSearch;
+  });
 
   return (
     <div className="flex-1 space-y-6 p-10 bg-[#f6f6f8] dark:bg-[#101622] min-h-screen font-sans">
@@ -96,7 +135,12 @@ const WorkflowApprovals = () => {
           Workflows
         </NavLink>
         <ChevronRight size={14} />
-        <span className="text-slate-900 dark:text-white">{workflowId}</span>
+        <NavLink
+          to={`/workflows/${workflowId}`}
+          className="text-slate-900 dark:text-white hover:text-blue-600 transition-colors"
+        >
+          {workflowId}
+        </NavLink>
         <ChevronRight size={14} />
         <span className="text-slate-900 dark:text-white">Approvals</span>
       </nav>
@@ -107,7 +151,7 @@ const WorkflowApprovals = () => {
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm font-normal">
             Monitoring and governance of approvals generated by Enterprise
-            Workflow #{workflowId || "882"}
+            Workflow #{workflowId}
           </p>
         </div>
         <div className="flex gap-3">
@@ -159,162 +203,125 @@ const WorkflowApprovals = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-center gap-3 py-2 border-y border-slate-200 dark:border-slate-800">
-        <span className="text-xs font-bold uppercase text-slate-500 tracking-wider mr-2">
-          Filters:
-        </span>
-        {[
-          "Status: All",
-          "Approver: All",
-          "Stage: All",
-          "Range: Last 30 Days",
-        ].map((filter) => (
-          <button
-            key={filter}
-            className="flex h-9 items-center gap-x-2 rounded-lg bg-white dark:bg-slate-800 px-3 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 text-xs font-semibold text-slate-700 dark:text-slate-200"
-          >
-            {filter}
-            <ChevronDown size={14} className="opacity-50" />
-          </button>
-        ))}
-        <div className="flex-1" />
-        <button className="text-xs text-slate-500 hover:text-[#0f49bd] underline font-medium">
-          Clear all filters
-        </button>
+
+      <div className="">
+        <div className="flex gap-3 py-3 justify-between flex-wrap items-center ">
+          <div className=" relative h-12 w-full ">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              size={18}
+            />
+            <input
+              className="w-full h-full pl-10 pr-4 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-[#1f2937] text-sm focus:ring-2 focus:ring-[#0f49bd] outline-none shadow-md "
+              type="text"
+              placeholder="Search by Approval ID"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Menu
+              model={statusItems}
+              popup
+              ref={menuStatus}
+              id="status_menu"
+              className="cursor-pointer p-2 border-none shadow-2xl rounded-2xl bg-white dark:bg-gray-900 w-48"
+              pt={{
+                list: { className: "flex flex-col gap-1" },
+                action: {
+                  className:
+                    "hover:bg-blue-100 dark:hover:bg-gray-800 rounded-lg transition-colors p-3",
+                },
+                label: {
+                  className:
+                    "text-sm font-bold text-gray-700 dark:text-gray-200",
+                },
+              }}
+            />
+
+            {/* Status Filter Button */}
+            <FilterButton
+              label="Status"
+              value={filters.status}
+              isActive={filters.status !== "All"}
+              icon={<ChevronDown size={14} />}
+              onClick={(e) => menuStatus.current.toggle(e)}
+            />
+            <Menu
+              model={priorityItems}
+              popup
+              ref={menuPriority}
+              className="cursor-pointer p-2 border-none shadow-2xl rounded-2xl bg-white dark:bg-gray-900 w-48"
+              pt={{
+                list: { className: "flex flex-col gap-1" },
+                action: {
+                  className:
+                    "hover:bg-blue-100 dark:hover:bg-gray-800 rounded-lg transition-colors p-3",
+                },
+                label: {
+                  className:
+                    "text-sm font-bold text-gray-700 dark:text-gray-200",
+                },
+              }}
+            />
+            <FilterButton
+              label="Priority"
+              value={filters.priority}
+              isActive={filters.priority !== "All"}
+              icon={<ChevronDown size={14} />}
+              onClick={(e) => menuPriority.current.toggle(e)}
+            />
+
+            {/* The Calendar Component */}
+            {(filters.status !== "All" ||
+              filters.priority !== "All" ||
+              filters.dateRange) && (
+              <>
+                <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2"></div>
+                <button
+                  onClick={() =>
+                    setFilters({
+                      status: "All",
+                      priority: "All",
+                      dateRange: null,
+                    })
+                  }
+                  className="text-[#135bec] text-xs font-black uppercase tracking-tight hover:text-blue-700 cursor-pointer transition-colors"
+                >
+                  Clear All
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Main Table */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider">
-                <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">
-                  Approval ID
-                </th>
-                <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">
-                  Request Type
-                </th>
-                <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">
-                  Requested By
-                </th>
-                <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">
-                  Current Approver
-                </th>
-                <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">
-                  Status
-                </th>
-                <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">
-                  Stage
-                </th>
-                <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 w-32">
-                  SLA Progress
-                </th>
-                <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 text-right">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {approvals.map((item) => (
-                <tr
-                  key={item.id}
-                  className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group cursor-pointer"
-                  onClick={() => handleRowClick(item.id)}
-                >
-                  <td className="px-6 py-4 font-mono text-xs text-[#0f49bd] dark:text-blue-400 font-medium">
-                    {item.id}
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                      {item.type}
-                    </p>
-                    <p className="text-[11px] text-slate-500">{item.dept}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <UserCell
-                      name={item.requester.name}
-                      img={item.requester.img}
-                    />
-                  </td>
-                  <td className="px-6 py-4">
-                    {item.approver ? (
-                      <UserCell
-                        name={item.approver.name}
-                        img={item.approver.img}
-                      />
-                    ) : (
-                      <div className="flex items-center gap-2 text-slate-400">
-                        <CheckCircle2 size={14} className="text-emerald-500" />
-                        <span className="text-xs">Complete</span>
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase ${item.statusStyles}`}
-                    >
-                      {item.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-xs text-slate-600 dark:text-slate-400">
-                    {item.stage}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-1.5 w-full">
-                      <div className="flex justify-between text-[10px] font-bold">
-                        <span
-                          className={
-                            item.slaCritical
-                              ? "text-rose-500"
-                              : "text-slate-900 dark:text-white"
-                          }
-                        >
-                          {item.timeText.split(" / ")[0]}
-                        </span>
-                        <span className="text-slate-400">
-                          / {item.timeText.split(" / ")[1]}
-                        </span>
-                      </div>
-                      <div className="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${item.slaCritical ? "bg-rose-500" : "bg-[#0f49bd]"}`}
-                          style={{ width: `${item.sla}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td
-                    className="px-6 py-4 text-right"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ActionBtn icon={<Eye size={16} />} title="View" />
-                      <ActionBtn icon={<Link size={16} />} title="Link" />
-                      <ActionBtn
-                        icon={<Bolt size={16} />}
-                        title="Escalate"
-                        color="rose"
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <DynamicTable
+            tableData={filteredData}
+            loading={loading}
+            handleRowClick={(id) => handleRowClick(id)}
+            first={first}
+            tableHead={TableSchemas.approval}
+          />
         </div>
         <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <p className="text-xs text-slate-500 font-medium">
-            Showing 1 to 3 of 142 entries
-          </p>
-          <div className="flex gap-2">
-            <button className="rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 h-8 px-3 text-[11px] font-bold text-slate-400 cursor-not-allowed">
-              Previous
-            </button>
-            <button className="rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 h-8 px-3 text-[11px] font-bold text-slate-600 dark:text-white hover:bg-slate-50">
-              Next
-            </button>
-          </div>
+          <Paginator
+            first={first}
+            rows={rows}
+            onPageChange={onPageChange}
+            totalRecords={filteredData.length}
+          />
         </div>
       </div>
     </div>
