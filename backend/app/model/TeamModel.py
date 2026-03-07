@@ -16,9 +16,9 @@ from sqlalchemy.orm import relationship
 
 
 class TeamStatus(str, enum.Enum):
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    ARCHIVED = "archived"
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    ARCHIVED = "ARCHIVED"
 
 
 class Team(Base):

@@ -1,7 +1,7 @@
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { resolveData } from "../Utils/TableSchemas";
-import { Archive, Copy, Edit2, Eye } from "lucide-react";
+import { Archive, CheckCircle, Copy, Edit2, Eye, XCircle } from "lucide-react";
 import PriorityBadge from "./MiniComponent/PriorityBadge";
 
 const DynamicTable = ({
@@ -44,7 +44,7 @@ const DynamicTable = ({
         </span>
       );
     }
-    if (col.field == "priority") {
+    if (col.field == "priority" || col.field == "risk_score") {
       return <PriorityBadge value={value} />;
     }
 
@@ -52,7 +52,8 @@ const DynamicTable = ({
       return <span>{first + opt.rowIndex + 1}</span>;
     }
 
-    if (col.type == "date") {
+    if (col.type === "date") {
+      if (!value) return "N/A";
       return new Date(value).toLocaleDateString("en-IN", {
         day: "2-digit",
         month: "short",
@@ -90,6 +91,27 @@ const DynamicTable = ({
         </>
       );
     }
+    if (col.field == "approval") {
+      return (
+        <>
+          <div className="flex justify-end  gap-1  ">
+            <button
+              onClick={() => handleApprove(rowData.id)}
+              title="Approve"
+              className="p-2 rounded-lg cursor-pointer  dark:hover:bg-white/10 text-green-600 dark:text-green-600 hover:bg-green-100 transition-colors shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+            >
+              <CheckCircle size={18} />
+            </button>
+            <button
+              onClick={() => handleReject(rowData.id)}
+              className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-white/10 text-red-600  dark:text-red-600 hover:text-red-600 transition-colors shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+            >
+              <XCircle size={18} />
+            </button>
+          </div>
+        </>
+      );
+    }
 
     return value || "N/A";
   };
@@ -98,7 +120,7 @@ const DynamicTable = ({
       {/* 1. Outside Border Container */}
       <div className="overflow-hidden rounded-xl  shadow-sm dark:border-gray-700">
         <DataTable
-          value={tableData}
+          value={Array.isArray(tableData) ? tableData : []}
           onRowClick={handleRowClick}
           emptyMessage={
             <div className="flex whitespace-nowrap items-center justify-center py-10 text-2xl font-bold text-red-600">

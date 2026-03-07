@@ -1,7 +1,69 @@
-import React from "react";
+import React, { useState } from "react";
 import { X, ShieldAlert, Search, ChevronDown, ShieldCheck } from "lucide-react";
 
-const RiskModal = ({ isOpen, onClose }) => {
+const RiskModal = ({ isOpen, onClose, onSubmit, users }) => {
+  const [formData, setFormData] = useState({
+    risk_title: "",
+    description: "",
+    category: "Security",
+    risk_owner: "",
+    likelihood: "LOW",
+    impact: "LOW",
+    mitigation_plan: "",
+  });
+
+  const likelihoodScore = {
+    LOW: 1,
+    MEDIUM: 2,
+    HIGH: 3,
+  };
+
+  const impactScore = {
+    LOW: 1,
+    MEDIUM: 2,
+    HIGH: 3,
+    CRITICAL: 4,
+  };
+
+  const riskScore =
+    (likelihoodScore[formData.likelihood] || 0) *
+    (impactScore[formData.impact] || 0);
+
+  const severity =
+    riskScore >= 15
+      ? "CRITICAL"
+      : riskScore >= 10
+        ? "HIGH RISK"
+        : riskScore >= 5
+          ? "MEDIUM"
+          : "LOW";
+
+  const handleChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleSubmit = () => {
+    const payload = {
+      ...formData,
+    };
+
+    onSubmit(payload);
+
+    setFormData({
+      risk_title: "",
+      description: "",
+      category: "Security",
+      risk_owner: "",
+      likelihood: "LOW",
+      impact: "LOW",
+      mitigation_plan: "",
+    });
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -45,19 +107,11 @@ const RiskModal = ({ isOpen, onClose }) => {
                 Risk Title
               </label>
               <input
+                value={formData.risk_title}
+                onChange={(e) => handleChange("risk_title", e.target.value)}
                 type="text"
                 className="w-full rounded-xl border-2 border-slate-200 dark:border-[#3b4754] bg-slate-50 dark:bg-[#283039] text-lg focus:ring-4 focus:ring-[#137fec]/20 focus:border-[#137fec] dark:text-white p-4 outline-none transition-all"
                 placeholder="e.g., Potential data leakage in vendor API"
-              />
-            </div>
-            <div>
-              <label className="block text-lg font-bold text-slate-800 dark:text-slate-200 mb-3">
-                Risk Description
-              </label>
-              <textarea
-                rows="4"
-                className="w-full rounded-xl border-2 border-slate-200 dark:border-[#3b4754] bg-slate-50 dark:bg-[#283039] text-lg focus:ring-4 focus:ring-[#137fec]/20 focus:border-[#137fec] dark:text-white p-4 outline-none transition-all"
-                placeholder="Describe the risk and its potential impact on the organization..."
               />
             </div>
           </div>
@@ -68,11 +122,15 @@ const RiskModal = ({ isOpen, onClose }) => {
                 Category
               </label>
               <div className="relative">
-                <select className="w-full appearance-none rounded-xl border-2 border-slate-200 dark:border-[#3b4754] bg-slate-50 dark:bg-[#283039] text-lg dark:text-white p-4 outline-none cursor-pointer">
-                  <option>Security</option>
-                  <option>Operational</option>
-                  <option>Financial</option>
-                  <option>Compliance</option>
+                <select
+                  value={formData.category}
+                  onChange={(e) => handleChange("category", e.target.value)}
+                  className="w-full appearance-none rounded-xl border-2 border-slate-200 dark:border-[#3b4754] bg-slate-50 dark:bg-[#283039] text-lg dark:text-white p-4 outline-none cursor-pointer"
+                >
+                  <option value="Security">Security</option>
+                  <option value="Operational">Operational</option>
+                  <option value="Financial">Financial</option>
+                  <option value="Compliance">Compliance</option>
                 </select>
                 <ChevronDown
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
@@ -85,15 +143,29 @@ const RiskModal = ({ isOpen, onClose }) => {
                 Risk Owner
               </label>
               <div className="relative">
-                <Search
+                {/* <Search
                   size={22}
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-                <input
+                /> */}
+                {/* <input
+                  value={formData.risk_owner}
+                  onChange={(e) => handleChange("risk_owner", e.target.value)}
                   type="text"
                   className="w-full pl-12 rounded-xl border-2 border-slate-200 dark:border-[#3b4754] bg-slate-50 dark:bg-[#283039] text-lg focus:ring-4 focus:ring-[#137fec]/20 focus:border-[#137fec] dark:text-white p-4 outline-none transition-all"
                   placeholder="Search team members..."
-                />
+                /> */}
+                <select
+                  value={formData.risk_owner}
+                  onChange={(e) => handleChange("risk_owner", e.target.value)}
+                  className="w-full appearance-none rounded-xl border-2 border-slate-200 dark:border-[#3b4754] bg-slate-50 dark:bg-[#283039] text-lg dark:text-white p-4 outline-none cursor-pointer"
+                >
+                  <option>Select Risk Owner</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.first_name} {user.last_name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
@@ -109,7 +181,7 @@ const RiskModal = ({ isOpen, onClose }) => {
                   Calculated Severity:
                 </span>
                 <span className="px-4 py-1.5 rounded-full text-sm font-black bg-orange-500/10 text-orange-600 border-2 border-orange-500/20 shadow-sm">
-                  12 • HIGH RISK
+                  {riskScore} • {severity}
                 </span>
               </div>
             </div>
@@ -119,24 +191,29 @@ const RiskModal = ({ isOpen, onClose }) => {
                 <label className="text-xs font-black text-slate-400 uppercase ml-1">
                   Likelihood (Probability)
                 </label>
-                <select className="w-full rounded-xl border-2 border-slate-200 dark:border-[#3b4754] bg-white dark:bg-[#283039] text-lg font-bold dark:text-white p-4 outline-none shadow-sm">
-                  <option>1 - Rare</option>
-                  <option>2 - Unlikely</option>
-                  <option selected>3 - Possible</option>
-                  <option>4 - Likely</option>
-                  <option>5 - Almost Certain</option>
+                <select
+                  value={formData.likelihood}
+                  onChange={(e) => handleChange("likelihood", e.target.value)}
+                  className="w-full rounded-xl border-2 border-slate-200 dark:border-[#3b4754] bg-white dark:bg-[#283039] text-lg font-bold dark:text-white p-4 outline-none shadow-sm"
+                >
+                  <option value="LOW">LOW</option>
+                  <option value="MEDIUM">MEDIUM</option>
+                  <option value="HIGH"> HIGH</option>
                 </select>
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-black text-slate-400 uppercase ml-1">
                   Impact (Consequence)
                 </label>
-                <select className="w-full rounded-xl border-2 border-slate-200 dark:border-[#3b4754] bg-white dark:bg-[#283039] text-lg font-bold dark:text-white p-4 outline-none shadow-sm">
-                  <option>1 - Insignificant</option>
-                  <option>2 - Minor</option>
-                  <option>3 - Moderate</option>
-                  <option selected>4 - Major</option>
-                  <option>5 - Catastrophic</option>
+                <select
+                  value={formData.impact}
+                  onChange={(e) => handleChange("impact", e.target.value)}
+                  className="w-full border p-3 rounded-lg"
+                >
+                  <option value="LOW">LOW</option>
+                  <option value="MEDIUM">MEDIUM</option>
+                  <option value="HIGH"> HIGH</option>
+                  <option value="CRITICAL"> CRITICAL</option>
                 </select>
               </div>
             </div>
@@ -148,8 +225,22 @@ const RiskModal = ({ isOpen, onClose }) => {
             </label>
             <textarea
               rows="3"
+              value={formData.mitigation_plan}
+              onChange={(e) => handleChange("mitigation_plan", e.target.value)}
               className="w-full rounded-xl border-2 border-slate-200 dark:border-[#3b4754] bg-slate-50 dark:bg-[#283039] text-lg focus:ring-4 focus:ring-[#137fec]/20 focus:border-[#137fec] dark:text-white p-4 outline-none transition-all"
               placeholder="Outline the internal controls or steps to reduce this risk..."
+            />
+          </div>
+          <div>
+            <label className="block text-lg font-bold text-slate-800 dark:text-slate-200 mb-3">
+              Risk Description
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => handleChange("description", e.target.value)}
+              rows="4"
+              className="w-full rounded-xl border-2 border-slate-200 dark:border-[#3b4754] bg-slate-50 dark:bg-[#283039] text-lg focus:ring-4 focus:ring-[#137fec]/20 focus:border-[#137fec] dark:text-white p-4 outline-none transition-all"
+              placeholder="Describe the risk and its potential impact on the organization..."
             />
           </div>
         </div>
@@ -158,11 +249,14 @@ const RiskModal = ({ isOpen, onClose }) => {
         <div className="px-8 py-6 bg-slate-50 dark:bg-[#283039] border-t border-slate-200 dark:border-[#3b4754] flex items-center justify-end gap-5 rounded-b-2xl">
           <button
             onClick={onClose}
-            className="px-6 py-3 text-lg font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"
+            className="cursor-pointer px-6 py-3 text-lg font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"
           >
             Cancel Assessment
           </button>
-          <button className="flex items-center gap-3 px-10 py-4 bg-[#137fec] text-white text-lg font-black rounded-xl hover:bg-blue-600 shadow-xl shadow-[#137fec]/30 transition-all active:scale-95">
+          <button
+            onClick={handleSubmit}
+            className="flex cursor-pointer items-center gap-3 px-10 py-4 bg-[#137fec] text-white text-lg font-black rounded-xl hover:bg-blue-600 shadow-xl shadow-[#137fec]/30 transition-all active:scale-95"
+          >
             <ShieldCheck size={22} />
             <span>Create Risk Profile</span>
           </button>

@@ -9,17 +9,16 @@ import {
 } from "lucide-react";
 import { Calendar as PrimeCalendar } from "primereact/calendar";
 import { Menu } from "primereact/menu";
-import { useRef } from "react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useOutletContext, useParams } from "react-router-dom";
 import ApprovalDecisionModal from "../../Components/ApprovalDecisionModal";
 import DynamicTable from "../../Components/DynamicTable";
+import FilterButton from "../../Components/MiniComponent/FilterButton";
 import Paginator from "../../Components/Paginator";
 import RejectConfirmationModal from "../../Components/RejectConfirmationModal";
-import { TableSchemas } from "../../Utils/TableSchemas";
 import { approve_reject } from "../../RTKThunk/AsyncThunk";
-import FilterButton from "../../Components/MiniComponent/FilterButton";
+import { TableSchemas } from "../../Utils/TableSchemas";
 
 const PendingApprovals = () => {
   const { status } = useParams();
@@ -311,7 +310,9 @@ const PendingApprovals = () => {
         <div className="flex-1 flex flex-col bg-white dark:bg-gray-900 border border-[#dbdfe6] dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
           <div className="overflow-y-auto">
             {loading ? (
-              <p>Loading ...</p>
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
             ) : (
               <DynamicTable
                 tableData={filteredData}

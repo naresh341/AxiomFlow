@@ -1,46 +1,53 @@
-const PolicyList = () => {
+import DynamicTable from "../../Components/DynamicTable";
+import Paginator from "../../Components/Paginator";
+import { TableSchemas } from "../../Utils/TableSchemas";
+
+const PolicyList = ({
+  policies,
+  error,
+  loading,
+  rows,
+  first,
+  onPageChange,
+}) => {
+  if (error)
+    return (
+      <div className="p-8 text-red-500 font-bold">
+        Error loading policies: {error}
+      </div>
+    );
   return (
-    <table className="w-full text-left">
-      <thead className="bg-slate-50 dark:bg-[#1c2127]/50 border-b border-slate-200 dark:border-slate-800">
-        <tr>
-          <th className="px-8 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">
-            Policy Name
-          </th>
-          <th className="px-8 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">
-            Version
-          </th>
-          <th className="px-8 py-4 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">
-            Action
-          </th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-        {[
-          "Information Security Policy",
-          "Data Privacy Policy",
-          "Incident Response Plan",
-        ].map((name) => (
-          <tr
-            key={name}
-            className="hover:bg-slate-50 dark:hover:bg-blue-500/5 transition-colors group"
-          >
-            <td className="px-8 py-5 text-sm font-bold dark:text-white">
-              {name}
-            </td>
-            <td className="px-8 py-5">
-              <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-black">
-                v2.1
-              </span>
-            </td>
-            <td className="px-8 py-5 text-right">
-              <button className="text-[#137fec] text-[10px] font-black uppercase tracking-widest hover:underline">
-                Download PDF
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <>
+      <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-[#3b4754] bg-white dark:bg-[#1c2127]">
+        {loading ? (
+          <>
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          </>
+        ) : (
+          <DynamicTable
+            tableData={policies}
+            tableHead={TableSchemas.policies}
+            rows={rows}
+            first={first}
+          />
+        )}
+      </div>
+
+      <div className="px-6 py-3 border-t border-slate-200 dark:border-[#2d3a4b] bg-slate-50 dark:bg-[#101922] shrink-0">
+        {!loading && policies?.length > 0 && (
+          <div className="px-6 py-3 border-t border-slate-200 dark:border-[#2d3a4b] bg-slate-50 dark:bg-[#101922]">
+            <Paginator
+              first={first}
+              rows={rows}
+              totalRecords={policies.length}
+              onPageChange={onPageChange}
+            />
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 

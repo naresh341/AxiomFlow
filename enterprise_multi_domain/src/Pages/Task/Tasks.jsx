@@ -17,7 +17,7 @@ const Tasks = () => {
   const dispatch = useDispatch();
   const [first, setFirst] = useState(0);
   const rows = 10;
-  const { loading, error, data } = useSelector((state) => state.task);
+  const { loading, data } = useSelector((state) => state.task);
 
   useEffect(() => {
     const apiResponse = activeTab === "MyTasks" ? "MyTasks" : activeTab;
@@ -286,7 +286,9 @@ const Tasks = () => {
               </tbody>
             </table> */}
             {loading ? (
-              <p> Data is Loading</p>
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
             ) : (
               <DynamicTable
                 tableData={data?.data || []}

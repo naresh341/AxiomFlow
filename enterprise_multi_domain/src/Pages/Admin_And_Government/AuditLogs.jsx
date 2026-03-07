@@ -1,18 +1,18 @@
 import {
-  Calendar,
+Calendar,
   ChevronDown,
   Download,
   ShieldAlert,
-  Users,
   Terminal,
+  Users,
 } from "lucide-react";
 import { useState } from "react";
+import UserAction from "./UserAction";
+import SystemLogs from "./SystemLogs";
 import AdminActions from "./AdminAction";
-import SystemLogs from "../SystemLogs";
-import UserAction from "../UserAction";
 
 const AuditLogsSystem = () => {
-  const [activeTab, setActiveTab] = useState("user");
+  const [activeTab, setActiveTab] = useState("USER");
 
   const configs = {
     user: {
@@ -28,7 +28,6 @@ const AuditLogsSystem = () => {
     system: {
       title: "System Logs",
       sub: "Backend events and forensic infrastructure logs.",
-      // btn is removed here as per your request
     },
   };
 
@@ -69,20 +68,20 @@ const AuditLogsSystem = () => {
         {/* TAB SWITCHER */}
         <div className="flex gap-10 border-b border-slate-200 dark:border-slate-800">
           <TabButton
-            active={activeTab === "user"}
-            onClick={() => setActiveTab("user")}
+            active={activeTab === "USER"}
+            onClick={() => setActiveTab("USER")}
             icon={<Users size={16} />}
             label="User Actions"
           />
           <TabButton
-            active={activeTab === "admin"}
-            onClick={() => setActiveTab("admin")}
+            active={activeTab === "ADMIN"}
+            onClick={() => setActiveTab("ADMIN")}
             icon={<ShieldAlert size={16} />}
             label="Admin Actions"
           />
           <TabButton
-            active={activeTab === "system"}
-            onClick={() => setActiveTab("system")}
+            active={activeTab === "SYSTEM"}
+            onClick={() => setActiveTab("SYSTEM")}
             icon={<Terminal size={16} />}
             label="System Logs"
           />
@@ -90,9 +89,9 @@ const AuditLogsSystem = () => {
 
         {/* CONTENT AREA */}
         <div className="mt-2">
-          {activeTab === "user" && <UserAction />}
-          {activeTab === "admin" && <AdminActions />}
-          {activeTab === "system" && <SystemLogs />}
+          {activeTab === "USER" && <UserAction />}
+          {activeTab === "ADMIN" && <AdminActions />}
+          {activeTab === "SYSTEM" && <SystemLogs />}
         </div>
       </main>
     </div>

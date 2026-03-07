@@ -12,7 +12,6 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   const [first, setFirst] = useState(0); // starting index
   const rows = 5; // rows per page
-  const totalRecords = 1; // ← later this comes from backend
 
   const { loading, data } = useSelector((state) => state.approval);
 
@@ -24,10 +23,6 @@ const Dashboard = () => {
 
   const handlePageChange = (event) => {
     setFirst(event + 1) * rows;
-  };
-  const handleCustomPageChange = (selectedPage) => {
-    const newFirst = selectedPage * rows;
-    setFirst(newFirst);
   };
 
   useEffect(() => {
@@ -189,12 +184,18 @@ const Dashboard = () => {
               </h4>
             </div>
             <div className="p-4 text-slate-500 dark:text-slate-400 ">
-              <DynamicTable
-                tableData={tabledata}
-                tableHead={TableSchemas.approval}
-                first={first}
-                rows={rows}
-              />
+              {loading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+              ) : (
+                <DynamicTable
+                  tableData={tabledata}
+                  tableHead={TableSchemas.approval}
+                  first={first}
+                  rows={rows}
+                />
+              )}
             </div>
 
             <Paginator

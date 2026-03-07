@@ -6,21 +6,22 @@ from app.model.base import Base
 
 
 class UserRole(str, enum.Enum):
-    ADMIN = "admin"
-    MANAGER = "manager"
-    EMPLOYEE = "employee"
+    ADMIN = "ADMIN"
+    MANAGER = "MANAGER"
+    EMPLOYEE = "EMPLOYEE"
 
 
 class UserStatus(str, enum.Enum):
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    ARCHIVED = "archived"
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    ARCHIVED = "ARCHIVED"
 
 
 class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
+    username = Column(String(50), unique=True, nullable=False, index=True)
     first_name = Column(String(50), nullable=False)
     last_name = Column(String(50), nullable=False)
     email = Column(String(100), unique=True, nullable=False, index=True)

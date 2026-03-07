@@ -1,13 +1,4 @@
-import {
-  ArrowRight,
-  CheckCircle,
-  Info,
-  Send,
-  Timer,
-  User,
-  X,
-  XCircle,
-} from "lucide-react";
+import { CheckCircle, Info, Send, Timer, User, X, XCircle } from "lucide-react";
 import { useState } from "react";
 
 const ApprovalDecisionModal = ({

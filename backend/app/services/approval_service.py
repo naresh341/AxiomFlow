@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
 from app.model.approval import Approval
-from sqlalchemy.sql import func
 from app.model.ApprovalHistory import ApprovalHistory
 from app.schemas.ApprovalHistorySchema import HistoryBase
 
@@ -39,7 +38,6 @@ class ApprovalService:
 
         approvals = query.all()
         return {"total": len(approvals), "data": approvals}
-
 
     def approve(self, approval_id: int, approver_id: int):
         approval = self.db.get(Approval, approval_id)

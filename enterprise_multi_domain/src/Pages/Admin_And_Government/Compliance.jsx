@@ -6,19 +6,82 @@ import {
   ShieldCheck,
   Upload,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import EvidenceList from "./EvidenceList";
 import PolicyList from "./PolicyList";
 import RiskMatrix from "./RiskMatrix";
 import RiskModal from "../../Components/RiskModal";
 import EvidenceModal from "../../Components/EvidenceModal";
 import AssessmentModal from "../../Components/AssessmentModal";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addNewPolicy,
+  addRisk,
+  get_UserOrg,
+  getPolicies,
+  uploadControlEvidence,
+} from "../../RTKThunk/AsyncThunk";
 
 const Compliance = () => {
-  const [activeTab, setActiveTab] = useState("Policy Documents");
+  const rows = 10;
+  const dispatch = useDispatch();
+  const [first, setfirst] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("Policy Documents");
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
+  const { policies, risks, evidence, loading, error } = useSelector(
+    (state) => state.compliance,
+  );
+
+  const { data } = useSelector((state) => state.UserOrg);
+
+  useEffect(() => {
+    dispatch(get_UserOrg());
+  }, [dispatch]);
+
+  const onPageChange = (page) => {
+    setfirst(page - 1) * rows;
+  };
+
+  useEffect(() => {
+    dispatch(getPolicies("active"));
+  }, [dispatch]);
+
+  const handleSubmit = async (formdata) => {
+    try {
+      const response = await dispatch(addNewPolicy(formdata)).unwrap();
+      setIsAssessmentModalOpen(false);
+      dispatch(getPolicies());
+      return response;
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleAddRisk = async (data) => {
+    try {
+      await dispatch(addRisk(data)).unwrap();
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleUploadEvidence = async (data) => {
+    try {
+      await dispatch(
+        uploadControlEvidence({
+          controlId: data.control_id,
+          formData: data,
+        }),
+      ).unwrap();
+
+      setIsEvidenceModalOpen(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const stats = [
     {
@@ -73,7 +136,7 @@ const Compliance = () => {
 
   const renderHeaderButton = () => {
     const btnClass =
-      "flex items-center gap-2 px-6 py-2.5 bg-[#137fec] text-white font-bold rounded-lg hover:bg-blue-600 transition-all shadow-lg active:scale-95 text-lg";
+      "flex items-center gap-2 px-6 py-2.5 bg-[#137fec] text-white cursor-pointer font-bold rounded-lg hover:bg-blue-600 transition-all shadow-lg active:scale-95 text-lg";
     if (activeTab === "Evidence Tracker") {
       return (
         <button
@@ -204,10 +267,10 @@ const Compliance = () => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-4 text-[11px] font-black uppercase tracking-widest transition-all border-b-2 ${
+                className={`pb-4 text-xs font-bold cursor-pointer uppercase tracking-widest transition-all  ${
                   activeTab === tab
-                    ? "border-[#137fec] text-[#137fec]"
-                    : "border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                    ? "border-b-[3px] border-[#137fec] text-[#137fec]"
+                    : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
                 }`}
               >
                 {tab}
@@ -218,20 +281,37 @@ const Compliance = () => {
 
         {/* Swappable Layout Content */}
         <div className="bg-white dark:bg-[#111418] border border-slate-200 dark:border-[#2d333b] rounded-2xl overflow-hidden shadow-md">
-          {activeTab === "Policy Documents" && <PolicyList />}
+          {activeTab === "Policy Documents" && (
+            <PolicyList
+              policies={policies}
+              error={error}
+              loading={loading}
+              rows={rows}
+              first={first}
+              onPageChange={onPageChange}
+            />
+          )}
           {activeTab === "Evidence Tracker" && <EvidenceList />}
           {activeTab === "Risk Assessments" && <RiskMatrix />}
         </div>
       </div>
 
-      <RiskModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <RiskModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleAddRisk}
+        users={data}
+      />
       <EvidenceModal
         isOpen={isEvidenceModalOpen}
         onClose={() => setIsEvidenceModalOpen(false)}
+        onSubmit={handleUploadEvidence}
       />
       <AssessmentModal
         isOpen={isAssessmentModalOpen}
         onClose={() => setIsAssessmentModalOpen(false)}
+        policies={policies}
+        handleSubmit={handleSubmit}
       />
     </div>
   );

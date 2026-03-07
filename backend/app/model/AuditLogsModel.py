@@ -24,39 +24,40 @@ class SeverityLevel(str, enum.Enum):
 
 
 class AuditStatus(str, enum.Enum):
-    SUCCESS = "success"
-    FAILED = "failed"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
 
 
 class AuditActorType(str, enum.Enum):
-    USER = "user"
-    ADMIN = "admin"
-    SYSTEM = "system"
+    USER = "USER"
+    ADMIN = "ADMIN"
+    SYSTEM = "SYSTEM"
 
 
 class AuditActionType(str, enum.Enum):
     # CRUD Actions
-    CREATE = "create"
-    UPDATE = "update"
-    DELETE = "delete"
+    CREATE = "CREATE"
+    UPDATE = "UPDATE"
+    DELETE = "DELETE"
 
     # Auth Actions
-    LOGIN = "login"
-    LOGOUT = "logout"
-    PASSWORD_CHANGE = "password_change"
+    LOGIN = "LOGIN"
+    LOGOUT = "LOGOUT"
+    PASSWORD_CHANGE = "PASSWORD_CHANGE"
 
     # Access Actions
-    ASSIGN_ROLE = "assign_role"
-    REVOKE_ACCESS = "revoke_access"
+    ASSIGN_ROLE = "ASSIGN_ROLE"
+    REVOKE_ACCESS = "REVOKE_ACCESS"
 
     # System Actions
-    SYSTEM_JOB = "system_job"
-    BACKUP = "backup"
-    OTHER = "other"
+    SYSTEM_JOB = "SYSTEM_JOB"
+    BACKUP = "BACKUP"
+    OTHER = "OTHER"
 
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
+    __table_args__ = {"extend_existing": True}
 
     id = Column(Integer, primary_key=True)
     actor_id = Column(
@@ -64,10 +65,20 @@ class AuditLog(Base):
     )
     actor_type = Column(Enum(AuditActorType), nullable=False)
 
-    action_type = Column(Enum(AuditActionType), nullable=False)
-    action_description = Column(Text, nullable=False)
+    # --- NEW METADATA COLUMNS ---
+    user_display_name = Column(String(100), nullable=True)
+    role = Column(String(50), nullable=True)
+    dept = Column(String(50), nullable=True)
+    location = Column(String(100), nullable=True)
+    resource = Column(String(255), nullable=True)
+    device = Column(String(100), nullable=True)
+    model_info = Column(String(100), nullable=True)
+    # ----------------------------
 
-    resource_type = Column(String(50), nullable=False)  # e.g., "team", "user"
+    action_type = Column(Enum(AuditActionType), nullable=False)
+    description = Column(Text, nullable=False)
+
+    resource_type = Column(String(50), nullable=False)
     resource_id = Column(Integer, nullable=True)
 
     old_values = Column(JSON, nullable=True)
@@ -78,10 +89,9 @@ class AuditLog(Base):
     created_at = Column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
-    service = Column(
-        String(50), nullable=True, index=True
-    )  # auth-service, team-service
-    event = Column(String(100), nullable=True)  # USER_LOGIN, TEAM_CREATED
+
+    service = Column(String(50), nullable=True, index=True)
+    event = Column(String(100), nullable=True)
     severity = Column(Enum(SeverityLevel), default=SeverityLevel.INFO, index=True)
 
     actor = relationship("User")

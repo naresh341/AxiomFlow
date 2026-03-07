@@ -1,14 +1,24 @@
+from app.api.routes.compliance_routes import router as complianceRoute
 from app.api.routes.approvalroute import router as approvalRouter
+from app.api.routes.auditLogsroute import router as auditLogs
 from app.api.routes.taskroute import router as taskRouter
 from app.api.routes.team_route import router as team
 from app.api.routes.user_organization_route import router as userOrg
 from app.api.routes.workflow import router as workflow_router
 from app.auth.routes import (
     router as auth_router,
-)  # this import is from app->auth->routes.py  then router as auth_router
+)
 from app.core.database import engine
 from app.model.approval import Approval
+from app.model.AuditLogsModel import AuditLog
 from app.model.base import Base
+from app.model.complianceModel import (
+    ComplianceControl,
+    ComplianceEvidence,
+    CompliancePolicy,
+    ComplianceRisk,
+    PolicyDocument,
+)
 from app.model.execution import Execution
 from app.model.task import Task
 from app.model.TeamMemberModel import TeamMember
@@ -18,6 +28,7 @@ from app.model.workflow import Workflow
 from app.model.WorkflowVersion import WorkflowVersion
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.core.config import settings
 
 # To create the table In the Postgres
 Base.metadata.create_all(bind=engine)
@@ -36,11 +47,14 @@ app.include_router(taskRouter)
 app.include_router(approvalRouter)
 app.include_router(userOrg)
 app.include_router(team)
+app.include_router(auditLogs)
+app.include_router(complianceRoute)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    # allow_origins=settings.parsed_origins,  # 🔥 Use .env origins
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,  # Required for cookies
     allow_methods=["*"],
     allow_headers=["*"],
 )

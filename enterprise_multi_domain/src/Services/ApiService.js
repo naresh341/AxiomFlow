@@ -1,6 +1,6 @@
 import axios from "axios";
 axios.defaults.baseURL = import.meta.env.VITE_API_URL;
-axios.defaults.credentials = true;
+axios.defaults.withCredentials = true;
 
 export const Login = async ({ username, password }) => {
   try {
@@ -132,6 +132,98 @@ export const fetchTeam = async () => {
     return response.data;
   } catch (error) {
     console.error("Error while fetching Team data", error);
+    throw error;
+  }
+};
+export const fetchauditLogs = async (actorType = null) => {
+  try {
+    const response = await axios.get(
+      `/governance/audit-logs?actor_type=${actorType}`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error while fetching Audit Logs data", error);
+    throw error;
+  }
+};
+
+export const fetchPolicies = async (status = null) => {
+  try {
+    const url = status
+      ? `/compliance/policies?status=${status}`
+      : "/compliance/policies";
+    const response = await axios.get(url);
+    return response.data;
+  } catch (error) {
+    console.error("Error while fetching Policies", error);
+    throw error;
+  }
+};
+
+export const createPolicy = async (policyData) => {
+  try {
+    const response = await axios.post("/compliance/policies", policyData);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error while creating Policy", error);
+    throw error;
+  }
+};
+
+// 2. RISK MANAGEMENT
+export const fetchRisks = async () => {
+  try {
+    const response = await axios.get("/compliance/risks");
+    return response.data;
+  } catch (error) {
+    console.error("Error while fetching Risks", error);
+    throw error;
+  }
+};
+
+export const CreateRisk = async (riskData) => {
+  try {
+    const response = await axios.post("/compliance/risks", riskData);
+    return response.data;
+  } catch (error) {
+    console.error("Error while identifying Risk", error);
+    throw error;
+  }
+};
+
+// 3. EVIDENCE & CONTROLS
+export const fetchControlEvidence = async () => {
+  try {
+    const response = await axios.get(`/compliance/controls/evidence`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error while fetching evidence for control `, error);
+    throw error;
+  }
+};
+
+export const uploadEvidence = async (controlId, formData) => {
+  try {
+    // Note: formData must be used for File uploads
+    const response = await axios.post(
+      `/compliance/controls/${controlId}/evidence`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } },
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error while uploading evidence", error);
+    throw error;
+  }
+};
+
+// 4. DASHBOARD STATS
+export const fetchComplianceStats = async () => {
+  try {
+    const response = await axios.get("/compliance/dashboard/stats");
+    return response.data;
+  } catch (error) {
+    console.error("Error while fetching dashboard stats", error);
     throw error;
   }
 };

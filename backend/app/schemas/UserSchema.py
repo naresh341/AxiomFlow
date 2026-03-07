@@ -8,15 +8,15 @@ from .TeamSchemas import TeamRead
 
 
 class UserRole(str, Enum):
-    ADMIN = "admin"
-    MANAGER = "manager"
-    EMPLOYEE = "employee"
+    ADMIN = "ADMIN"
+    MANAGER = "MANAGER"
+    EMPLOYEE = "EMPLOYEE"
 
 
 class Status(str, Enum):
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    ARCHIVED = "archived"
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    ARCHIVED = "ARCHIVED"
 
 
 class UserBase(BaseModel):

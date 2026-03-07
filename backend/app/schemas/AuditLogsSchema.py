@@ -9,7 +9,16 @@ class AuditLogResponse(BaseModel):
     actor_id: Optional[int]
     actor_type: str
     action_type: str
-    action_description: str
+    description: str
+
+    user_display_name: str
+    role: str
+    dept: Optional[str] = None
+    location: Optional[str] = None
+    resource: Optional[str] = None  # The path
+    device: Optional[str] = None
+    model_info: Optional[str] = None
+
     resource_type: str
     resource_id: Optional[int]
     service: Optional[str]

@@ -1,61 +1,97 @@
-import React from "react";
-import {
-  AlertTriangle,
-  Info,
-  Filter,
-  Download,
-  Plus,
-  MoreVertical,
-  RefreshCw,
-  CheckCircle,
-  XCircle,
-} from "lucide-react";
+import { ChevronDown, Download, Filter, Info, Search, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import DynamicTable from "../../Components/DynamicTable";
+import { getRisks } from "../../RTKThunk/AsyncThunk";
+import { TableSchemas } from "../../Utils/TableSchemas";
+import Paginator from "../../Components/Paginator";
+import { Menu } from "primereact/menu";
+import FilterButton from "../../Components/MiniComponent/FilterButton";
 
 const RiskMatrix = () => {
-  // Mock data for the Risk Registry Table
-  const riskRegistry = [
+  const dispatch = useDispatch();
+  const menuStatus = useRef(null);
+  const [filters, setFilters] = useState({
+    status: "All",
+  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const { risks, loading, error } = useSelector((state) => state.compliance);
+  const rows = 10;
+  const [first, setfirst] = useState(0);
+  useEffect(() => {
+    dispatch(getRisks());
+  }, [dispatch]);
+
+  const statusItems = [
     {
-      id: "R-102",
-      desc: "Unauthorized Access to Production Data",
-      cat: "Security",
-      sev: "Critical",
-      status: "In Progress",
-      owner: "JS",
-      ownerName: "J. Smith",
-      color: "red",
+      label: "All",
+      className: filters.status === "All" ? "font-bold text-blue-600" : "",
+      command: () => setFilters((prev) => ({ ...prev, status: "All" })),
     },
     {
-      id: "R-105",
-      desc: "Third-party API failure (Main Cloud provider)",
-      cat: "Operational",
-      sev: "High",
-      status: "Unmitigated",
-      owner: "AL",
-      ownerName: "A. Lee",
-      color: "orange",
+      label: "Open",
+      command: () => setFilters((prev) => ({ ...prev, status: "OPEN" })),
     },
     {
-      id: "R-109",
-      desc: "Missing SSL certificates on internal dev nodes",
-      cat: "Security",
-      sev: "Medium",
-      status: "Mitigated",
-      owner: "BK",
-      ownerName: "B. Kim",
-      color: "yellow",
+      label: "Mitigated",
+      command: () => setFilters((prev) => ({ ...prev, status: "MITIGATED" })),
     },
     {
-      id: "R-114",
-      desc: "Physical site access log delays",
-      cat: "Compliance",
-      sev: "Low",
-      status: "Mitigated",
-      owner: "TR",
-      ownerName: "T. Ross",
-      color: "emerald",
+      label: "Accepted",
+      command: () => setFilters((prev) => ({ ...prev, status: "ACCEPTED" })),
+    },
+    {
+      label: "Closed",
+      command: () => setFilters((prev) => ({ ...prev, status: "CLOSED" })),
     },
   ];
+  const onPageChange = (page) => {
+    setfirst(page - 1) * rows;
+  };
+  const weight = {
+    LOW: 1,
+    MEDIUM: 2,
+    HIGH: 3,
+    CRITICAL: 4,
+    VERY_HIGH: 5,
+  };
+  const riskStats = useMemo(() => {
+    const counts = { Critical: 0, High: 0, Medium: 0, Low: 0 };
+    const matrixMap = Array(5)
+      .fill(0)
+      .map(() => Array(5).fill(0));
 
+    risks.forEach((r) => {
+      const impactStr = r.impact?.toUpperCase();
+      if (impactStr === "CRITICAL") counts.Critical++;
+      else if (impactStr === "HIGH") counts.High++;
+      else if (impactStr === "MEDIUM") counts.Medium++;
+      else if (impactStr === "LOW") counts.Low++;
+      const lVal = weight[r.likelihood?.toUpperCase()] || 1;
+      const iVal = weight[r.impact?.toUpperCase()] || 1;
+
+      const lIdx = Math.min(Math.max(lVal - 1, 0), 4);
+      const iIdx = Math.min(Math.max(iVal - 1, 0), 4);
+
+      matrixMap[lIdx][iIdx]++;
+    });
+
+    return { counts, matrixMap };
+  }, [risks]);
+
+  const filteredData = risks.filter((item) => {
+    const matchesSearch =
+      !searchQuery ||
+      item.risk_code?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus =
+      filters.status === "All" ||
+      item.status?.toLowerCase() === filters.status.toLowerCase();
+
+    return matchesStatus && matchesSearch;
+  });
+
+  if (error) return <div className="p-10 text-rose-500">Error: {error}</div>;
   return (
     <div className="flex flex-col gap-8 p-6 animate-in fade-in duration-500">
       {/* 1. Heatmap Summary Section */}
@@ -75,25 +111,27 @@ const RiskMatrix = () => {
               </div>
               {/* The 5x5 Grid */}
               <div className="grid grid-cols-5 grid-rows-5 gap-1 w-full aspect-square border-l border-b border-slate-300 dark:border-slate-700">
-                {/* Simplified Matrix Logic: High severity top-right */}
-                {[...Array(25)].map((_, i) => {
-                  const row = Math.floor(i / 5);
-                  const col = i % 5;
-                  // Color logic based on standard risk matrix (top right is dangerous)
-                  let bgColor = "bg-green-500/20";
-                  if (row + col < 3) bgColor = "bg-red-600/60 text-white";
-                  else if (row + col < 6) bgColor = "bg-orange-500/40";
-                  else if (row + col < 8) bgColor = "bg-yellow-400/20";
+                {/* Render Matrix from Top-Down (Likelihood 5 to 1) */}
+                {[4, 3, 2, 1, 0].map((rowIdx) =>
+                  [0, 1, 2, 3, 4].map((colIdx) => {
+                    const count = riskStats.matrixMap[rowIdx][colIdx];
+                    let bgColor = "bg-emerald-500/20"; // Low
+                    if (rowIdx + colIdx >= 6)
+                      bgColor = "bg-red-600/60 text-white"; // Critical
+                    else if (rowIdx + colIdx >= 4)
+                      bgColor = "bg-orange-500/40"; // High
+                    else if (rowIdx + colIdx >= 2) bgColor = "bg-yellow-400/20"; // Medium
 
-                  return (
-                    <div
-                      key={i}
-                      className={`flex items-center justify-center text-xs font-bold border border-white/5 ${bgColor}`}
-                    >
-                      {Math.floor(Math.random() * 5)}
-                    </div>
-                  );
-                })}
+                    return (
+                      <div
+                        key={`${rowIdx}-${colIdx}`}
+                        className={`flex items-center justify-center text-xs font-bold border border-white/5 ${bgColor}`}
+                      >
+                        {count > 0 ? count : ""}
+                      </div>
+                    );
+                  }),
+                )}
               </div>
             </div>
             <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-2 ml-6">
@@ -105,28 +143,28 @@ const RiskMatrix = () => {
           <div className="lg:col-span-7 flex flex-col justify-center">
             <div className="grid grid-cols-2 gap-4">
               <SeverityCard
-                count="3"
+                count={riskStats.counts.Critical}
                 label="Critical Risks"
                 color="text-red-500"
                 bg="bg-red-500/10"
                 border="border-red-500/20"
               />
               <SeverityCard
-                count="11"
+                count={riskStats.counts.High}
                 label="High Risks"
                 color="text-orange-500"
                 bg="bg-orange-500/10"
                 border="border-orange-500/20"
               />
               <SeverityCard
-                count="21"
+                count={riskStats.counts.Medium}
                 label="Medium Risks"
                 color="text-yellow-600"
                 bg="bg-yellow-500/10"
                 border="border-yellow-500/20"
               />
               <SeverityCard
-                count="23"
+                count={riskStats.counts.Low}
                 label="Low Risks"
                 color="text-emerald-500"
                 bg="bg-emerald-500/10"
@@ -143,90 +181,96 @@ const RiskMatrix = () => {
           <h3 className="text-slate-900 dark:text-white text-xl font-bold">
             Risk Registry
           </h3>
-          <div className="flex gap-2">
-            <TableButton icon={<Filter size={16} />} label="Filter" />
-            <TableButton icon={<Download size={16} />} label="Export CSV" />
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="relative flex-1 min-w-75">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                size={18}
+              />
+              <input
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 shadow-md dark:bg-gray-800 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#135bec]/20 outline-none"
+                placeholder="Search Risk ID"
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            <div className="flex gap-3 flex-wrap items-center ">
+              <Menu
+                model={statusItems}
+                popup
+                ref={menuStatus}
+                id="status_menu"
+                className="cursor-pointer p-2 border-none shadow-2xl rounded-2xl bg-white dark:bg-gray-900 w-48"
+                pt={{
+                  list: { className: "flex flex-col gap-1" },
+                  action: {
+                    className:
+                      "hover:bg-blue-100 dark:hover:bg-gray-800 rounded-lg transition-colors p-3",
+                  },
+                  label: {
+                    className:
+                      "text-sm font-bold text-gray-700 dark:text-gray-200",
+                  },
+                }}
+              />
+
+              <FilterButton
+                label="Status"
+                value={filters.status}
+                isActive={filters.status !== "All"}
+                icon={<ChevronDown size={14} />}
+                onClick={(e) => menuStatus.current.toggle(e)}
+              />
+
+              {filters.status !== "All" && (
+                <>
+                  <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2"></div>
+                  <button
+                    onClick={() =>
+                      setFilters({
+                        status: "All",
+                      })
+                    }
+                    className="text-[#135bec] text-xs font-black uppercase tracking-tight hover:text-blue-700 cursor-pointer transition-colors"
+                  >
+                    Clear All
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-[#3b4754] bg-white dark:bg-[#1c2127]">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-50 dark:bg-[#283039] border-b border-slate-200 dark:border-[#3b4754]">
-              <tr>
-                <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                  Risk ID
-                </th>
-                <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                  Description
-                </th>
-                <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                  Severity
-                </th>
-                <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                  Mitigation
-                </th>
-                <th className="px-4 py-3 text-right"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-[#283039]">
-              {riskRegistry.map((risk) => (
-                <tr
-                  key={risk.id}
-                  className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"
-                >
-                  <td className="px-4 py-4 font-mono text-xs text-slate-400">
-                    {risk.id}
-                  </td>
-                  <td className="px-4 py-4 text-sm font-semibold dark:text-white">
-                    <div>{risk.desc}</div>
-                    <div className="text-[10px] text-slate-400 font-normal uppercase">
-                      {risk.cat}
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border 
-                      ${
-                        risk.color === "red"
-                          ? "bg-red-500/10 text-red-500 border-red-500/20"
-                          : risk.color === "orange"
-                            ? "bg-orange-500/10 text-orange-500 border-orange-500/20"
-                            : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                      }`}
-                    >
-                      {risk.sev}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-1.5 text-xs font-bold">
-                      {risk.status === "Mitigated" ? (
-                        <CheckCircle size={14} className="text-emerald-500" />
-                      ) : (
-                        <RefreshCw
-                          size={14}
-                          className="text-amber-500 animate-spin-slow"
-                        />
-                      )}
-                      <span
-                        className={
-                          risk.status === "Mitigated"
-                            ? "text-emerald-500"
-                            : "text-amber-500"
-                        }
-                      >
-                        {risk.status}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 text-right">
-                    <button className="p-1 text-slate-400 hover:text-primary">
-                      <MoreVertical size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {loading ? (
+            <div className="flex justify-center items-center h-48">
+              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#137fec]"></div>
+            </div>
+          ) : (
+            <DynamicTable
+              tableData={filteredData || []}
+              tableHead={TableSchemas.risks}
+              rows={rows}
+              first={first}
+            />
+          )}
+        </div>
+        <div className="px-6 py-3 border-t border-slate-200 dark:border-[#2d3a4b] bg-slate-50 dark:bg-[#101922] shrink-0">
+          <Paginator
+            first={first}
+            rows={rows}
+            totalRecords={filteredData?.length || 0}
+            onPageChange={onPageChange}
+          />
         </div>
       </section>
     </div>

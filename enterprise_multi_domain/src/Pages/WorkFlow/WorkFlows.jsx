@@ -96,7 +96,9 @@ const WorkFlows = () => {
         <div className="bg-white dark:bg-[#101622] border border-[#dbdfe6] dark:border-[#2d3748] rounded-xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             {loading ? (
-              <p>Loading...</p>
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
             ) : (
               <>
                 <DynamicTable
@@ -123,7 +125,6 @@ const WorkFlows = () => {
               </>
             )}
           </div>
-
         </div>
       </main>
     </div>

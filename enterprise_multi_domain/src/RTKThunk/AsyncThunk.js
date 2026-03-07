@@ -1,8 +1,15 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
   approveRejectTask,
+  createPolicy,
+  CreateRisk,
   fetcAllTask,
   fetchAllApproval,
+  fetchauditLogs,
+  fetchComplianceStats,
+  fetchControlEvidence,
+  fetchPolicies,
+  fetchRisks,
   fetchTeam,
   fetchUserOrg,
   getWorkflowApproval,
@@ -11,6 +18,7 @@ import {
   getWorkflowVersions,
   Login,
   PublishWorkflow,
+  uploadEvidence,
   workflowById,
   WorkflowData,
 } from "../Services/ApiService";
@@ -28,7 +36,7 @@ export const loginUser = createAsyncThunk(
 );
 
 export const getWorkflow = createAsyncThunk(
-  "workflows/fetchAll",
+  "workflows/fetchWorkflow",
   async (status, apierr) => {
     try {
       return await WorkflowData(status);
@@ -62,7 +70,7 @@ export const getWorkflowById = createAsyncThunk(
 );
 
 export const getTaskList = createAsyncThunk(
-  "tasks/fetchAll",
+  "tasks/fetchTask",
   async (status, { rejectWithValue }) => {
     try {
       return await fetcAllTask(status);
@@ -73,7 +81,7 @@ export const getTaskList = createAsyncThunk(
 );
 
 export const getApprovalList = createAsyncThunk(
-  "approval/fetchAll",
+  "approval/fetchApproval",
   async (status, { rejectWithValue }) => {
     try {
       return await fetchAllApproval(status);
@@ -84,7 +92,7 @@ export const getApprovalList = createAsyncThunk(
 );
 
 export const approve_reject = createAsyncThunk(
-  "approval/decide",
+  "approval/ApproveOrRject",
   async (data, { rejectWithValue }) => {
     try {
       return await approveRejectTask(data);
@@ -136,7 +144,7 @@ export const get_Workflow_Approvals = createAsyncThunk(
 );
 
 export const get_UserOrg = createAsyncThunk(
-  "user-org/fetchAll",
+  "user-org/Users",
   async (_, rejectWithValue) => {
     try {
       return await fetchUserOrg();
@@ -145,13 +153,104 @@ export const get_UserOrg = createAsyncThunk(
     }
   },
 );
+
 export const get_teams = createAsyncThunk(
-  "teams/fetchAll",
+  "teams/teams",
   async (_, rejectWithValue) => {
     try {
       return await fetchTeam();
     } catch (error) {
       return rejectWithValue(error.message);
+    }
+  },
+);
+export const get_auditLogs = createAsyncThunk(
+  "governance/audit-Logs",
+  async (actorType, rejectWithValue) => {
+    try {
+      return await fetchauditLogs(actorType);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
+export const getPolicies = createAsyncThunk(
+  "compliance/fetchPolicies",
+  async (status, { rejectWithValue }) => {
+    try {
+      return await fetchPolicies(status);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+
+export const addNewPolicy = createAsyncThunk(
+  "compliance/createPolicy",
+  async (policyData, { rejectWithValue }) => {
+    try {
+      return await createPolicy(policyData);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+
+export const getRisks = createAsyncThunk(
+  "compliance/fetchRisks",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchRisks();
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+
+// IDENTIFY NEW RISK
+export const addRisk = createAsyncThunk(
+  "compliance/identifyRisk",
+  async (riskData, { rejectWithValue }) => {
+    try {
+      return await CreateRisk(riskData);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+
+// FETCH DASHBOARD STATS
+export const getComplianceStats = createAsyncThunk(
+  "compliance/fetchStats",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchComplianceStats();
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+
+export const getControlEvidence = createAsyncThunk(
+  "compliance/fetchControlEvidence",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchControlEvidence();
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+
+// 2. UPLOAD NEW EVIDENCE (Handles Files)
+export const uploadControlEvidence = createAsyncThunk(
+  "compliance/uploadEvidence",
+  async ({ controlId, formData }, { rejectWithValue }) => {
+    try {
+      return await uploadEvidence(controlId, formData);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
     }
   },
 );
