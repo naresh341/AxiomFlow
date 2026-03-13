@@ -2,8 +2,9 @@ from typing import Optional
 
 from app.core.dependencies import get_db
 from app.services.task_service import TaskService
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from app.schemas.TaskSchema import TaskCreate, Task as TaskResponse
 
 router = APIRouter(prefix="/tasks", tags=["TASK"])
 
@@ -18,3 +19,12 @@ def fetch_task(
     tasks = service.list_task(workflow_id=workflow_id, status=status)
 
     return {"total": len(tasks), "data": tasks}
+
+
+@router.post("/createTask", response_model=TaskResponse)
+def create_task(payload: TaskCreate, db: Session = Depends(get_db)):
+    service = TaskService(db)
+    try:
+        return service.create_task(payload)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

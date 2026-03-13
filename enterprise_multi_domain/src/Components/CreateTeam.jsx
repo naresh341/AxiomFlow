@@ -1,68 +1,122 @@
-import React from "react";
-import {
-  X,
-  Users,
-  Info,
-  UserCircle,
-  Search,
-  ChevronDown,
-  ShieldCheck,
-  Plus,
-} from "lucide-react";
+import { ChevronDown, Plus, User, Users, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { addTeams, update_Teams } from "../RTKThunk/AsyncThunk"; // Verify this path
 
-const CreateTeam = ({ isOpen, onClose }) => {
+const CreateTeam = ({ isOpen, onClose, editData = false }) => {
+  const isEditMode = !!editData;
+  const dispatch = useDispatch();
+
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    is_active: true,
+    users: editData?.users?.map((u) => u.id) || [],
+  });
+
   if (!isOpen) return null;
 
-  // Mock data for the tags shown in your HTML
-  const members = [
-    { id: 1, name: "Sarah Johnson", img: "https://i.pravatar.cc/150?u=sarah" },
-    { id: 2, name: "Marcus Lee", img: "https://i.pravatar.cc/150?u=marcus" },
-  ];
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   const payload = {
+  //     ...formData,
+  //     // lead_id: formData.lead_id ? parseInt(formData.lead_id) : null,
+  //   };
+
+  //   try {
+  //     await dispatch(addTeams(payload)).unwrap();
+  //     onClose();
+  //     setFormData({ name: "", description: "", is_active: true });
+  //   } catch (error) {
+  //     console.error("Failed to create team:", error);
+  //   }
+  // };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      ...formData,
+      // is_active: String(formData.is_active) === "true",
+    };
+
+    try {
+      if (isEditMode) {
+        await dispatch(update_Teams({ id: editData.id, payload })).unwrap();
+      } else {
+        await dispatch(addTeams(payload)).unwrap();
+        setFormData({});
+      }
+      onClose();
+    } catch (error) {
+      console.error("Operation failed:", error);
+    }
+  };
+  useEffect(() => {
+    if (editData) {
+      setFormData({
+        ...editData,
+        name: editData.name || "",
+        description: editData.description || "",
+        is_active: editData.is_active ?? true,
+        users: editData.users?.map((u) => u.id) || [],
+      });
+    } else {
+      // Reset for Create mode
+      setFormData({ name: "", description: "", is_active: true, users: [] });
+    }
+  }, [editData]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop - High contrast dark overlay with blur */}
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-300"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal Container - Desktop Standard (640px) */}
-      <div className="relative w-180 bg-white dark:bg-[#111318] rounded-4xl shadow-2xl border border-slate-200 dark:border-[#282e39] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 font-sans">
+      <form
+        onSubmit={handleSubmit}
+        className="relative w-180 bg-white dark:bg-[#111318] rounded-4xl shadow-2xl border border-slate-200 dark:border-[#282e39] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300"
+      >
         {/* HEADER */}
         <div className="px-8 py-6 border-b border-slate-100 dark:border-[#282e39] flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="bg-[#135bec]/10 p-2 rounded-xl">
               <Users className="text-[#135bec]" size={24} />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
               Create Team
             </h1>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+            className="p-2 text-slate-400 hover:text-white"
           >
             <X size={24} />
           </button>
         </div>
 
-        {/* SCROLLABLE FORM CONTENT */}
+        {/* CONTENT */}
         <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8 max-h-[75vh]">
           {/* Team Name */}
           <div className="space-y-2.5">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+            <label className="text-sm font-bold text-slate-700 dark:text-slate-200">
               Team Name
             </label>
             <input
+              required
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
               type="text"
               placeholder="e.g., Product Design"
-              className="w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-[#111318] border border-slate-200 dark:border-[#282e39] text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-[#135bec]/30 focus:border-[#135bec] transition-all"
+              className="w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-[#111318] border border-slate-200 dark:border-[#282e39] text-slate-900 dark:text-white outline-none focus:border-[#135bec] transition-all"
             />
-            <p className="text-xs text-slate-500 dark:text-[#bab29c] flex items-center gap-1.5">
-              <Info size={12} /> Pick a name that identifies your team across
-              the organization.
-            </p>
           </div>
 
           {/* Description */}
@@ -71,104 +125,79 @@ const CreateTeam = ({ isOpen, onClose }) => {
               Description
             </label>
             <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
               rows="3"
               placeholder="Explain the purpose of this team..."
-              className="w-full p-4 rounded-xl bg-slate-50 dark:bg-[#111318] border border-slate-200 dark:border-[#282e39] text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-[#135bec]/30 focus:border-[#135bec] transition-all resize-none"
+              className="w-full p-4 rounded-xl bg-slate-50 dark:bg-[#111318] border border-slate-200 dark:border-[#282e39] text-slate-900 dark:text-white outline-none focus:border-[#135bec] transition-all resize-none"
             />
           </div>
 
-          {/* Team Lead */}
-          <div className="space-y-2.5">
+          {/* Team Lead - This maps to lead_id in your TeamModel */}
+          {/* <div className="space-y-2.5">
             <label className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
               <UserCircle size={16} className="text-[#135bec]" /> Team Lead
             </label>
             <div className="relative">
-              <select className="w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-[#111318] border border-slate-200 dark:border-[#282e39] text-slate-900 dark:text-white outline-none appearance-none cursor-pointer focus:border-[#135bec]">
-                <option value="" disabled selected>
-                  Select a lead
-                </option>
-                <option value="1">Alex Rivera (Product Manager)</option>
-                <option value="2">Jordan Smith (Lead Designer)</option>
-                <option value="3">Casey Chen (CTO)</option>
+              <select
+                name="lead_id"
+                value={formData.lead_id}
+                onChange={handleChange}
+                className="w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-[#111318] border border-slate-200 dark:border-[#282e39] text-slate-900 dark:text-white outline-none appearance-none cursor-pointer focus:border-[#135bec]"
+              >
+                <option value="">Select a lead (Optional)</option>
+                <option value="1">Alex Rivera</option>
+                <option value="2">Jordan Smith</option>
               </select>
               <ChevronDown
                 size={18}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
               />
             </div>
-          </div>
-
-          {/* Members Multi-select */}
-          <div className="space-y-2.5">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-              Members
-            </label>
-            <div className="flex flex-wrap gap-2 p-2.5 min-h-14 bg-slate-50 dark:bg-[#111318] border border-slate-200 dark:border-[#282e39] rounded-xl">
-              {members.map((member) => (
-                <div
-                  key={member.id}
-                  className="flex items-center gap-2 bg-[#135bec]/20 text-[#135bec] px-2 py-1.5 rounded-lg text-sm font-bold border border-[#135bec]/20"
-                >
-                  <img
-                    src={member.img}
-                    alt={member.name}
-                    className="w-5 h-5 rounded-full object-cover"
-                  />
-                  <span>{member.name}</span>
-                  <button className="hover:text-white transition-colors">
-                    <X size={14} />
-                  </button>
-                </div>
-              ))}
-              <div className="flex items-center flex-1 min-w-37.5 px-2">
-                <Search size={14} className="text-slate-400 mr-2" />
-                <input
-                  type="text"
-                  placeholder="Search members..."
-                  className="w-full bg-transparent border-none outline-none text-sm dark:text-white"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Default Role */}
-          <div className="space-y-2.5 pb-2">
-            <label className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-              <ShieldCheck size={16} className="text-[#135bec]" /> Default
-              Member Role
+          </div> */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold flex items-center gap-2">
+              <User size={16} /> Status
             </label>
             <div className="relative">
-              <select className="w-full h-12 px-4 rounded-xl bg-slate-50 dark:bg-[#111318] border border-slate-200 dark:border-[#282e39] text-slate-900 dark:text-white outline-none appearance-none cursor-pointer focus:border-[#135bec]">
-                <option value="viewer">Viewer (Can only view projects)</option>
-                <option value="contributor" selected>
-                  Contributor (Can edit and manage projects)
+              <select
+                name="is_active"
+                value={formData.is_active}
+                onChange={handleChange}
+                className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 appearance-none outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="" disabled>
+                  Select isActive
                 </option>
-                <option value="admin">Admin (Full permissions)</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive </option>
               </select>
               <ChevronDown
                 size={18}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
               />
             </div>
-            <p className="text-xs text-slate-500 dark:text-[#bab29c]">
-              New members will be assigned this role by default.
-            </p>
           </div>
         </div>
 
         {/* FOOTER */}
         <div className="px-8 py-6 bg-slate-50 dark:bg-[#111318]/50 border-t border-slate-100 dark:border-[#282e39] flex justify-end gap-3">
           <button
+            type="button"
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-200 dark:hover:bg-[#3d3725] transition-all"
+            className="px-6 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-200 transition-all"
           >
             Cancel
           </button>
-          <button className="px-8 py-2.5 rounded-xl bg-[#135bec] text-[#181611] font-black flex items-center gap-2 hover:brightness-110 shadow-lg shadow-[#135bec]/20 active:scale-95 transition-all">
+          <button
+            type="submit"
+            className="px-8 py-2.5 rounded-xl bg-[#135bec] text-white font-bold flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all"
+          >
             Create Team <Plus size={18} />
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 };

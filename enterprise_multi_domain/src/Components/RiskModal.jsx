@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { X, ShieldAlert, Search, ChevronDown, ShieldCheck } from "lucide-react";
+import { ChevronDown, ShieldAlert, ShieldCheck, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
-const RiskModal = ({ isOpen, onClose, onSubmit, users }) => {
+const RiskModal = ({ isOpen, onClose, onSubmit, users = [], editData }) => {
   const [formData, setFormData] = useState({
     risk_title: "",
     description: "",
@@ -11,6 +11,15 @@ const RiskModal = ({ isOpen, onClose, onSubmit, users }) => {
     impact: "LOW",
     mitigation_plan: "",
   });
+
+  useEffect(() => {
+    if (!editData) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      ...editData,
+    }));
+  }, [editData]);
 
   const likelihoodScore = {
     LOW: 1,
@@ -144,16 +153,16 @@ const RiskModal = ({ isOpen, onClose, onSubmit, users }) => {
               </label>
               <div className="relative">
                 {/* <Search
-                  size={22}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                /> */}
+                    size={22}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  /> */}
                 {/* <input
-                  value={formData.risk_owner}
-                  onChange={(e) => handleChange("risk_owner", e.target.value)}
-                  type="text"
-                  className="w-full pl-12 rounded-xl border-2 border-slate-200 dark:border-[#3b4754] bg-slate-50 dark:bg-[#283039] text-lg focus:ring-4 focus:ring-[#137fec]/20 focus:border-[#137fec] dark:text-white p-4 outline-none transition-all"
-                  placeholder="Search team members..."
-                /> */}
+                    value={formData.risk_owner}
+                    onChange={(e) => handleChange("risk_owner", e.target.value)}
+                    type="text"
+                    className="w-full pl-12 rounded-xl border-2 border-slate-200 dark:border-[#3b4754] bg-slate-50 dark:bg-[#283039] text-lg focus:ring-4 focus:ring-[#137fec]/20 focus:border-[#137fec] dark:text-white p-4 outline-none transition-all"
+                    placeholder="Search team members..."
+                  /> */}
                 <select
                   value={formData.risk_owner}
                   onChange={(e) => handleChange("risk_owner", e.target.value)}

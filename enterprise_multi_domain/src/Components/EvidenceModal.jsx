@@ -1,7 +1,7 @@
 import { CloudUpload, FileText, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-const EvidenceModal = ({ isOpen, onClose, onSubmit }) => {
+const EvidenceModal = ({ isOpen, onClose, onSubmit, editData }) => {
   const [formData, setFormData] = useState({
     evidence_name: "",
     collection_date: "",
@@ -9,6 +9,15 @@ const EvidenceModal = ({ isOpen, onClose, onSubmit }) => {
     control_id: "",
     file: null,
   });
+
+  useEffect(() => {
+    if (!editData) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      ...editData,
+    }));
+  }, [editData]);
 
   if (!isOpen) return null;
 
@@ -36,9 +45,15 @@ const EvidenceModal = ({ isOpen, onClose, onSubmit }) => {
     data.append("evidence_name", formData.evidence_name);
     data.append("collection_date", formData.collection_date);
     data.append("description", formData.description);
-    data.append("file", formData.file);
+    if (formData.file) {
+      data.append("file", formData.file);
+    }
 
-    onSubmit(formData.control_id, data);
+    if (editData) {
+      onSubmit(editData.id, data);
+    } else {
+      onSubmit(formData.control_id, data);
+    }
   };
 
   return (

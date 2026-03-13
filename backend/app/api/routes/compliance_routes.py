@@ -1,21 +1,33 @@
-from typing import List
 from datetime import datetime
+from typing import List
+
 from app.core.dependencies import get_db
 from app.core.security import get_current_user
 from app.model.complianceModel import ComplianceEvidence
 from app.model.UserModel import User
 from app.schemas.complianceSchemas import (
     DocumentRead,
+    EvidenceCreate,
     EvidenceRead,
     PolicyCreate,
     PolicyRead,
     RiskCreate,
     RiskRead,
-    EvidenceCreate,
+    PolicyUpdate,
 )
 from app.services.compliance_service import ComplianceService
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+    File,
+    Form,
+)
 from sqlalchemy.orm import Session
+from typing import Optional
 
 router = APIRouter(prefix="/compliance", tags=["Compliance"])
 
@@ -63,6 +75,23 @@ async def upload_policy_doc(
     return await ComplianceService.upload_policy_document(db, policy_id, file, user_id)
 
 
+@router.put("/updatePolicies/{policy_id}", response_model=PolicyRead)
+async def update_policy(
+    policy_id: int,
+    payload: PolicyUpdate,
+    db: Session = Depends(get_db),
+):
+    return ComplianceService.update_policy(db, policy_id, payload)
+
+
+@router.delete("/deletePolicies/{policy_id}")
+async def delete_policy(policy_id: int, db: Session = Depends(get_db)):
+    success = ComplianceService.delete_policy(db, policy_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Policy not found")
+    return {"id": policy_id, "message": "Deleted"}
+
+
 # ==========================
 # 2. CONTROLS & EVIDENCE
 # ==========================
@@ -81,19 +110,64 @@ async def submit_evidence(
     evidence_name: str = Form(...),
     collection_date: datetime = Form(...),
     description: str = Form(None),
-    file: UploadFile = File(...),
-    user_id: int = 1,
+    file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     return await ComplianceService.upload_evidence(
-        db,
-        control_id,
-        evidence_name,
-        collection_date,
-        description,
-        file,
-        user_id,
+        db=db,
+        control_id=control_id,
+        evidence_name=evidence_name,
+        collection_date=collection_date,
+        description=description,
+        file=file,
+        user_obj=current_user,
+        meta_data={},
+        user_id=current_user.id,
     )
+
+
+@router.put("/controls/updateEvidence/{evidence_id}", response_model=EvidenceRead)
+async def update_compliance_evidence(
+    evidence_id: int,
+    evidence_name: str = Form(...),
+    collection_date: datetime = Form(...),
+    description: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+
+    payload = {
+        "evidence_name": evidence_name,
+        "collection_date": collection_date,
+        "description": description,
+    }
+
+    updated = await ComplianceService.update_evidence(
+        db=db,
+        evidence_id=evidence_id,
+        payload=payload,
+        file=file,
+        user_obj=current_user,
+    )
+
+    if not updated:
+        raise HTTPException(status_code=404, detail="Evidence not found")
+
+    return updated
+
+
+@router.delete("/controls/deleteEvidence/{evidence_id}")
+async def delete_compliance_evidence(
+    evidence_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    success = ComplianceService.delete_evidence(db, evidence_id, current_user)
+    if not success:
+        raise HTTPException(status_code=404, detail="Evidence not found")
+    return {"id": evidence_id, "status": "deleted"}
 
 
 # ==========================
@@ -123,6 +197,19 @@ async def identify_compliance_risk(risk: RiskCreate, db: Session = Depends(get_d
     based on impact and likelihood weights
     """
     return await ComplianceService.identify_risk(db, risk)
+
+
+@router.put("/updateRisks/{risk_id}", response_model=RiskRead)
+async def update_risk(risk_id: int, payload: dict, db: Session = Depends(get_db)):
+    return ComplianceService.update_risk(db, risk_id, payload)
+
+
+@router.delete("/deleteRisks/{risk_id}")
+async def delete_risk(risk_id: int, db: Session = Depends(get_db)):
+    success = ComplianceService.delete_risk(db, risk_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Policy not found")
+    return {"id": risk_id, "message": "Deleted"}
 
 
 # ==========================

@@ -53,6 +53,16 @@ class DocumentRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class PolicyUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    regulation_type: Optional[str] = None
+    status: Optional[str] = None
+    review_frequency: Optional[str] = None
+    owner_id: Optional[int] = None
+    responsible_team_id: Optional[int] = None
+
+
 # ==========================================
 # 2. CONTROLS & EVIDENCE
 # ==========================================
@@ -78,7 +88,7 @@ class EvidenceRead(BaseModel):
     control_id: int
     collection_date: datetime
     description: Optional[str]
-    file_path: str
+    file_path: Optional[str] = None
     uploaded_by: int
     status: str
     created_at: datetime
@@ -103,6 +113,15 @@ class RiskCreate(BaseModel):
     description: Optional[str] = None
     impact: str
     likelihood: str
+    mitigation_plan: Optional[str] = None
+
+
+class RiskUpdate(BaseModel):
+    category: Optional[str] = None
+    risk_title: Optional[str] = None
+    description: Optional[str] = None
+    impact: Optional[str] = None
+    likelihood: Optional[str] = None
     mitigation_plan: Optional[str] = None
 
 

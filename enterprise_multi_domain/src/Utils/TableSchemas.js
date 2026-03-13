@@ -17,6 +17,7 @@ export const TableSchemas = {
     { header: "Team", field: "teams.name" },
     { header: "Status", field: "status" },
     { header: "Created At", field: "created_at", type: "date" },
+    { header: "Action", field: "action" },
   ],
 
   dashboard: [
@@ -53,7 +54,7 @@ export const TableSchemas = {
 
   task: [
     { header: "Sr.NO", field: "srno" },
-    { header: "Task ID", field: "task_field" },
+    { header: "Task ID", field: "task_key" },
     { header: "Task Name", field: "name" },
     { header: "Status", field: "status" },
     { header: "Assigned To", field: "assignee_role" },
@@ -87,7 +88,7 @@ export const TableSchemas = {
 
   team: [
     { header: "Sr.No", field: "srno" },
-    { header: "Name", field: "name" },
+    { header: "Team Name", field: "name" },
     // { header: "Lead", field: "lead_id" },
     { header: "User", field: "users.first_name" },
     { header: "Description", field: "description" },
@@ -106,6 +107,7 @@ export const TableSchemas = {
     { header: "Resource", field: "resource" },
     { header: "Status", field: "status" },
     { header: "Created At", field: "created_at", type: "date" },
+    // { header: "Action", field: "action" },
   ],
   auditLogsAdmin: [
     { header: "Sr.No", field: "srno" },
@@ -117,6 +119,7 @@ export const TableSchemas = {
     { header: "Resource", field: "resource" },
     { header: "Created At", field: "created_at", type: "date" },
     { header: "Status", field: "status" },
+    // { header: "Action", field: "action" },
   ],
 
   auditLogsSystem: [
@@ -128,7 +131,8 @@ export const TableSchemas = {
     { header: "Resource", field: "resource" },
     { header: "Created At", field: "created_at", type: "date" },
     { header: "Status", field: "status" },
-    { header: "Action", field: "action_type" },
+    { header: "Action Type", field: "action_type" },
+    // { header: "Action", field: "action" },
   ],
   policies: [
     { header: "Sr.No", field: "srno" },
@@ -141,6 +145,7 @@ export const TableSchemas = {
     { header: "Created At", field: "created_at", type: "date" },
     { header: "Status", field: "status" },
     { header: "Action", field: "approval" },
+    { header: "Action", field: "action" },
   ],
 
   evidence: [
@@ -152,7 +157,8 @@ export const TableSchemas = {
     { header: "Created At", field: "created_at", type: "date" },
     { header: "Download", field: "file_path" },
     { header: "Status", field: "status" },
-    { header: "Action", field: "approval" },
+    { header: "Approval Action", field: "approval" },
+    { header: "Action", field: "action" },
   ],
   risks: [
     { header: "Sr.No", field: "srno" },
@@ -163,8 +169,9 @@ export const TableSchemas = {
     { header: "impact", field: "impact" },
     { header: "mitigation_plan", field: "mitigation_plan" },
     { header: "identified_at", field: "identified_at", type: "date" },
-    { header: "resolved_at", field: "resolved_at", type: "date" },
+    // { header: "resolved_at", field: "resolved_at", type: "date" },
     { header: "Status", field: "status" },
-    { header: "Action", field: "approval" },
+    { header: "Approval Action", field: "approval" },
+    { header: "Action", field: "action" },
   ],
 };

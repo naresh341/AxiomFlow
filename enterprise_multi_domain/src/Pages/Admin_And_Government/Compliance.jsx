@@ -7,20 +7,21 @@ import {
   Upload,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import EvidenceList from "./EvidenceList";
-import PolicyList from "./PolicyList";
-import RiskMatrix from "./RiskMatrix";
-import RiskModal from "../../Components/RiskModal";
-import EvidenceModal from "../../Components/EvidenceModal";
-import AssessmentModal from "../../Components/AssessmentModal";
 import { useDispatch, useSelector } from "react-redux";
+import AssessmentModal from "../../Components/AssessmentModal";
+import EvidenceModal from "../../Components/EvidenceModal";
+import RiskModal from "../../Components/RiskModal";
 import {
   addNewPolicy,
   addRisk,
   get_UserOrg,
   getPolicies,
+  update_Policies,
   uploadControlEvidence,
 } from "../../RTKThunk/AsyncThunk";
+import EvidenceList from "./EvidenceList";
+import PolicyList from "./PolicyList";
+import RiskMatrix from "./RiskMatrix";
 
 const Compliance = () => {
   const rows = 10;
@@ -29,13 +30,16 @@ const Compliance = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Policy Documents");
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
-  const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
-  const { policies, risks, evidence, loading, error } = useSelector(
-    (state) => state.compliance,
-  );
-
+  const { policies, loading, error } = useSelector((state) => state.compliance);
   const { data } = useSelector((state) => state.UserOrg);
+  const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
+  const [selectedPolicy, setSelectedPolicy] = useState(null);
+  const [selectedEvidence, setSelectedEvidence] = useState(null);
 
+  const toggleAssessmentModal = (policy = null) => {
+    setSelectedPolicy(policy);
+    setIsAssessmentModalOpen(!isAssessmentModalOpen);
+  };
   useEffect(() => {
     dispatch(get_UserOrg());
   }, [dispatch]);
@@ -48,14 +52,25 @@ const Compliance = () => {
     dispatch(getPolicies("active"));
   }, [dispatch]);
 
+  const handleEditEvidence = (evidence) => {
+    setSelectedEvidence(evidence);
+    setIsEvidenceModalOpen(true);
+  };
+
   const handleSubmit = async (formdata) => {
     try {
-      const response = await dispatch(addNewPolicy(formdata)).unwrap();
+      if (formdata.id) {
+        await dispatch(update_Policies(formdata)).unwrap();
+      } else {
+        await dispatch(addNewPolicy(formdata)).unwrap();
+      }
+
       setIsAssessmentModalOpen(false);
-      dispatch(getPolicies());
-      return response;
+      setSelectedPolicy(null);
+
+      dispatch(getPolicies("active"));
     } catch (error) {
-      console.error(error);
+      console.error("Submission failed:", error);
     }
   };
 
@@ -68,12 +83,12 @@ const Compliance = () => {
     }
   };
 
-  const handleUploadEvidence = async (data) => {
+  const handleUploadEvidence = async (controlId, formData) => {
     try {
       await dispatch(
         uploadControlEvidence({
-          controlId: data.control_id,
-          formData: data,
+          controlId: controlId,
+          formData: formData,
         }),
       ).unwrap();
 
@@ -82,7 +97,6 @@ const Compliance = () => {
       console.error(error);
     }
   };
-
   const stats = [
     {
       id: 1,
@@ -288,10 +302,13 @@ const Compliance = () => {
               loading={loading}
               rows={rows}
               first={first}
+              onEdit={(policy) => toggleAssessmentModal(policy)}
               onPageChange={onPageChange}
             />
           )}
-          {activeTab === "Evidence Tracker" && <EvidenceList />}
+          {activeTab === "Evidence Tracker" && (
+            <EvidenceList onEdit={(e) => handleEditEvidence(e)} />
+          )}
           {activeTab === "Risk Assessments" && <RiskMatrix />}
         </div>
       </div>
@@ -306,12 +323,14 @@ const Compliance = () => {
         isOpen={isEvidenceModalOpen}
         onClose={() => setIsEvidenceModalOpen(false)}
         onSubmit={handleUploadEvidence}
+        editData={selectedEvidence}
       />
       <AssessmentModal
         isOpen={isAssessmentModalOpen}
         onClose={() => setIsAssessmentModalOpen(false)}
         policies={policies}
         handleSubmit={handleSubmit}
+        editData={selectedPolicy}
       />
     </div>
   );

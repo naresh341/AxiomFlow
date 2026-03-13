@@ -5,12 +5,23 @@ import App from "./App.jsx";
 import "./index.css";
 import { Store } from "./Store/Store.js";
 import { ThemeProvider } from "./Context/ThemeContext.jsx";
+import "primereact/resources/themes/lara-light-blue/theme.css";
+import "primereact/resources/primereact.min.css";
+import "primeicons/primeicons.css";
+import { PrimeReactProvider } from "primereact/api";
+const primeReactConfig = {
+  ripple: true,
+  hideOverlaysOnDocumentScrolling: true,
+};
 createRoot(document.getElementById("root")).render(
-  <BrowserRouter>
-    <Provider store={Store}>
-      <ThemeProvider>
-        <App />
-      </ThemeProvider>
-    </Provider>
-  </BrowserRouter>,
+  <PrimeReactProvider value={primeReactConfig}>
+    <BrowserRouter>
+      <Provider store={Store}>
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
+      </Provider>
+    </BrowserRouter>
+    ,
+  </PrimeReactProvider>,
 );

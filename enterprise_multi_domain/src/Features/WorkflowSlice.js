@@ -21,7 +21,13 @@ const WorkflowSlice = createSlice({
     currentWorkflowVersions: [],
     currentWorkflowExecutions: [],
   },
-  reducers: {},
+  reducers: {
+    clearCurrentWorkflow: (state) => {
+      state.currentWorkflow = null;
+      state.currentWorkflowTasks = [];
+      state.currentWorkflowVersions = [];
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getWorkflow.pending, (state) => {

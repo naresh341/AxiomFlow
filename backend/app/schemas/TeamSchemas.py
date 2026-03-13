@@ -13,7 +13,7 @@ class TeamBase(BaseModel):
 
 
 class TeamCreate(TeamBase):
-    pass  # Usually same as base
+    user_ids: Optional[List[int]] = []
 
 
 class TeamRead(TeamBase):

@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime, timezone
-from sqlalchemy import Column, DateTime, Integer, String, Text, Enum
+from sqlalchemy import Column, DateTime, Integer, String, Text, Enum, Boolean
 from sqlalchemy.orm import relationship
 from app.model.base import Base
 
@@ -26,7 +26,7 @@ class User(Base):
     last_name = Column(String(50), nullable=False)
     email = Column(String(100), unique=True, nullable=False, index=True)
     password_hash = Column(Text, nullable=False)
-
+    is_active = Column(Boolean, default=True, nullable=False)
     role = Column(Enum(UserRole), default=UserRole.EMPLOYEE, nullable=False)
     status = Column(Enum(UserStatus), default=UserStatus.ACTIVE, nullable=False)
 

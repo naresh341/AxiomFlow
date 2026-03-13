@@ -9,6 +9,8 @@ const DynamicTable = ({
   tableHead = [],
   handleRowClick,
   first,
+  onDelete, // New Prop
+  onEdit,
 }) => {
   const statuStyle = (status) => {
     const s = status?.toLowerCase();
@@ -68,8 +70,9 @@ const DynamicTable = ({
     if (col.field == "action") {
       return (
         <>
-          <div className="flex justify-end  gap-1  ">
+          <div className="flex justify-center  gap-1  ">
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 handleRowClick({ data: rowData });
@@ -78,13 +81,21 @@ const DynamicTable = ({
             >
               <Eye size={16} />
             </button>
-            <button className="p-2 rounded-lg hover:bg-white dark:hover:bg-white/10 text-[#616f89] dark:text-gray-400 hover:text-blue-600 transition-colors shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+            <button
+              type="button"
+              onClick={() => onEdit(rowData)}
+              className="p-2 rounded-lg hover:bg-white dark:hover:bg-white/10 text-[#616f89] dark:text-gray-400 hover:text-blue-600 transition-colors shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+            >
               <Edit2 size={16} />
             </button>
             <button className="p-2 rounded-lg hover:bg-white dark:hover:bg-white/10 text-[#616f89] dark:text-gray-400 hover:text-blue-600 transition-colors shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
               <Copy size={16} />
             </button>
-            <button className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-[#616f89] dark:text-gray-400 hover:text-red-500 transition-colors shadow-sm border border-transparent hover:border-red-100 dark:hover:border-red-900">
+            <button
+              type="button"
+              onClick={() => onDelete(rowData.id)}
+              className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-[#616f89] dark:text-gray-400 hover:text-red-500 transition-colors shadow-sm border border-transparent hover:border-red-100 dark:hover:border-red-900"
+            >
               <Archive size={16} />
             </button>
           </div>
@@ -94,7 +105,7 @@ const DynamicTable = ({
     if (col.field == "approval") {
       return (
         <>
-          <div className="flex justify-end  gap-1  ">
+          <div className="flex justify-center  gap-1  ">
             <button
               onClick={() => handleApprove(rowData.id)}
               title="Approve"

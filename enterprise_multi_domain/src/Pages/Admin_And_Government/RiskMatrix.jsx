@@ -1,12 +1,13 @@
-import { ChevronDown, Download, Filter, Info, Search, X } from "lucide-react";
+import { ChevronDown, Info, Search, X } from "lucide-react";
+import { Menu } from "primereact/menu";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import DynamicTable from "../../Components/DynamicTable";
-import { getRisks } from "../../RTKThunk/AsyncThunk";
-import { TableSchemas } from "../../Utils/TableSchemas";
-import Paginator from "../../Components/Paginator";
-import { Menu } from "primereact/menu";
 import FilterButton from "../../Components/MiniComponent/FilterButton";
+import Paginator from "../../Components/Paginator";
+import RiskModal from "../../Components/RiskModal";
+import { delete_Risk, getRisks, update_Risk } from "../../RTKThunk/AsyncThunk";
+import { TableSchemas } from "../../Utils/TableSchemas";
 
 const RiskMatrix = () => {
   const dispatch = useDispatch();
@@ -18,9 +19,35 @@ const RiskMatrix = () => {
   const { risks, loading, error } = useSelector((state) => state.compliance);
   const rows = 10;
   const [first, setfirst] = useState(0);
+
   useEffect(() => {
     dispatch(getRisks());
   }, [dispatch]);
+
+  const [selectedRisk, setSelectedRisk] = useState(null);
+  const [isRiskModalOpen, setIsRiskModalOpen] = useState(false);
+
+  const handleEdit = (risk) => {
+    setSelectedRisk(risk);
+    setIsRiskModalOpen(true);
+  };
+  const handleDeleteRisk = async (id) => {
+    try {
+      await dispatch(delete_Risk(id)).unwrap();
+      dispatch(getRisks());
+    } catch (error) {
+      console.error("Delete failed:", error);
+    }
+  };
+
+  const handleUpdateRisk = async (id, payload) => {
+    try {
+      await dispatch(update_Risk({ id, payload })).unwrap();
+      dispatch(getRisks());
+    } catch (error) {
+      console.error("Update failed:", error);
+    }
+  };
 
   const statusItems = [
     {
@@ -261,6 +288,8 @@ const RiskMatrix = () => {
               tableHead={TableSchemas.risks}
               rows={rows}
               first={first}
+              onEdit={handleEdit}
+              onDelete={handleDeleteRisk}
             />
           )}
         </div>
@@ -273,6 +302,18 @@ const RiskMatrix = () => {
           />
         </div>
       </section>
+      <RiskModal
+        isOpen={isRiskModalOpen}
+        onClose={() => {
+          setIsRiskModalOpen(false);
+          setSelectedRisk(null);
+        }}
+        editData={selectedRisk}
+        onSubmit={(data) => {
+          if (!selectedRisk) return;
+          handleUpdateRisk(selectedRisk.id, data);
+        }}
+      />
     </div>
   );
 };
@@ -285,12 +326,6 @@ const SeverityCard = ({ count, label, color, bg, border }) => (
       {label}
     </div>
   </div>
-);
-
-const TableButton = ({ icon, label }) => (
-  <button className="flex items-center gap-2 rounded-lg h-9 px-3 bg-slate-100 dark:bg-[#283039] text-slate-600 dark:text-white text-xs font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
-    {icon} <span>{label}</span>
-  </button>
 );
 
 export default RiskMatrix;

@@ -1,5 +1,7 @@
+import { useDispatch } from "react-redux";
 import DynamicTable from "../../Components/DynamicTable";
 import Paginator from "../../Components/Paginator";
+import { delete_Policies } from "../../RTKThunk/AsyncThunk";
 import { TableSchemas } from "../../Utils/TableSchemas";
 
 const PolicyList = ({
@@ -9,7 +11,14 @@ const PolicyList = ({
   rows,
   first,
   onPageChange,
+  onEdit,
 }) => {
+  const dispatch = useDispatch();
+
+  const handleDelete = (id) => {
+    dispatch(delete_Policies(id));
+  };
+
   if (error)
     return (
       <div className="p-8 text-red-500 font-bold">
@@ -31,6 +40,8 @@ const PolicyList = ({
             tableHead={TableSchemas.policies}
             rows={rows}
             first={first}
+            onDelete={handleDelete}
+            onEdit={onEdit}
           />
         )}
       </div>
@@ -46,6 +57,25 @@ const PolicyList = ({
             />
           </div>
         )}
+
+        {/* {isEditModalOpen && (
+          <AssessmentModal
+            isOpen={isEditModalOpen}
+            onClose={() => {
+              setIsEditModalOpen(false);
+              setSelectedUser(null);
+            }}
+            editData={selectedUser}
+            handleSubmit={(data) => {
+              dispatch(update_Policies(data))
+                .unwrap()
+                .then(() => {
+                  setIsEditModalOpen(false);
+                  setSelectedUser(null);
+                });
+            }}
+          />
+        )} */}
       </div>
     </>
   );

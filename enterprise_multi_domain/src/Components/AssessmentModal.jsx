@@ -8,7 +8,14 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-const AssessmentModal = ({ isOpen, onClose, policies = [], handleSubmit }) => {
+const AssessmentModal = ({
+  isOpen,
+  onClose,
+  policies = [],
+  handleSubmit,
+  editData = null,
+}) => {
+  const isEditMode = !!editData;
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -22,6 +29,15 @@ const AssessmentModal = ({ isOpen, onClose, policies = [], handleSubmit }) => {
     impact: 3,
     evidenceUrl: "",
   });
+
+  useEffect(() => {
+    if (editData) {
+      setFormData({
+        ...editData,
+        policies: editData.policies?.map((t) => t.id) || [],
+      });
+    }
+  }, [editData]);
 
   // Auto-calculate Next Review Date
   useEffect(() => {
@@ -72,14 +88,15 @@ const AssessmentModal = ({ isOpen, onClose, policies = [], handleSubmit }) => {
   };
 
   const handleFinalSubmit = () => {
-    const submissionData = {
+    const payload = {
       ...formData,
-      risk_level: riskMeta.label.toUpperCase(),
       owner_id: Number(formData.owner_id),
       responsible_team_id: Number(formData.responsible_team_id),
     };
-    handleSubmit(submissionData);
+
+    handleSubmit(payload);
   };
+
   const regulationTypes = Array.from(
     new Set(
       (policies || [])

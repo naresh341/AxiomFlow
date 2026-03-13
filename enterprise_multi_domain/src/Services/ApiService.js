@@ -135,6 +135,8 @@ export const fetchTeam = async () => {
     throw error;
   }
 };
+
+// ========================== AUDIT LOGS==================================================
 export const fetchauditLogs = async (actorType = null) => {
   try {
     const response = await axios.get(
@@ -147,6 +149,26 @@ export const fetchauditLogs = async (actorType = null) => {
   }
 };
 
+export const updateAuditlogs = async (id, payload) => {
+  try {
+    const response = await axios.put(`/governance/audit-logs/${id}`, payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Updating Audit Logs", error);
+    throw error;
+  }
+};
+export const deleteAuditlogs = async (id) => {
+  try {
+    const response = await axios.delete(`/governance/audit-logs/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Deleting AuditLogs", error);
+    throw error;
+  }
+};
+
+// ================================POLICIES============================================
 export const fetchPolicies = async (status = null) => {
   try {
     const url = status
@@ -170,7 +192,29 @@ export const createPolicy = async (policyData) => {
   }
 };
 
-// 2. RISK MANAGEMENT
+export const updatePolicies = async (id, payload) => {
+  try {
+    const response = await axios.put(
+      `/compliance/updatePolicies/${id}`,
+      payload,
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error While Adding Team", error);
+    throw error;
+  }
+};
+export const deletePolicies = async (id) => {
+  try {
+    const response = await axios.delete(`/compliance/deletePolicies/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Adding Team", error);
+    throw error;
+  }
+};
+
+//=========================================== RISK MANAGEMENT====================================
 export const fetchRisks = async () => {
   try {
     const response = await axios.get("/compliance/risks");
@@ -191,7 +235,26 @@ export const CreateRisk = async (riskData) => {
   }
 };
 
-// 3. EVIDENCE & CONTROLS
+export const updateRisk = async (id, payload) => {
+  try {
+    const response = await axios.put(`/compliance/updateRisks/${id}`, payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Updating Team", error);
+    throw error;
+  }
+};
+export const deleteRisk = async (id) => {
+  try {
+    const response = await axios.delete(`/compliance/deleteRisks/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Deleting Risk", error);
+    throw error;
+  }
+};
+
+// ========================= EVIDENCE & CONTROLS ========================
 export const fetchControlEvidence = async () => {
   try {
     const response = await axios.get(`/compliance/controls/evidence`);
@@ -208,7 +271,6 @@ export const uploadEvidence = async (controlId, formData) => {
     const response = await axios.post(
       `/compliance/controls/${controlId}/evidence`,
       formData,
-      { headers: { "Content-Type": "multipart/form-data" } },
     );
     return response.data;
   } catch (error) {
@@ -217,13 +279,106 @@ export const uploadEvidence = async (controlId, formData) => {
   }
 };
 
-// 4. DASHBOARD STATS
+export const updateEvidence = async (id, payload) => {
+  try {
+    const response = await axios.put(`/controls/updateEvidence/${id}`, payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Updating Evidence", error);
+    throw error;
+  }
+};
+
+export const deleteEvidence = async (id) => {
+  try {
+    const response = await axios.delete(
+      `/compliance/controls/deleteEvidence/${id}`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error While Deleting Evidence", error);
+    throw error;
+  }
+};
+
+// ============================= DASHBOARD STATS=======================
 export const fetchComplianceStats = async () => {
   try {
     const response = await axios.get("/compliance/dashboard/stats");
     return response.data;
   } catch (error) {
     console.error("Error while fetching dashboard stats", error);
+    throw error;
+  }
+};
+// ==================================Users=====================================
+export const addUsers = async (payload) => {
+  try {
+    const response = await axios.post("/user-org/addUsers", payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Adding Users", error);
+    throw error;
+  }
+};
+
+export const updateUsers = async (id, payload) => {
+  try {
+    const response = await axios.put(`/user-org/updateUser/${id}`, payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Adding Users", error);
+    throw error;
+  }
+};
+
+export const DeleteUsers = async (id) => {
+  try {
+    await axios.delete(`/user-org/deleteUser/${id}`);
+    return id;
+  } catch (error) {
+    console.error("Error While Adding Users", error);
+    throw error;
+  }
+};
+
+// =================================Teams==================================
+export const addTeam = async (payload) => {
+  try {
+    const response = await axios.post("/teams/createTeam", payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Adding Team", error);
+    throw error;
+  }
+};
+export const updateTeam = async (id, payload) => {
+  try {
+    const response = await axios.put(`/teams/updateTeam/${id}`, payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Adding Team", error);
+    throw error;
+  }
+};
+export const deleteTeam = async (id) => {
+  try {
+    const response = await axios.delete(`/teams/deleteTeam/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Adding Team", error);
+    throw error;
+  }
+};
+
+// ===================================Task=================================
+
+export const addTask = async (payload) => {
+  try {
+    const response = await axios.post("/tasks/createTask", payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Adding Team", error);
     throw error;
   }
 };

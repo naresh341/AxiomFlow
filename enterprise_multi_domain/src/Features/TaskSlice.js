@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { getTaskList } from "../RTKThunk/AsyncThunk";
+import { addTasks, getTaskList } from "../RTKThunk/AsyncThunk";
 
 const initialState = {
   error: null,
@@ -21,6 +21,17 @@ const TaskSlice = createSlice({
         state.data = action.payload;
       })
       .addCase(getTaskList.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(addTasks.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(addTasks.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data.unshift(action.payload);
+      })
+      .addCase(addTasks.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

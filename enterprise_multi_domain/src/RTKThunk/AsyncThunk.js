@@ -1,8 +1,17 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
+  addTask,
+  addTeam,
+  addUsers,
   approveRejectTask,
   createPolicy,
   CreateRisk,
+  deleteAuditlogs,
+  deleteEvidence,
+  deletePolicies,
+  deleteRisk,
+  deleteTeam,
+  DeleteUsers,
   fetcAllTask,
   fetchAllApproval,
   fetchauditLogs,
@@ -18,6 +27,12 @@ import {
   getWorkflowVersions,
   Login,
   PublishWorkflow,
+  updateAuditlogs,
+  updateEvidence,
+  updatePolicies,
+  updateRisk,
+  updateTeam,
+  updateUsers,
   uploadEvidence,
   workflowById,
   WorkflowData,
@@ -164,6 +179,8 @@ export const get_teams = createAsyncThunk(
     }
   },
 );
+
+// ================================================AUDIT LOGS==================================
 export const get_auditLogs = createAsyncThunk(
   "governance/audit-Logs",
   async (actorType, rejectWithValue) => {
@@ -175,6 +192,31 @@ export const get_auditLogs = createAsyncThunk(
   },
 );
 
+export const update_AuditLogs = createAsyncThunk(
+  "governance/updateAuditLogs",
+  async (data, { rejectWithValue }) => {
+    try {
+      const { id, ...payload } = data;
+
+      const response = await updateAuditlogs(id, payload);
+
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data);
+    }
+  },
+);
+export const delete_AuditLogs = createAsyncThunk(
+  "governance/deleteAuditLogs",
+  async (id, { rejectWithValue }) => {
+    try {
+      return await deleteAuditlogs(id);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+// =============================POLICIES====================================
 export const getPolicies = createAsyncThunk(
   "compliance/fetchPolicies",
   async (status, { rejectWithValue }) => {
@@ -197,6 +239,32 @@ export const addNewPolicy = createAsyncThunk(
   },
 );
 
+export const update_Policies = createAsyncThunk(
+  "compliance/updatePolicies",
+  async (data, { rejectWithValue }) => {
+    try {
+      const { id, ...payload } = data;
+
+      const response = await updatePolicies(id, payload);
+
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data);
+    }
+  },
+);
+export const delete_Policies = createAsyncThunk(
+  "compliance/deletePolicies",
+  async (id, { rejectWithValue }) => {
+    try {
+      return await deletePolicies(id);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+
+// ===========================RISK===================================
 export const getRisks = createAsyncThunk(
   "compliance/fetchRisks",
   async (_, { rejectWithValue }) => {
@@ -208,7 +276,6 @@ export const getRisks = createAsyncThunk(
   },
 );
 
-// IDENTIFY NEW RISK
 export const addRisk = createAsyncThunk(
   "compliance/identifyRisk",
   async (riskData, { rejectWithValue }) => {
@@ -220,7 +287,28 @@ export const addRisk = createAsyncThunk(
   },
 );
 
-// FETCH DASHBOARD STATS
+export const update_Risk = createAsyncThunk(
+  "compliance/updateRisk",
+  async ({ id, payload }, { rejectWithValue }) => {
+    try {
+      return await updateRisk(id, payload);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+export const delete_Risk = createAsyncThunk(
+  "compliance/deleteRisk",
+  async (id, { rejectWithValue }) => {
+    try {
+      return await deleteRisk(id);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+
+//================================= FETCH DASHBOARD STATS=====================
 export const getComplianceStats = createAsyncThunk(
   "compliance/fetchStats",
   async (_, { rejectWithValue }) => {
@@ -232,6 +320,7 @@ export const getComplianceStats = createAsyncThunk(
   },
 );
 
+//  =======================================EVIDENCE=============================================
 export const getControlEvidence = createAsyncThunk(
   "compliance/fetchControlEvidence",
   async (_, { rejectWithValue }) => {
@@ -243,12 +332,106 @@ export const getControlEvidence = createAsyncThunk(
   },
 );
 
-// 2. UPLOAD NEW EVIDENCE (Handles Files)
 export const uploadControlEvidence = createAsyncThunk(
   "compliance/uploadEvidence",
   async ({ controlId, formData }, { rejectWithValue }) => {
     try {
       return await uploadEvidence(controlId, formData);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+export const update_Evidence = createAsyncThunk(
+  "compliance/updateEvidence",
+  async ({ id, payload }, { rejectWithValue }) => {
+    try {
+      return await updateEvidence(id, payload);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+export const delete_Evidence = createAsyncThunk(
+  "compliance/deleteEvidence",
+  async (id, { rejectWithValue }) => {
+    try {
+      return await deleteEvidence(id);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+//  =================================== USERS =========================
+export const addUser = createAsyncThunk(
+  "user-org/addUsers",
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await addUsers(payload);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+export const update_User = createAsyncThunk(
+  "user-org/UpdateUsers",
+  async ({ id, payload }, { rejectWithValue }) => {
+    try {
+      return await updateUsers(id, payload);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+export const delete_User = createAsyncThunk(
+  "user-org/deleteUser",
+  async (id, { rejectWithValue }) => {
+    try {
+      return await DeleteUsers(id);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+
+// ============================= Team ==========================================
+export const addTeams = createAsyncThunk(
+  "teams/addTeam",
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await addTeam(payload);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+export const update_Teams = createAsyncThunk(
+  "teams/updateTeam",
+  async ({ id, payload }, { rejectWithValue }) => {
+    try {
+      return await updateTeam(id, payload);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+export const delete_Teams = createAsyncThunk(
+  "teams/deleteTeam",
+  async (id, { rejectWithValue }) => {
+    try {
+      return await deleteTeam(id);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || error.message);
+    }
+  },
+);
+
+// =====================================TASK===================================
+export const addTasks = createAsyncThunk(
+  "task/addTasks",
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await addTask(payload);
     } catch (error) {
       return rejectWithValue(error.response?.data?.detail || error.message);
     }

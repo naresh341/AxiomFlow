@@ -13,6 +13,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from app.model.base import Base
+from sqlalchemy.dialects.postgresql import JSONB
 
 
 class SeverityLevel(str, enum.Enum):
@@ -39,7 +40,7 @@ class AuditActionType(str, enum.Enum):
     CREATE = "CREATE"
     UPDATE = "UPDATE"
     DELETE = "DELETE"
-
+    UPLOAD = "UPLOAD"
     # Auth Actions
     LOGIN = "LOGIN"
     LOGOUT = "LOGOUT"
@@ -81,8 +82,8 @@ class AuditLog(Base):
     resource_type = Column(String(50), nullable=False)
     resource_id = Column(Integer, nullable=True)
 
-    old_values = Column(JSON, nullable=True)
-    new_values = Column(JSON, nullable=True)
+    old_values = Column(JSONB, nullable=True)
+    new_values = Column(JSONB, nullable=True)
 
     ip_address = Column(String(45), nullable=True)
     status = Column(Enum(AuditStatus), default=AuditStatus.SUCCESS, nullable=False)

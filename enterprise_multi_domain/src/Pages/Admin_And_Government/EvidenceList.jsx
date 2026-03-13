@@ -1,14 +1,14 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Filter, Search, Eye, Upload, X, ChevronDown } from "lucide-react";
-import DynamicTable from "../../Components/DynamicTable";
-import { TableSchemas } from "../../Utils/TableSchemas";
-import { useDispatch, useSelector } from "react-redux";
-import { getControlEvidence } from "../../RTKThunk/AsyncThunk";
-import Paginator from "../../Components/Paginator";
-import FilterButton from "../../Components/MiniComponent/FilterButton";
+import { ChevronDown, Search, X } from "lucide-react";
 import { Menu } from "primereact/menu";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import DynamicTable from "../../Components/DynamicTable";
+import FilterButton from "../../Components/MiniComponent/FilterButton";
+import Paginator from "../../Components/Paginator";
+import { delete_Evidence, getControlEvidence } from "../../RTKThunk/AsyncThunk";
+import { TableSchemas } from "../../Utils/TableSchemas";
 
-const EvidenceList = () => {
+const EvidenceList = ({ onEdit }) => {
   const dispatch = useDispatch();
   const menuStatus = useRef(null);
   const [filters, setFilters] = useState({
@@ -29,6 +29,15 @@ const EvidenceList = () => {
         Error loading evidence: {error}
       </div>
     );
+
+  const handleDeleteRisk = async (id) => {
+    try {
+      await dispatch(delete_Evidence(id)).unwrap();
+      dispatch(getControlEvidence());
+    } catch (error) {
+      console.error("Delete failed:", error);
+    }
+  };
 
   const statusItems = [
     {
@@ -51,7 +60,7 @@ const EvidenceList = () => {
     },
   ];
   const onPageChange = (page) => {
-    setfirst(page - 1) * rows;
+    setfirst((page - 1) * rows);
   };
   const filteredData = evidence.filter((item) => {
     const matchesSearch =
@@ -153,6 +162,8 @@ const EvidenceList = () => {
               tableHead={TableSchemas.evidence}
               rows={rows}
               first={first}
+              onEdit={onEdit}
+              onDelete={handleDeleteRisk}
             />
           )}
         </div>

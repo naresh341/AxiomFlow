@@ -22,23 +22,19 @@ const UserAction = () => {
   const rows = 10;
   const menuStatus = useRef(null);
   const menuactorType = useRef(null);
-  // 1. Get dynamic data from Redux
   const { loading, auditdata } = useSelector((state) => state.governance);
   const [filters, setFilters] = useState({
     status: "All",
     actorType: "All",
   });
   const [searchQuery, setSearchQuery] = useState("");
-  // 2. Local state for the selected log (for the sidebar)
   const [selectedLog, setSelectedLog] = useState(null);
 
   useEffect(() => {
     dispatch(get_auditLogs("USER"));
   }, [dispatch]);
 
-  // Update selected log when data arrives
   const handleRowClick = (rowData) => {
-    console.log("Row Clicked:", rowData.data);
     setSelectedLog(rowData.data);
   };
 
@@ -98,7 +94,6 @@ const UserAction = () => {
   });
   return (
     <div className="flex flex-col gap-8">
-      {/* Filter Bar - Enhanced Height and Text Size */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         <div className="relative group">
           <Search
@@ -139,7 +134,6 @@ const UserAction = () => {
           }}
         />
 
-        {/* Status Filter Button */}
         <FilterButton
           label="Action Type"
           value={filters.actorType}
@@ -166,7 +160,6 @@ const UserAction = () => {
           }}
         />
 
-        {/* Status Filter Button */}
         <FilterButton
           label="Status"
           value={filters.status}
@@ -195,7 +188,6 @@ const UserAction = () => {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 grow">
-        {/* Main Table Section (70%) - Increased Padding and Font Sizes */}
         <div className="w-full lg:w-[68%] bg-white dark:bg-[#111418] border border-slate-200 dark:border-[#283039] rounded-2xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             {loading ? (
