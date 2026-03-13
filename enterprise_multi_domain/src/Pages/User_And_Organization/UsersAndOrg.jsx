@@ -1,15 +1,13 @@
 import { Shield, Upload, UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import InviteUser from "../../Components/InviteUser";
-import ImportUser from "../../Components/ImportUser";
 import CreateRole from "../../Components/CreateRole";
 import CreateTeam from "../../Components/CreateTeam";
+import ImportUser from "../../Components/ImportUser";
+import InviteUser from "../../Components/InviteUser";
 
 const UsersAndOrg = () => {
   const location = useLocation();
-
-  // 1. STATE MANAGEMENT FOR MODAL
   const [activeModal, setActiveModal] = useState(null);
 
   const tabConfig = {
@@ -46,9 +44,8 @@ const UsersAndOrg = () => {
     },
   };
 
-  const currentPath = location.pathname;
-  const current =
-    tabConfig[currentPath] || tabConfig["/users"];
+  const path = location.pathname.split("/").pop();
+  const current = tabConfig[`/${path}`] || tabConfig["/users"];
 
   const tabs = [
     { name: "Users", path: "users" },
@@ -115,7 +112,6 @@ const UsersAndOrg = () => {
         </div>
       </div>
 
-      {/* Invite User Modal */}
       <InviteUser
         isOpen={activeModal === "Invite User"}
         onClose={() => setActiveModal(null)}

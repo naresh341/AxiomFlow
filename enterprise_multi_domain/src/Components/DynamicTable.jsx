@@ -9,7 +9,7 @@ const DynamicTable = ({
   tableHead = [],
   handleRowClick,
   first,
-  onDelete, // New Prop
+  onDelete, 
   onEdit,
 }) => {
   const statuStyle = (status) => {
