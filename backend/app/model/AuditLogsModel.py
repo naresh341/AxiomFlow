@@ -55,6 +55,8 @@ class AuditActionType(str, enum.Enum):
     BACKUP = "BACKUP"
     OTHER = "OTHER"
 
+    FEATURE_FLAG_TOGGLE = "FEATURE_FLAG_TOGGLE"
+
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"

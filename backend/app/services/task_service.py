@@ -31,7 +31,6 @@ class TaskService:
         return self.repo.get_task(workflow_id=workflow_id, status=status)
 
     def create_task(self, task_in):
-        # 1. Convert Pydantic object to dict if necessary
         if hasattr(task_in, "model_dump"):
             task_data = task_in.model_dump()
         elif hasattr(task_in, "dict"):
@@ -39,13 +38,10 @@ class TaskService:
         else:
             task_data = task_in
 
-        # 2. Handle Parent Workflow (Auto-create if missing)
         w_id = task_data.get("workflow_id")
         workflow = self.db.query(Workflow).filter(Workflow.id == w_id).first()
 
         if not workflow:
-            # If the frontend sent an ID that doesn't exist, or no ID at all,
-            # we create a placeholder workflow.
             new_workflow = Workflow(
                 name=task_data.get("name", "Auto-Generated Workflow")
             )
@@ -54,14 +50,12 @@ class TaskService:
             self.db.refresh(new_workflow)
             w_id = new_workflow.id
 
-        # 3. Key Generation & Priority (Moved OUTSIDE the 'if' block)
         total_tasks = self.db.query(Task).count()
         generated_key = f"TSK-{(total_tasks + 1):03d}"
 
         local_task_count = self.db.query(Task).filter(Task.workflow_id == w_id).count()
         priority_order = local_task_count + 1
 
-        # 4. Task Creation
         new_task = Task(
             task_key=generated_key,
             name=task_data.get("name"),
@@ -101,3 +95,26 @@ class TaskService:
         self.db.commit()
         self.db.refresh(task)
         return task
+
+    def update_task(self, task_id: int, update_data):
+        task = self.db.get(Task, task_id)
+
+        if not task:
+            raise ValueError("Task not found")
+
+        if hasattr(update_data, "model_dump"):
+            update_data = update_data.model_dump(exclude_unset=True)
+
+        task.updated_at = datetime.now(timezone.utc)
+
+        return self.repo.update(task, update_data)
+
+    def delete_task(self, task_id: int):
+        task = self.db.get(Task, task_id)
+
+        if not task:
+            raise ValueError("Task not found")
+
+        self.repo.delete(task)
+
+        return {"message": "Task deleted successfully"}

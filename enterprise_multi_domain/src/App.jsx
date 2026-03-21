@@ -20,8 +20,10 @@ import APIDocumentation from "./Pages/Integrations/APIDocumentation";
 import Configure from "./Pages/Integrations/Configure";
 import CustomIntegrationBuilder from "./Pages/Integrations/CustomIntegrationBuilder";
 import DocumentationContent from "./Pages/Integrations/DocumentationContent";
+import EmailSent from "./Pages/Login/EmailSent";
 import ForgotPassword from "./Pages/Login/ForgotPassword";
 import Login from "./Pages/Login/Login";
+import PasswordReset from "./Pages/Login/PasswordReset";
 import SignUp from "./Pages/Login/SignUp";
 import Support from "./Pages/Support";
 import Tasks from "./Pages/Task/Tasks";
@@ -50,6 +52,8 @@ function App() {
         <Route path="/Login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/reset-password" element={<PasswordReset />} />
+        <Route path="/email-sent" element={<EmailSent />} />
 
         <Route element={<MainLayout />}>
           <Route path="/Dashboard" element={<Dashboard />} />
@@ -69,7 +73,7 @@ function App() {
             path="/workflows/:workflowId/tasks"
             element={<WorkflowTasks />}
           />
-          
+
           <Route
             path="/workflows/:workflowId/execution"
             element={<WorkflowExecution />}

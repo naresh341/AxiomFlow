@@ -1,8 +1,16 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "../Navigation/Sidebar";
 import Topbar from "../Navigation/Topbar";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { Login_Credentials } from "../RTKThunk/AsyncThunk";
 
 const MainLayout = () => {
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(Login_Credentials());
+  }, [dispatch]);
+
   return (
     <div className="h-screen flex bg-gray-50 dark:bg-slate-950">
       <Topbar className="fixed top-0 left-0 right-0 z-50" />

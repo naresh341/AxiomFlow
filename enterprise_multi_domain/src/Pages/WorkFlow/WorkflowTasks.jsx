@@ -46,6 +46,7 @@ const WorkflowTasks = () => {
         handlePageChange={handlePageChange}
         first={first}
         rows={rows}
+        loading={loading}
       />
 
       {activeTask && (

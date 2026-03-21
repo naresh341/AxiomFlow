@@ -10,7 +10,7 @@ class WorflowSchema(BaseModel):
     name: str
     status: str
     trigger: Optional[str] = None
-    owner_name: str = "System"
+    owner_name: Optional[str] = "System"
     versions: list[WorkflowVersionSchema]
     created_at: datetime
     updated_at: datetime

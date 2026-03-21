@@ -7,16 +7,32 @@ import {
   ShieldCheck,
   Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BreakGlassModal from "../../Components/BreakGlassModal";
 import { NavLink } from "react-router-dom";
 import OverrideModal from "../../Components/OverrideModal";
 import LockRoles from "../../Components/LockRoles";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchStatus } from "../../RTKThunk/AsyncThunk";
 
 const Governance = () => {
+  const dispatch = useDispatch();
+
+  const { status, loading, error } = useSelector((state) => state.GovAction);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isOverrideModalOpen, setIsOverrideModalOpen] = useState(false);
   const [isLockRolesModalOpen, setIsLockRolesModalOpen] = useState(false);
+
+  useEffect(() => {
+    dispatch(fetchStatus());
+  }, [dispatch]);
+
+  const currentStatus = status || {
+    override_active: false,
+    roles_locked: false,
+    break_glass_active: false,
+  };
   return (
     <div className="min-h-screen transition-colors duration-300 bg-[#f6f7f8] dark:bg-[#101922]">
       <div className="flex flex-col h-full grow">
@@ -66,6 +82,99 @@ const Governance = () => {
               </div>
             </div>
 
+            {/* --- GOVERNANCE HUD SECTION --- */}
+            <div className="flex flex-col gap-3 p-4">
+              {/* Emergency Access Banner */}
+              {currentStatus.break_glass_active && (
+                <div className="relative overflow-hidden group border-l-4 border-red-600 bg-red-50 dark:bg-red-950/30 p-4 rounded-r-xl shadow-md transition-all">
+                  <div className="absolute top-0 right-0 p-1">
+                    <span className="flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 bg-red-600 rounded-lg text-white">
+                        <AlertTriangle size={24} />
+                      </div>
+                      <div>
+                        <h3 className="text-red-900 dark:text-red-400 font-black text-sm uppercase tracking-tighter">
+                          Emergency Protocol Active
+                        </h3>
+                        <p className="text-red-700/80 dark:text-red-500/80 text-xs font-medium">
+                          Full admin bypass enabled. Session is being recorded
+                          to security vault.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setIsModalOpen(true)}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-md shadow-lg transition-colors"
+                    >
+                      TERMINATE SESSION
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Role Lock Banner */}
+              {currentStatus.roles_locked && (
+                <div className="border-l-4 border-orange-500 bg-orange-50 dark:bg-orange-950/20 p-4 rounded-r-xl shadow-sm">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 bg-orange-500 rounded-lg text-white shadow-inner">
+                        <LockKeyhole size={20} />
+                      </div>
+                      <div>
+                        <h3 className="text-orange-900 dark:text-orange-400 font-black text-sm uppercase tracking-tighter">
+                          Policy Lockdown Engaged
+                        </h3>
+                        <p className="text-orange-700/80 dark:text-orange-500/80 text-xs font-medium">
+                          RBAC modifications are currently restricted across all
+                          domains.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setIsLockRolesModalOpen(true)}
+                      className="text-orange-700 dark:text-orange-400 text-xs font-black hover:underline underline-offset-4"
+                    >
+                      RELEASE LOCK
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Global Override Banner */}
+              {currentStatus.override_active && (
+                <div className="border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20 p-4 rounded-r-xl shadow-sm">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 bg-yellow-500 rounded-lg text-black">
+                        <ShieldAlert size={20} />
+                      </div>
+                      <div>
+                        <h3 className="text-yellow-900 dark:text-yellow-500 font-black text-sm uppercase tracking-tighter">
+                          Global Override Active
+                        </h3>
+                        <p className="text-yellow-700/80 dark:text-yellow-600/80 text-xs font-medium">
+                          Org-wide security policies are forcing local
+                          configuration bypass.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setIsOverrideModalOpen(true)}
+                      className="text-yellow-800 dark:text-yellow-500 text-xs font-black hover:underline underline-offset-4"
+                    >
+                      VIEW DETAILS
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Control Cards Section */}
             <div className="flex flex-col gap-6">
               {/* Org-wide Overrides Card */}
@@ -107,7 +216,9 @@ const Governance = () => {
                           onClick={() => setIsOverrideModalOpen(true)}
                           className="flex items-center justify-center h-10 px-5 min-w-35 bg-[#137fec] hover:bg-[#137fec]/90 text-white text-sm font-bold rounded-lg transition-colors"
                         >
-                          Enable Overrides
+                          {currentStatus.override_active
+                            ? "Manage Overrides"
+                            : "Enable Overrides"}
                         </button>
                       </div>
                     </div>
@@ -148,7 +259,9 @@ const Governance = () => {
                           onClick={() => setIsLockRolesModalOpen(true)}
                           className="flex items-center justify-center h-10 px-5 min-w-35 bg-[#137fec] hover:bg-[#137fec]/90 text-white text-sm font-bold rounded-lg transition-colors"
                         >
-                          Lock Roles
+                          {currentStatus.roles_locked
+                            ? "Unlock Roles"
+                            : "Lock Roles"}
                         </button>
                       </div>
                     </div>

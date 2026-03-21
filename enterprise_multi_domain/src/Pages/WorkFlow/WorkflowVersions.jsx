@@ -9,19 +9,23 @@ import {
   Workflow,
   X,
 } from "lucide-react";
+import { Menu } from "primereact/menu";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
 import CreateVersionModal from "../../Components/CreateVersionModal";
 import DynamicTable from "../../Components/DynamicTable";
-import Paginator from "../../Components/Paginator";
-import { get_Workflow_Versions } from "../../RTKThunk/AsyncThunk";
-import { TableSchemas } from "../../Utils/TableSchemas";
 import FilterButton from "../../Components/MiniComponent/FilterButton";
-import { Menu } from "primereact/menu";
+import Paginator from "../../Components/Paginator";
+import {
+  add_Version,
+  delete_Version,
+  get_Workflow_Versions,
+  update_Version,
+} from "../../RTKThunk/AsyncThunk";
+import { TableSchemas } from "../../Utils/TableSchemas";
 
 const WorkflowVersions = () => {
-  const [activeTab, setActiveTab] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
   const { workflowId } = useParams();
@@ -34,12 +38,12 @@ const WorkflowVersions = () => {
     priority: "All",
   });
   const [searchQuery, setSearchQuery] = useState("");
-
+  const [selectedVersion, setSelectedVersion] = useState(null);
   const { loading, currentWorkflowVersions } = useSelector(
     (state) => state.workflows,
   );
-
-  const versionData = currentWorkflowVersions || [];
+  const versionData = currentWorkflowVersions.data || [];
+  console.log(versionData);
   useEffect(() => {
     dispatch(get_Workflow_Versions(workflowId));
   }, [workflowId, dispatch]);
@@ -48,8 +52,53 @@ const WorkflowVersions = () => {
     setfirst((page + 1) * rows);
   };
 
-  const handleRowClick = (versionId) => {
-    navigate(`${versionId}?workflowId=${workflowId}`);
+  const handleRowClick = (event) => {
+    const rowData = event.data;
+
+    const id = rowData?.id;
+
+    if (!id) {
+      console.error("No ID found in row data:", rowData);
+      return;
+    }
+
+    // Navigate using the ID from the data property
+    navigate(`/workflows/${workflowId}/version/${id}`);
+  };
+
+  const handleCreateVersion = async (workflowId, payload) => {
+    try {
+      await dispatch(add_Version({ workflowId, payload })).unwrap();
+      console.log("workflowId in dashboard:", workflowId);
+      await dispatch(get_Workflow_Versions(workflowId)).unwrap();
+    } catch (error) {
+      console.error("Error creating task:", error);
+    }
+  };
+
+  const handleEdit = (risk) => {
+    setSelectedVersion(risk);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteVersion = async (id) => {
+    try {
+      await dispatch(delete_Version({ id })).unwrap();
+
+      await dispatch(get_Workflow_Versions(workflowId)).unwrap();
+    } catch (error) {
+      console.error("Delete failed:", error);
+    }
+  };
+
+  const handleUpdateVersion = async (id, payload) => {
+    try {
+      await dispatch(update_Version({ id, payload })).unwrap();
+
+      await dispatch(get_Workflow_Versions(workflowId)).unwrap();
+    } catch (error) {
+      console.error("Update failed:", error);
+    }
   };
 
   const statusItems = [
@@ -339,13 +388,21 @@ const WorkflowVersions = () => {
                 ))}
               </tbody>
             </table> */}
-            <DynamicTable
-              tableData={filteredData}
-              tableHead={TableSchemas.versions}
-              rows={rows}
-              first={first}
-              handleRowClick={handleRowClick}
-            />
+            {loading ? (
+              <div className="flex justify-center items-center h-48">
+                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#137fec]"></div>
+              </div>
+            ) : (
+              <DynamicTable
+                tableData={filteredData}
+                tableHead={TableSchemas.versions}
+                rows={rows}
+                first={first}
+                handleRowClick={handleRowClick}
+                onEdit={handleEdit}
+                onDelete={handleDeleteVersion}
+              />
+            )}
           </div>
           {/* Pagination */}
           <div className="flex items-center justify-center px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50">
@@ -380,7 +437,14 @@ const WorkflowVersions = () => {
       </main>
       <CreateVersionModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedVersion(null);
+        }}
+        workflowId={workflowId}
+        editData={selectedVersion}
+        onCreate={handleCreateVersion}
+        onUpdate={handleUpdateVersion}
       />
     </div>
   );

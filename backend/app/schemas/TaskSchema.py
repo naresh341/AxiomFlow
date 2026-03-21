@@ -38,3 +38,17 @@ class TaskCreate(BaseModel):
     type: str
     input_data: Optional[Dict] = None
     priority: Optional[int] = None
+    assignee_id: Optional[int] = None
+    assignee_role: Optional[str] = None
+    due_at: Optional[datetime] = None
+
+
+class TaskUpdate(BaseModel):
+    name: Optional[str] = None
+    type: Optional[str] = None
+    priority: Optional[int] = None
+    assignee_id: Optional[int] = None
+    assignee_role: Optional[str] = None
+    input_data: Optional[Dict] = None
+    status: Optional[str] = None
+    due_at: Optional[datetime] = None

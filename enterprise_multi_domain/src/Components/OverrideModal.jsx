@@ -1,29 +1,122 @@
-import React, { useState } from "react";
 import {
+  Calendar,
+  CheckCircle2,
+  Lock,
   ShieldAlert,
   TriangleAlert,
-  CheckCircle2,
-  Calendar,
-  Lock,
   X,
-  Info,
-  ShieldCheck,
 } from "lucide-react";
+import { useState } from "react";
+import { OverRideAction, Send_OTP } from "../RTKThunk/AsyncThunk";
+import { useDispatch } from "react-redux";
+import OtpModal from "./MiniComponent/OtpModal";
 
 const OverrideModal = ({ isOpen, onClose }) => {
-  const [mfa, setMfa] = useState(new Array(6).fill(""));
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpmodel, setOtpmodel] = useState(false);
 
-  if (!isOpen) return null;
+  const [formData, setFormData] = useState({
+    justification: "",
+    metadata: {},
+    mfa: ["", "", "", "", "", ""],
+    mfa_code: "",
+    duration: "",
+  });
 
-  const handleMfaChange = (element, index) => {
-    if (isNaN(element.value)) return false;
-    setMfa([...mfa.map((d, idx) => (idx === index ? element.value : d))]);
-    // Focus next input
-    if (element.nextSibling) {
-      element.nextSibling.focus();
+  // =====================
+  // HANDLE BASIC INPUT
+  // =====================
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // =====================
+  // DURATION SELECT
+  // =====================
+  const setDuration = (value) => {
+    setFormData((prev) => ({
+      ...prev,
+      duration: value,
+    }));
+  };
+
+  // =====================
+  // MFA HANDLING
+  // =====================
+  const handleMfaChange = (e, index) => {
+    const value = e.target.value;
+
+    if (!/^\d?$/.test(value)) return;
+
+    setFormData((prev) => {
+      const updated = [...prev.mfa];
+      updated[index] = value;
+
+      return {
+        ...prev,
+        mfa: updated,
+        mfa_code: updated.join(""),
+      };
+    });
+
+    if (value && index < 5) {
+      document.querySelector(`input[data-index="${index + 1}"]`)?.focus();
     }
   };
 
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace" && !formData.mfa[index] && index > 0) {
+      document.querySelector(`input[data-index="${index - 1}"]`)?.focus();
+    }
+  };
+
+  // =====================
+  // SUBMIT VIA THUNK
+  // =====================
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+
+      const payload = {
+        justification: formData.justification,
+        duration: formData.duration,
+        metadata: {
+          ...formData.metadata,
+        },
+        mfa_code: formData.mfa_code,
+      };
+
+      const res = await dispatch(OverRideAction(payload)).unwrap();
+
+      console.log("SUCCESS:", res);
+
+      onClose();
+    } catch (err) {
+      console.error("Governance action failed", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendOtp = async () => {
+    try {
+      await dispatch(Send_OTP({ action_type: "override" })).unwrap();
+
+      setOtpSent(true);
+      setOtpmodel(true);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -113,16 +206,25 @@ const OverrideModal = ({ isOpen, onClose }) => {
             </div>
             <div className="space-y-4">
               <textarea
+                name="justification"
+                value={formData.justification}
+                onChange={handleChange}
                 className="w-full bg-slate-50 dark:bg-[#f2b90d]/20 dark:text-white  border border-slate-200 dark:border-[#2d3a4b] rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#f2b90d] outline-none min-h-25 transition-all  "
                 placeholder="Provide detailed business justification for this global change..."
               />
               <div className="grid grid-cols-2 gap-4">
-                <button className="flex items-center justify-between px-4 py-3 bg-[#f2b90d]/10 border border-[#f2b90d] rounded-xl text-xs font-bold text-[#f2b90d]">
+                <button
+                  onClick={() => setDuration("manual")}
+                  className="flex items-center justify-between px-4 py-3 bg-[#f2b90d]/10 border border-[#f2b90d] rounded-xl text-xs font-bold text-[#f2b90d]"
+                >
                   <span>Until manually disabled</span>
                   <CheckCircle2 size={16} />
                 </button>
-                <button className="flex items-center justify-between px-4 py-3 bg-transparent border border-slate-200 dark:border-[#2d3a4b] rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-[#1c2632]">
-                  <span>Auto-expire after...</span>
+                <button
+                  onClick={() => setDuration("1 Hour")}
+                  className="flex items-center justify-between px-4 py-3 bg-transparent border border-slate-200 dark:border-[#2d3a4b] rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-[#1c2632]"
+                >
+                  <span>Auto-expire (1 Hour)</span>
                   <Calendar size={16} />
                 </button>
               </div>
@@ -151,19 +253,30 @@ const OverrideModal = ({ isOpen, onClose }) => {
                 </span>
               </label>
 
-              <div className="flex justify-center gap-2">
-                {mfa.map((data, index) => (
-                  <input
-                    key={index}
-                    type="text"
-                    maxLength="1"
-                    className="size-12 text-center text-xl border-slate-300 shadow-md font-bold bg-white dark:bg-[#1c2632] border  dark:border-[#2d3a4b] rounded-xl focus:border-[#f2b90d] focus:ring-4 focus:ring-[#f2b90d]/10 outline-none transition-all"
-                    value={data}
-                    onChange={(e) => handleMfaChange(e.target, index)}
-                    onFocus={(e) => e.target.select()}
-                  />
-                ))}
-              </div>
+              {!otpSent && (
+                <button
+                  onClick={handleSendOtp}
+                  className="h-12 bg-blue-600 text-white font-bold rounded-lg"
+                >
+                  Send OTP
+                </button>
+              )}
+              {otpSent && (
+                <div className="flex justify-center gap-2">
+                  {formData.mfa.map((digit, index) => (
+                    <input
+                      key={index}
+                      data-index={index}
+                      type="text"
+                      maxLength="1"
+                      value={digit}
+                      onChange={(e) => handleMfaChange(e, index)}
+                      onKeyDown={(e) => handleKeyDown(e, index)}
+                      className="size-12 text-center text-xl border-slate-300 shadow-md font-bold bg-white dark:bg-[#1c2632] border  dark:border-[#2d3a4b] rounded-xl focus:border-[#f2b90d] focus:ring-4 focus:ring-[#f2b90d]/10 outline-none transition-all"
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </section>
         </div>
@@ -175,17 +288,25 @@ const OverrideModal = ({ isOpen, onClose }) => {
           </div>
           <div className="flex gap-3">
             <button
+              type="button"
               onClick={onClose}
-              className="px-6 py-2.5 rounded-xl border border-slate-300 dark:border-[#2d3a4b] text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#2d3a4b] transition-all"
+              className="cursor-pointer px-6 py-2.5 rounded-xl border border-slate-300 dark:border-[#2d3a4b] text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#2d3a4b] transition-all"
             >
               Cancel
             </button>
-            <button className="px-8 py-2.5 rounded-xl bg-[#f2b90d] text-[#101922] text-xs font-black uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-[#f2b90d]/20">
+            <button
+              type="submit"
+              onClick={handleSubmit}
+              disabled={loading}
+              className="cursor-pointer px-8 py-2.5 rounded-xl bg-[#f2b90d] text-[#101922] text-xs font-black uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-[#f2b90d]/20"
+            >
               Enable Overrides
             </button>
           </div>
         </div>
       </div>
+
+      <OtpModal isOpen={otpmodel} onClose={() => setOtpmodel(false)} />
     </div>
   );
 };

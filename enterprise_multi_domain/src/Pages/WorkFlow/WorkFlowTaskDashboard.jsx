@@ -1,11 +1,26 @@
-import { ChevronDown, ChevronRight, Download, Search, X } from "lucide-react";
-import { NavLink } from "react-router-dom";
-import { TableSchemas } from "../../Utils/TableSchemas";
-import DynamicTable from "../../Components/DynamicTable";
-import Paginator from "../../Components/Paginator";
-import { useRef, useState } from "react";
-import FilterButton from "../../Components/MiniComponent/FilterButton";
+import {
+  ChevronDown,
+  ChevronRight,
+  Download,
+  Plus,
+  Search,
+  X,
+} from "lucide-react";
 import { Menu } from "primereact/menu";
+import { useRef, useState } from "react";
+import { useDispatch } from "react-redux";
+import { NavLink } from "react-router-dom";
+import CreateTaskModal from "../../Components/CreateTaskModal";
+import DynamicTable from "../../Components/DynamicTable";
+import FilterButton from "../../Components/MiniComponent/FilterButton";
+import Paginator from "../../Components/Paginator";
+import {
+  addTasks,
+  delete_Tasks,
+  get_Workflow_Tasks,
+  update_Tasks,
+} from "../../RTKThunk/AsyncThunk";
+import { TableSchemas } from "../../Utils/TableSchemas";
 
 const WorkFlowTaskDashboard = ({
   data,
@@ -14,15 +29,51 @@ const WorkFlowTaskDashboard = ({
   handlePageChange,
   first,
   rows,
+  loading,
 }) => {
-  // const tasks = Array.isArray(data) ? data : [];
   const menuStatus = useRef(null);
+  const dispatch = useDispatch();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
   const menuPriority = useRef(null);
   const [filters, setFilters] = useState({
     status: "All",
     priority: "All",
   });
+
+  const handleCreateTask = async (workflowId, payload) => {
+    try {
+      await dispatch(addTasks({ workflowId, payload })).unwrap();
+      console.log("workflowId in dashboard:", workflowId);
+      dispatch(get_Workflow_Tasks(workflowId));
+    } catch (error) {
+      console.error("Error creating task:", error);
+    }
+  };
+
+  const handleEdit = (risk) => {
+    setSelectedTask(risk);
+    setIsModalOpen(true);
+  };
+  const handleDeleteTask = async (id) => {
+    try {
+      await dispatch(delete_Tasks(id)).unwrap();
+      dispatch(get_Workflow_Tasks(workflowId));
+    } catch (error) {
+      console.error("Delete failed:", error);
+    }
+  };
+
+  const handleUpdateTask = async (id, payload) => {
+    try {
+      await dispatch(update_Tasks({ id, payload })).unwrap();
+      dispatch(get_Workflow_Tasks(workflowId));
+    } catch (error) {
+      console.error("Update failed:", error);
+    }
+  };
+
   const statusItems = [
     {
       label: "All",
@@ -102,22 +153,32 @@ const WorkFlowTaskDashboard = ({
   return (
     <div className="min-h-screen bg-[#f6f6f8] dark:bg-[#101622] font-display text-[#111318] dark:text-white">
       <main className="mx-auto px-6 py-8">
-        <nav className="flex items-center gap-2 mb-6 text-sm font-medium text-slate-500">
-          <NavLink
-            to="/workflows"
-            className="hover:text-blue-600 transition-colors"
-          >
-            Workflows
-          </NavLink>
-          <ChevronRight size={14} />
-          <NavLink
-            to={`/workflows/${workflowId}`}
-            className="text-slate-900 dark:text-white hover:text-blue-600 transition-colors"
-          >
-            {`${workflowId}`}
-          </NavLink>
-          <ChevronRight size={14} />
-          <span className="text-slate-900 dark:text-white">TASK</span>
+        <nav className="flex items-center justify-between gap-2 mb-6 text-sm font-medium text-slate-500">
+          <div className="w-full flex items-center gap-3">
+            <NavLink
+              to="/workflows"
+              className="hover:text-blue-600 transition-colors"
+            >
+              Workflows
+            </NavLink>
+            <ChevronRight size={14} />
+            <NavLink
+              to={`/workflows/${workflowId}`}
+              className="text-slate-900 dark:text-white hover:text-blue-600 transition-colors"
+            >
+              {`${workflowId}`}
+            </NavLink>
+            <ChevronRight size={14} />
+            <span className="text-slate-900 dark:text-white">TASK</span>
+          </div>
+          <div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex  whitespace-nowrap items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all"
+            >
+              <Plus size={18} /> New Task
+            </button>
+          </div>
         </nav>
         <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
           <div>
@@ -317,13 +378,21 @@ const WorkFlowTaskDashboard = ({
               ))}
             </tbody>
           </table> */}
-          <DynamicTable
-            tableData={filteredData}
-            tableHead={TableSchemas.task}
-            handleRowClick={onRowClick}
-            first={first}
-            rows={rows}
-          />
+          {loading ? (
+            <div className="flex justify-center items-center h-48">
+              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#137fec]"></div>
+            </div>
+          ) : (
+            <DynamicTable
+              tableData={filteredData}
+              tableHead={TableSchemas.task}
+              handleRowClick={onRowClick}
+              first={first}
+              rows={rows}
+              onEdit={handleEdit}
+              onDelete={handleDeleteTask}
+            />
+          )}
           <div className="px-6 py-4 border-t border-slate-100 dark:border-gray-800  dark:bg-gray-900 flex items-center justify-center bg-slate-50/30">
             <div className="p-4 border-t border-gray-200 dark:border-gray-800 dark:bg-gray-900">
               <Paginator
@@ -336,6 +405,18 @@ const WorkFlowTaskDashboard = ({
           </div>
         </div>
       </main>
+
+      <CreateTaskModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedTask(null);
+        }}
+        editData={selectedTask}
+        workflowId={workflowId}
+        onCreate={handleCreateTask}
+        onUpdate={handleUpdateTask}
+      />
     </div>
   );
 };

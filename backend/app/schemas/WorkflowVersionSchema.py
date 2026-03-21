@@ -20,8 +20,10 @@ class WorkflowVersionBase(BaseModel):
     created_by: Optional[str] = None
 
 
-class WorkflowVersionCreate(WorkflowVersionBase):
-    workflow_id: int
+class WorkflowVersionCreate(BaseModel):
+    version: str
+    is_active: bool = True
+    definition: Optional[Dict[str, Any]] = None
 
 
 class WorkflowVersionSchema(WorkflowVersionBase):
@@ -30,3 +32,8 @@ class WorkflowVersionSchema(WorkflowVersionBase):
     created_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UpdateWorkflowVersion(BaseModel):
+    version: Optional[str]
+    is_active: Optional[bool]

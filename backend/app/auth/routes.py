@@ -1,131 +1,113 @@
-import bcrypt
 from app.core.dependencies import get_db
-from app.core.security import (
-    create_access_token,
-    create_refresh_token,
-    decode_token,
-)
-from app.model.UserModel import User, UserStatus
-from fastapi import (
-    APIRouter,
-    Cookie,
-    Depends,
-    HTTPException,
-    Response,
-    status,
-)
+from app.services.auth_Service import AuthService
+from fastapi import APIRouter, Cookie, Depends, Response, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta, timezone
 
-from .schemas import LoginRequest, LoginResponse
+from app.auth.schemas import (
+    LoginRequest,
+    LoginResponse,
+    RegisterSchema,
+    ResetPasswordRequest,
+)
+from app.services.auth_Service import forgot_password, reset_password
+from fastapi import BackgroundTasks
+from app.core.security import get_current_user
+from app.model.UserModel import User
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
+# ✅ LOGIN
 @router.post("/login", response_model=LoginResponse)
 def login(
     data: LoginRequest,
     response: Response,
     db: Session = Depends(get_db),
 ):
-    expires = datetime.now(timezone.utc) + timedelta(days=1)
-    # 1️⃣ Fetch user
-    user = db.query(User).filter(User.username == data.username).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Credentials",
-        )
-
-    # 2️⃣ Verify password
-    password_bytes = data.password.encode("utf-8")
-    hashed_bytes = user.password_hash.encode("utf-8")
-
-    if not bcrypt.checkpw(password_bytes, hashed_bytes):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Credentials",
-        )
-
-    # 3️⃣ Check account status
-    if user.status is not UserStatus.ACTIVE:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is not active",
-        )
-
-    # 4️⃣ Generate tokens
-    access_token = create_access_token(
-        {
-            "sub": str(user.id),
-            "role": user.role,
-        }
-    )
-
-    refresh_token = create_refresh_token(
-        {
-            "sub": str(user.id),
-        }
-    )
+    result = AuthService.login_user(data, db)
 
     response.set_cookie(
         key="access_token",
-        value=access_token,
+        value=result["access_token"],
         httponly=True,
         secure=False,
-        expires=expires,
         samesite="lax",
         max_age=15 * 60,
     )
 
+    # Set refresh token cookie
     response.set_cookie(
         key="refresh_token",
-        value=refresh_token,
+        value=result["refresh_token"],
         httponly=True,
         secure=True,
-        expires=expires,
         samesite="lax",
         max_age=7 * 24 * 60 * 60,
     )
 
-    return {
-        "user": {
-            "name": f"{user.first_name} {user.last_name}",
-            "role": user.role,
-        }
-    }
+    return {"user": result["user"]}
+
+
+# ✅ REGISTER
+@router.post("/register")
+def register(
+    data: RegisterSchema,
+    db: Session = Depends(get_db),
+):
+    result = AuthService.register_user(data, db)
+    return result
 
 
 @router.post("/refresh")
-def refresh_token_endpoint(
+def refresh_token(
     response: Response,
     refresh_token: str = Cookie(None),
 ):
-    if not refresh_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No refresh token",
-        )
-
-    payload = decode_token(refresh_token)
-    user_id = payload.get("sub")
-
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token",
-        )
-
-    new_access_token = create_access_token({"sub": str(user_id)})
+    result = AuthService.refresh_access_token(refresh_token)
 
     response.set_cookie(
         key="access_token",
-        value=new_access_token,
+        value=result["access_token"],
         httponly=True,
-        secure=False,
+        secure=False,  # ⚠️ True in production
         samesite="lax",
         max_age=15 * 60,
     )
 
     return {"message": "Token refreshed"}
+
+
+# ✅ LOGOUT
+@router.post("/logout")
+def logout(response: Response):
+    AuthService.logout_user()
+
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
+
+    return {"message": "Logged out successfully"}
+
+
+@router.post("/forgot-password")
+def forgot_password_route(
+    email: dict,
+    db: Session = Depends(get_db),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+):
+    return forgot_password(email["email"], db, background_tasks)
+
+
+@router.post("/reset-password")
+def reset_password_route(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    return reset_password(data.token, data.password, db)
+
+
+@router.get("/me")
+def get_me(current_user: User = Depends(get_current_user)):
+    return {
+        "id": current_user.id,
+        "name": f"{current_user.first_name} {current_user.last_name}",
+        "email": current_user.email,
+        "organization_id": current_user.organization_id,
+        "role": current_user.role,
+    }

@@ -11,10 +11,62 @@ import {
   Globe,
 } from "lucide-react";
 import { useState } from "react";
+import { create_Flag, get_Flag } from "../RTKThunk/AsyncThunk";
+import { useDispatch } from "react-redux";
 
 const CreateFeatureFlagModal = ({ isOpen, onClose }) => {
-  const [rollout, setRollout] = useState(15);
-  const [flagType, setFlagType] = useState("on_off");
+  const dispatch = useDispatch();
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    flag_type: "on_off",
+    rollout_percentage: 10,
+    scope: "global",
+    is_enabled: false,
+  });
+
+  const generateKey = (name) => name.toLowerCase().replace(/\s+/g, "-");
+
+  const handleCreate = () => {
+    try {
+      const payload = {
+        ...formData,
+        type: "beta",
+        key: generateKey(formData.name),
+      };
+
+      console.log("🚀 Creating Flag:", payload);
+
+      dispatch(create_Flag(payload));
+      dispatch(get_Flag());
+      onClose();
+    } catch (error) {
+      console.error(`Error while creating Flag`, error);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleToggle = () => {
+    setFormData((prev) => ({
+      ...prev,
+      is_enabled: !prev.is_enabled,
+    }));
+  };
+
+  const handleRolloutChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      rollout_percentage: Number(e.target.value),
+    }));
+  };
 
   if (!isOpen) return null;
 
@@ -62,6 +114,9 @@ const CreateFeatureFlagModal = ({ isOpen, onClose }) => {
                   Flag Name
                 </label>
                 <input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
                   className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white h-14 px-5 text-lg focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all"
                   placeholder="e.g. Next-Gen Checkout Flow"
                 />
@@ -71,7 +126,9 @@ const CreateFeatureFlagModal = ({ isOpen, onClose }) => {
                   System Key <HelpCircle size={16} className="text-slate-400" />
                 </label>
                 <div className="flex h-14 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-5 items-center text-slate-500 dark:text-slate-400 font-mono text-base italic">
-                  checkout-next-gen-v2
+                  {formData.name
+                    ? generateKey(formData.name)
+                    : "auto-generated-key"}
                 </div>
               </div>
               <div className="md:col-span-2 flex flex-col gap-3">
@@ -79,9 +136,38 @@ const CreateFeatureFlagModal = ({ isOpen, onClose }) => {
                   Operational Description
                 </label>
                 <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
                   className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white min-h-30 p-5 text-base outline-none focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all"
                   placeholder="Explain why this flag exists and who should be allowed to change it..."
                 />
+              </div>
+              <div className="flex flex-col gap-3">
+                <label className="text-sm font-semibold uppercase">Scope</label>
+                <select
+                  name="scope"
+                  value={formData.scope}
+                  onChange={handleChange}
+                  className="rounded-xl border p-3"
+                >
+                  <option value="global">Global</option>
+                  <option value="org">Organization</option>
+                  <option value="user">User</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-3">
+                <label className="text-sm font-semibold uppercase">Type</label>
+                <select
+                  name="type"
+                  value={formData.type}
+                  onChange={handleChange}
+                  className="rounded-xl border p-3"
+                >
+                  <option value="release">Release</option>
+                  <option value="beta">Beta</option>
+                  <option value="experiment">Experiment</option>
+                </select>
               </div>
             </div>
           </section>
@@ -104,7 +190,7 @@ const CreateFeatureFlagModal = ({ isOpen, onClose }) => {
                 <label
                   key={type}
                   className={`flex flex-col gap-3 p-6 rounded-2xl border-2 cursor-pointer transition-all ${
-                    flagType === type
+                    formData.flag_type === type
                       ? "border-blue-600 bg-blue-600/5 dark:bg-blue-600/10 shadow-md"
                       : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300"
                   }`}
@@ -112,13 +198,18 @@ const CreateFeatureFlagModal = ({ isOpen, onClose }) => {
                   <div className="flex justify-between items-start">
                     <input
                       type="radio"
-                      name="flagType"
-                      checked={flagType === type}
-                      onChange={() => setFlagType(type)}
+                      name="flag_type"
+                      checked={formData.flag_type === type}
+                      onChange={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          flag_type: type,
+                        }))
+                      }
                       className="w-5 h-5 text-blue-600"
                     />
                     <div
-                      className={`p-2 rounded-lg ${flagType === type ? "bg-blue-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400"}`}
+                      className={`p-2 rounded-lg ${formData.flag_type === type ? "bg-blue-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-400"}`}
                     >
                       {type === "on_off" && <Globe size={20} />}
                       {type === "percentage" && <Target size={20} />}
@@ -151,7 +242,11 @@ const CreateFeatureFlagModal = ({ isOpen, onClose }) => {
                     Flag value upon creation
                   </span>
                 </div>
-                <Toggle scale="large" />
+                <Toggle
+                  scale="large"
+                  checked={formData.is_enabled}
+                  onChange={handleToggle}
+                />
               </div>
               <div className="flex flex-col gap-4">
                 <div className="flex justify-between items-end">
@@ -159,13 +254,13 @@ const CreateFeatureFlagModal = ({ isOpen, onClose }) => {
                     Traffic Allocation
                   </label>
                   <span className="text-blue-600 text-2xl font-black">
-                    {rollout}%
+                    {formData.rollout_percentage}%
                   </span>
                 </div>
                 <input
                   type="range"
-                  value={rollout}
-                  onChange={(e) => setRollout(e.target.value)}
+                  value={formData.rollout_percentage}
+                  onChange={handleRolloutChange}
                   className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer accent-blue-600"
                 />
               </div>
@@ -225,12 +320,17 @@ const CreateFeatureFlagModal = ({ isOpen, onClose }) => {
         {/* Large Footer with Clear Actions */}
         <div className="p-8 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex items-center justify-end gap-6">
           <button
+            type="button"
             onClick={onClose}
-            className="px-8 h-14 text-slate-600 dark:text-slate-300 text-base font-bold rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+            className=" cursor-pointer px-8 h-14 text-slate-600 dark:text-slate-300 text-base font-bold rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
           >
             Discard Changes
           </button>
-          <button className="px-12 h-14 bg-blue-600 text-white text-lg font-bold rounded-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3 shadow-xl shadow-blue-600/25">
+          <button
+            type="submit"
+            onClick={handleCreate}
+            className="px-12 h-14 bg-blue-600 text-white text-lg font-bold rounded-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3 shadow-xl shadow-blue-600/25 cursor-pointer"
+          >
             <Plus size={20} strokeWidth={3} />
             Initialize Flag
           </button>
@@ -241,12 +341,13 @@ const CreateFeatureFlagModal = ({ isOpen, onClose }) => {
 };
 
 // Helper Toggle with variable sizing
-const Toggle = ({ defaultChecked = false, scale = "normal" }) => (
+const Toggle = ({ checked, onChange, scale = "normal" }) => (
   <label className="relative inline-flex items-center cursor-pointer">
     <input
       type="checkbox"
       className="sr-only peer"
-      defaultChecked={defaultChecked}
+      checked={checked}
+      onChange={onChange}
     />
     <div
       className={`
@@ -254,7 +355,7 @@ const Toggle = ({ defaultChecked = false, scale = "normal" }) => (
       bg-slate-300 dark:bg-slate-700 rounded-full peer 
       peer-checked:after:translate-x-full after:content-[''] after:absolute 
       ${scale === "large" ? "after:top-1 after:left-1 after:h-6 after:w-6" : "after:top-0.5 after:left-0.5 after:h-5 after:w-5"}
-      after:bg-white after:rounded-full after:transition-all peer-checked:bg-   0
+      after:bg-white after:rounded-full after:transition-all peer-checked:bg-blue-600
     `}
     ></div>
   </label>

@@ -6,13 +6,28 @@ import {
   Unlock,
   X,
 } from "lucide-react";
-import { useState } from "react";
 
-const PasswordPolicyEditor = ({ isOpen, onClose }) => {
-  const [lockoutEnabled, setLockoutEnabled] = useState(true);
+const PasswordPolicyEditor = ({
+  isOpen,
+  onClose,
+  formData,
+  setFormData,
+  onSave,
+}) => {
+  const handleChange = (e, section, key) => {
+    const value =
+      e.target.type === "checkbox" ? e.target.checked : e.target.value;
+
+    setFormData((prev) => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [key]: value,
+      },
+    }));
+  };
 
   if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-gray-900 w-full max-w-300 h-[90vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden border border-[#dbe0e6] dark:border-gray-800 animate-in fade-in zoom-in duration-200">
@@ -59,6 +74,11 @@ const PasswordPolicyEditor = ({ isOpen, onClose }) => {
                     <div className="flex items-center gap-3">
                       <input
                         type="number"
+                        value={formData.password_policy.min_length || 0}
+                        onChange={(e) =>
+                          handleChange(e, "password_policy", "min_length")
+                        }
+                        name=""
                         defaultValue="14"
                         className="w-24 h-12 bg-gray-50 border  dark:bg-gray-800 border-gray-300 dark:border-gray-700 rounded-xl text-lg font-bold text-center focus:ring-2 focus:ring-blue-600 outline-none"
                       />
@@ -70,22 +90,25 @@ const PasswordPolicyEditor = ({ isOpen, onClose }) => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {[
-                      "Require uppercase",
-                      "Require numbers",
-                      "Require special characters",
-                    ].map((label) => (
+                      { key: "require_uppercase", label: "Require uppercase" },
+                      { key: "require_numbers", label: "Require numbers" },
+                      {
+                        key: "require_symbols",
+                        label: "Require special characters",
+                      },
+                    ].map((item) => (
                       <label
-                        key={label}
-                        className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 cursor-pointer hover:border-blue-600/30 transition-all group"
+                        key={item.key}
+                        className="flex items-center gap-4 p-4 rounded-xl border bg-gray-50/50 dark:bg-gray-800/30"
                       >
                         <input
                           type="checkbox"
-                          defaultChecked
-                          className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+                          checked={formData.password_policy[item.key] || false}
+                          onChange={(e) =>
+                            handleChange(e, "password_policy", item.key)
+                          }
                         />
-                        <span className="text-base font-bold dark:text-gray-300 group-hover:text-blue-600 transition-colors">
-                          {label}
-                        </span>
+                        <span>{item.label}</span>
                       </label>
                     ))}
                   </div>
@@ -108,11 +131,18 @@ const PasswordPolicyEditor = ({ isOpen, onClose }) => {
                     <label className="text-lg font-bold dark:text-gray-200">
                       Password age
                     </label>
-                    <select className="w-56 h-12 bg-gray-50 border dark:bg-gray-800 border-gray-300 dark:border-gray-700 rounded-xl px-4 font-bold text-sm focus:ring-2 focus:ring-blue-600 outline-none">
-                      <option>30 days</option>
-                      <option>60 days</option>
-                      <option selected>90 days</option>
-                      <option>Never</option>
+                    <select
+                      value={formData.password_policy.password_age || "90"}
+                      onChange={(e) =>
+                        handleChange(e, "password_policy", "password_age")
+                      }
+                      className="w-56 h-12 bg-gray-50 border dark:bg-gray-800 border-gray-300 dark:border-gray-700 rounded-xl px-4 font-bold text-sm focus:ring-2 focus:ring-blue-600 outline-none"
+                    >
+                      <option value="">Select Passowrd Age</option>
+                      <option value="30">30 days</option>
+                      <option value="60">60 days</option>
+                      <option value="90">90 days</option>
+                      <option value="never">Never</option>
                     </select>
                   </div>
                   <div className="flex items-center justify-between">
@@ -125,7 +155,10 @@ const PasswordPolicyEditor = ({ isOpen, onClose }) => {
                       </span>
                       <input
                         type="number"
-                        defaultValue="5"
+                        value={formData.password_policy.history_limit || 5}
+                        onChange={(e) =>
+                          handleChange(e, "password_policy", "history_limit")
+                        }
                         className="w-20 h-12 bg-gray-50 border  dark:bg-gray-800 border-gray-300 dark:border-gray-700 rounded-xl text-center font-bold focus:ring-2 focus:ring-blue-600 outline-none"
                       />
                       <span className="text-sm font-bold text-[#617589]">
@@ -159,11 +192,31 @@ const PasswordPolicyEditor = ({ isOpen, onClose }) => {
                     </div>
                     <button
                       type="button"
-                      onClick={() => setLockoutEnabled(!lockoutEnabled)}
-                      className={`w-12 h-6 rounded-full relative transition-colors duration-200 ${lockoutEnabled ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-700"}`}
+                      onClick={() =>
+                        handleChange(
+                          {
+                            target: {
+                              type: "checkbox",
+                              checked:
+                                !formData.password_policy.lockout_enabled,
+                            },
+                          },
+                          "password_policy",
+                          "lockout_enabled",
+                        )
+                      }
+                      className={`w-12 h-6 rounded-full relative transition-colors duration-200 ${
+                        formData.password_policy.lockout_enabled
+                          ? "bg-blue-600"
+                          : "bg-gray-300 dark:bg-gray-700"
+                      }`}
                     >
                       <div
-                        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-200 ${lockoutEnabled ? "right-1" : "left-1"}`}
+                        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-200 ${
+                          formData.password_policy.lockout_enabled
+                            ? "right-1"
+                            : "left-1"
+                        }`}
                       />
                     </button>
                   </div>
@@ -175,7 +228,10 @@ const PasswordPolicyEditor = ({ isOpen, onClose }) => {
                       </label>
                       <input
                         type="number"
-                        defaultValue="5"
+                        value={formData.password_policy.max_attempts || 5}
+                        onChange={(e) =>
+                          handleChange(e, "password_policy", "max_attempts")
+                        }
                         className="w-full h-12 bg-gray-50 border shadow-md dark:bg-gray-800 border-gray-300 dark:border-gray-700 rounded-xl px-4 font-bold"
                       />
                     </div>
@@ -185,7 +241,10 @@ const PasswordPolicyEditor = ({ isOpen, onClose }) => {
                       </label>
                       <input
                         type="number"
-                        defaultValue="30"
+                        value={formData.password_policy.lockout_duration || 30}
+                        onChange={(e) =>
+                          handleChange(e, "password_policy", "lockout_duration")
+                        }
                         className="w-full h-12 bg-gray-50 border shadow-md dark:bg-gray-800 border-gray-300 dark:border-gray-700 rounded-xl px-4 font-bold"
                       />
                     </div>
@@ -265,7 +324,13 @@ const PasswordPolicyEditor = ({ isOpen, onClose }) => {
             >
               Cancel
             </button>
-            <button className="px-10 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-black rounded-xl transition-all shadow-lg shadow-blue-600/20">
+            <button
+              onClick={() => {
+                onSave();
+                onClose();
+              }}
+              className="px-10 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-black rounded-xl transition-all shadow-lg shadow-blue-600/20"
+            >
               Save Policy
             </button>
           </div>

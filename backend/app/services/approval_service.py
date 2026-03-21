@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from app.model.approval import Approval
 from app.model.ApprovalHistory import ApprovalHistory
 from app.schemas.ApprovalHistorySchema import HistoryBase
+from sqlalchemy import func
 
 
 class ApprovalService:
@@ -97,3 +98,39 @@ class ApprovalService:
         self.db.refresh(approval)
 
         return approval
+
+    def create_approval(self, data: dict):
+        total_approvals = self.db.query(func.count(Approval.id)).scalar()
+        generated_key = f"APP-{(total_approvals + 1):03d}"
+
+        new_approval = Approval(**data, approval_key=generated_key, status="PENDING")
+        self.db.add(new_approval)
+        self.db.commit()
+        self.db.refresh(new_approval)
+        return new_approval
+
+    def update_approval(self, approval_id: int, data: dict):
+        approval = self.db.query(Approval).filter(Approval.id == approval_id).first()
+        if not approval:
+            return None
+
+        # Update fields dynamically
+        for key, value in data.items():
+            if hasattr(approval, key):
+                setattr(approval, key, value)
+
+        self.db.commit()
+        self.db.refresh(approval)
+        return approval
+
+    def delete_approval(self, approval_id: int):
+        approval = self.db.query(Approval).filter(Approval.id == approval_id).first()
+        if not approval:
+            return False
+
+        # Using soft delete as per your plan
+        approval.status = "CLOSED"
+        # If you prefer hard delete: self.db.delete(approval)
+
+        self.db.commit()
+        return True

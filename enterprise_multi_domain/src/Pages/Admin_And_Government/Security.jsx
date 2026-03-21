@@ -1,32 +1,193 @@
-import React, { useState } from "react";
 import {
-  ShieldCheck,
-  Vibrate,
-  KeyRound,
-  Timer,
-  Plus,
   CheckCircle2,
-  UserCheck,
   Edit3,
+  KeyRound,
+  Plus,
+  Timer,
+  Vibrate,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import PasswordPolicyEditor from "../../Components/PasswordPolicyEditor";
-
+import { useDispatch, useSelector } from "react-redux";
+import {
+  get_Security,
+  update_Security,
+  create_Security,
+  delete_Security,
+} from "../../RTKThunk/AsyncThunk";
 const Security = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const networkAccess = [
-    { name: "VPN Gateway", range: "192.168.10.0/24", date: "Oct 10, 2023" },
-    {
-      name: "Office HQ (London)",
-      range: "10.0.0.1 - 10.0.0.254",
-      date: "Nov 15, 2023",
-    },
-    {
-      name: "Admin Remote Proxy",
-      range: "203.0.113.42/32",
-      date: "Dec 22, 2023",
-    },
-  ];
+  const user = useSelector((state) => state.islogin.user);
 
+  const orgId = user?.organization_id;
+
+  const dispatch = useDispatch();
+  const { data, loading } = useSelector((state) => state.security);
+
+  useEffect(() => {
+    if (orgId) {
+      dispatch(get_Security(orgId));
+    }
+  }, [orgId, dispatch]);
+
+  const [formData, setFormData] = useState({
+    mfa_enabled: false,
+
+    password_policy: {
+      min_length: 14,
+      require_uppercase: true,
+      require_numbers: true,
+      require_symbols: true,
+      expiry_days: 90,
+      history_limit: 5,
+    },
+
+    session_policy: {
+      timeout_minutes: 30,
+    },
+
+    network_policy: {
+      allowed_ips: [],
+    },
+  });
+  const networkAccess = formData?.network_policy?.allowed_ips || [];
+
+  useEffect(() => {
+    if (data?.data) {
+      const policy = data.data;
+
+      setFormData((prev) => ({
+        ...prev,
+        ...policy,
+
+        password_policy: {
+          ...prev.password_policy,
+          ...(policy.password_policy || {}),
+
+          // ✅ FIX: convert strings → numbers here
+          min_length: Number(policy.password_policy?.min_length || 0),
+          history_limit: Number(policy.password_policy?.history_limit || 0),
+          max_attempts: Number(policy.password_policy?.max_attempts || 0),
+          lockout_duration: Number(
+            policy.password_policy?.lockout_duration || 0,
+          ),
+        },
+
+        session_policy: {
+          ...prev.session_policy,
+          ...(policy.session_policy || {}),
+        },
+
+        network_policy: {
+          ...prev.network_policy,
+          ...(policy.network_policy || {}),
+        },
+      }));
+    }
+  }, [data]);
+  const handleSaveSecurity = () => {
+    dispatch(update_Security({ id: orgId, payload: { data: formData } }));
+  };
+
+  const toggleMFA = () => {
+    const updatedValue = !formData.mfa_enabled;
+
+    setFormData((prev) => ({
+      ...prev,
+      mfa_enabled: updatedValue,
+    }));
+
+    dispatch(
+      update_Security({
+        id: orgId,
+        payload: {
+          data: {
+            ...formData,
+            mfa_enabled: updatedValue,
+          },
+        },
+      }),
+    );
+  };
+
+  const handleSessionChange = (value) => {
+    const timeout = Number(value);
+
+    const updatedData = {
+      ...formData,
+      session_policy: {
+        ...formData.session_policy,
+        timeout_minutes: timeout,
+      },
+    };
+
+    setFormData(updatedData);
+
+    dispatch(
+      update_Security({
+        id: orgId,
+        payload: { data: updatedData },
+      }),
+    );
+  };
+
+  const addIpRange = () => {
+    const newIp = {
+      id: Date.now(),
+      name: "",
+      range: "",
+      date: new Date().toISOString().split("T")[0],
+    };
+
+    setFormData((prev) => ({
+      ...prev,
+      network_policy: {
+        ...prev.network_policy,
+        allowed_ips: [...prev.network_policy.allowed_ips, newIp],
+      },
+    }));
+  };
+
+  const updateIp = (id, key, value) => {
+    let updatedIps;
+
+    setFormData((prev) => {
+      updatedIps = prev.network_policy.allowed_ips.map((ip) =>
+        ip.id === id ? { ...ip, [key]: value } : ip,
+      );
+
+      return {
+        ...prev,
+        network_policy: {
+          ...prev.network_policy,
+          allowed_ips: updatedIps,
+        },
+      };
+    });
+
+    if (key === "range" && value) {
+      dispatch(
+        create_Security({
+          id: orgId,
+          ip: value,
+        }),
+      );
+    }
+  };
+
+  const revokeIp = (ipRange) => {
+    dispatch(delete_Security({ id: orgId, ip: ipRange }));
+
+    setFormData((prev) => ({
+      ...prev,
+      network_policy: {
+        ...prev.network_policy,
+        allowed_ips: prev.network_policy.allowed_ips.filter(
+          (item) => item.range !== ipRange,
+        ),
+      },
+    }));
+  };
   return (
     <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101922] text-[#111418] dark:text-white transition-colors">
       <main className="mx-auto py-12 px-6">
@@ -54,8 +215,17 @@ const Security = () => {
                     Enforced
                   </span>
                 </div>
-                <div className="w-12 h-6 bg-blue-600 rounded-full relative cursor-pointer transition-colors">
-                  <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm" />
+                <div
+                  onClick={toggleMFA}
+                  className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${
+                    formData.mfa_enabled ? "bg-blue-600" : "bg-gray-400"
+                  }`}
+                >
+                  <div
+                    className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${
+                      formData.mfa_enabled ? "right-1" : "left-1"
+                    }`}
+                  />
                 </div>
               </div>
               <div className="flex items-start gap-6">
@@ -101,10 +271,10 @@ const Security = () => {
                   <h3 className="text-xl font-bold mb-4">Password Policy</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {[
-                      "Minimum 14 characters",
-                      "Rotation every 90 days",
-                      "No reuse of last 5 passwords",
-                      "Uppercase, numeric, & symbols",
+                      `Minimum ${formData.password_policy.min_length} characters`,
+                      `Rotation every ${formData.password_policy.expiry_days} days`,
+                      `No reuse of last ${formData.password_policy.history_limit} passwords`,
+                      `Uppercase, numeric, & symbols`,
                     ].map((rule) => (
                       <div
                         key={rule}
@@ -150,11 +320,15 @@ const Security = () => {
                   <label className="block text-[12px] font-black uppercase text-gray-400 mb-2 tracking-widest">
                     Session Timeout
                   </label>
-                  <select className="w-full bg-gray-50 dark:bg-gray-800 border-0 rounded-xl text-sm font-bold py-3 px-4 focus:ring-2 focus:ring-blue-600">
-                    <option>15 Minutes</option>
-                    <option selected>30 Minutes</option>
-                    <option>1 Hour</option>
-                    <option>End of Working Day</option>
+                  <select
+                    value={formData.session_policy.timeout_minutes}
+                    onChange={(e) => handleSessionChange(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-gray-800 border-0 rounded-xl text-sm font-bold py-3 px-4 focus:ring-2 focus:ring-blue-600"
+                  >
+                    <option value={15}>15 Minutes</option>
+                    <option value={30}>30 Minutes</option>
+                    <option value={60}>1 Hour</option>
+                    <option value={480}>End of Working Day</option>
                   </select>
                 </div>
               </div>
@@ -176,7 +350,10 @@ const Security = () => {
                     High Security
                   </span>
                 </div>
-                <button className="bg-blue-600 text-white text-xs font-black py-2.5 px-5 rounded-xl flex items-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20">
+                <button
+                  onClick={addIpRange}
+                  className="bg-blue-600 text-white text-xs font-black py-2.5 px-5 rounded-xl flex items-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
+                >
                   <Plus size={16} /> Add IP Range
                 </button>
               </div>
@@ -200,22 +377,58 @@ const Security = () => {
                   </thead>
                   <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                     {networkAccess.map((item) => (
-                      <tr
-                        key={item.name}
-                        className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors"
-                      >
-                        <td className="py-5 font-bold">{item.name}</td>
-                        <td className="py-5 font-mono text-gray-500 dark:text-gray-400">
-                          {item.range}
+                      <tr key={item.id}>
+                        {/* Name */}
+                        <td className="py-3 px-4">
+                          <input
+                            value={item.name}
+                            onChange={(e) =>
+                              updateIp(item.id, "name", e.target.value)
+                            }
+                            placeholder="Location Name"
+                            className="w-full rounded-lg border border-gray-300 dark:bg-white h-10 px-3 text-sm"
+                          />
                         </td>
-                        <td className="py-5 text-gray-400">{item.date}</td>
-                        <td className="py-5 text-right">
-                          <button className="text-red-500 hover:text-red-600 font-black text-[12px] uppercase tracking-widest">
+
+                        {/* IP */}
+                        <td className="py-3 px-4">
+                          <input
+                            value={item.range}
+                            onChange={(e) =>
+                              updateIp(item.id, "range", e.target.value)
+                            }
+                            placeholder="IP Range / CIDR"
+                            className="w-full rounded-lg border border-gray-300 dark:bg-white h-10 px-3 text-sm"
+                          />
+                        </td>
+
+                        {/* Date */}
+                        <td className="py-3 px-4  text-gray-400">
+                          {item.date}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            onClick={() => revokeIp(item)}
+                            className="text-red-500 hover:text-red-600"
+                          >
                             Revoke
                           </button>
                         </td>
                       </tr>
                     ))}
+
+                    {networkAccess.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan="4"
+                          className="text-center py-6 text-gray-400 italic"
+                        >
+                          No IP ranges added
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -241,6 +454,9 @@ const Security = () => {
         <PasswordPolicyEditor
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
+          formData={formData}
+          setFormData={setFormData}
+          onSave={handleSaveSecurity}
         />
       </main>
     </div>

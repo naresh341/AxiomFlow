@@ -7,26 +7,15 @@ import {
   Maximize2,
   TrendingUp,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import DynamicTable from "../../Components/DynamicTable";
 import Paginator from "../../Components/Paginator";
 import WorkflowNode from "../../Components/WorkflowNode";
 import { TableSchemas } from "../../Utils/TableSchemas";
-import { get_Workflow_Executions } from "../../RTKThunk/AsyncThunk";
 
 const WorkflowOverview = () => {
   const { currentWorkflow } = useOutletContext();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const [first, setFirst] = useState(0);
-  const rows = 10;
-  const { loading, currentWorkflowExecutions } = useSelector(
-    (state) => state.workflows,
-  );
-  // currentWorkflowExecutions || {};
-  // const executions = currentWorkflowExecutions || [];
   const formatDateTime = (dateString) => {
     if (!dateString) return "Date not set";
     const date = new Date(dateString);
@@ -76,15 +65,13 @@ const WorkflowOverview = () => {
     },
   ];
 
-  const onPageChange = (pageIndex) => {
-    setFirst(pageIndex * rows);
-  };
   // const workflowId = currentWorkflow?.workflow_id_str;
   // useEffect(() => {
   //   if (workflowId) {
+  //     // Pass the workflowId to your thunk so it knows which executions to fetch
   //     dispatch(get_Workflow_Executions());
   //   }
-  // }, [dispatch, ]);
+  // }, [dispatch, workflowId]);
 
   // const executions = useMemo(() => {
   //   return Array.isArray(currentWorkflowExecutions)

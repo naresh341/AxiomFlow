@@ -1,25 +1,29 @@
 import { ArrowLeft, Lock } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import EmailSent from "./EmailSent";
+import { useDispatch, useSelector } from "react-redux";
+import { Forget_Password } from "../../RTKThunk/AsyncThunk";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [isSent, setIsSent] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const { data, loading } = useSelector((state) => state.islogin);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email) return;
+    try {
+      await dispatch(Forget_Password(email)).unwrap();
 
-    setLoading(true);
-    // Simulating an API call
-    setTimeout(() => {
-      setLoading(false);
-      setIsSent(true);
-    }, 1500);
+      // 🚀 Navigate to EmailSent page
+      navigate("/email-sent");
+    } catch (err) {
+      console.error(err);
+    }
   };
-
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col font-display transition-colors duration-200">
       {/* Exact Header from your HTML */}

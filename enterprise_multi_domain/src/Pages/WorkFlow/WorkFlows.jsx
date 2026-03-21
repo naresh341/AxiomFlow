@@ -84,7 +84,7 @@ const WorkFlows = () => {
                         : "bg-[#f0f2f4] dark:bg-white/5"
                     }`}
                   >
-                    {tab === "active" ? `${data.length}` : `${data.length}`}
+                    {tab === "active" ? `${data.total}` : `${data.total}`}
                   </span>
                 )}
               </div>
@@ -102,7 +102,7 @@ const WorkFlows = () => {
             ) : (
               <>
                 <DynamicTable
-                  tableData={data}
+                  tableData={data.data}
                   tableHead={TableSchemas.workflows}
                   handleRowClick={handleRowClick}
                   first={first}
@@ -110,12 +110,12 @@ const WorkFlows = () => {
 
                 <div className="flex items-center justify-between px-6 py-4 bg-[#f8fafc] dark:bg-white/5 border-t border-[#dbdfe6] dark:border-[#2d3748]">
                   <p className="text-sm text-[#616f89] dark:text-gray-400 font-medium">
-                    Showing {first + 1} to {Math.min(first + rows, data.length)}{" "}
-                    of {data.length} workflows
+                    Showing {first + 1} to {Math.min(first + rows, data.total)}{" "}
+                    of {data.total} workflows
                   </p>
                   <div className="flex items-center gap-2">
                     <Paginator
-                      totalRecords={data.length}
+                      totalRecords={data.total}
                       rows={rows}
                       first={first}
                       onPageChange={onPageChange}

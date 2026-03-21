@@ -22,7 +22,7 @@ class WorkflowVersion(Base):
     version = Column(String)
     definition = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
-    created_by = Column(Integer)
+    created_by = Column(String, nullable=True)
     created_at = Column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

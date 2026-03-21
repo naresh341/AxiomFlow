@@ -1,17 +1,47 @@
-import React, { useState } from "react";
 import {
-  ShieldAlert,
-  Gavel,
-  Smartphone,
-  History,
-  X,
-  ShieldCheck,
   AlertTriangle,
-  ArrowRight,
+  Gavel,
+  History,
+  ShieldCheck,
+  Smartphone,
 } from "lucide-react";
+import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { BreakGlassAction, Send_OTP } from "../RTKThunk/AsyncThunk";
+import OtpModal from "./MiniComponent/OtpModal";
 
 const BreakGlassModal = ({ isOpen, onClose }) => {
   const [mfaCode, setMfaCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpmodel, setOtpmodel] = useState(false);
+  const dispatch = useDispatch();
+
+  const handleBreakGlass = async () => {
+    try {
+      const payload = {
+        mfa_code: mfaCode,
+        action_type: "BREAK_GLASS",
+      };
+
+      await dispatch(BreakGlassAction(payload)).unwrap();
+
+      setOtpmodel(false);
+      onClose();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSendOtp = async () => {
+    try {
+      await dispatch(Send_OTP({ action_type: "BREAK_GLASS" })).unwrap();
+
+      setOtpSent(true);
+      setOtpmodel(true);
+    } catch (err) {
+      console.error(err);
+    }
+  };
   if (!isOpen) return null;
   return (
     <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101922] font-sans transition-colors duration-300">
@@ -81,27 +111,38 @@ const BreakGlassModal = ({ isOpen, onClose }) => {
                   Multi-Factor Authentication
                 </p>
               </div>
-              <div className="flex flex-col gap-3">
-                <label
-                  className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase"
-                  htmlFor="mfa-code"
+              {!otpSent && (
+                <button
+                  onClick={handleSendOtp}
+                  className="h-12 bg-blue-600 text-white font-bold rounded-lg"
                 >
-                  Enter code from your security key
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    id="mfa-code"
-                    value={mfaCode}
-                    onChange={(e) => setMfaCode(e.target.value)}
-                    className="flex-1 h-12 bg-white dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-700 rounded-lg px-4 text-xl font-mono tracking-[0.5em] focus:border-red-600 focus:ring-0 transition-colors dark:text-white"
-                    placeholder="XXXXXX"
-                  />
-                  <button className="h-12 px-4 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
-                    Resend
-                  </button>
+                  Send OTP
+                </button>
+              )}
+
+              {otpSent && (
+                <div className="flex flex-col gap-3">
+                  <label
+                    className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase"
+                    htmlFor="mfa-code"
+                  >
+                    Enter code from your security key
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      id="mfa-code"
+                      value={mfaCode}
+                      onChange={(e) => setMfaCode(e.target.value)}
+                      className="flex-1 h-12 bg-white dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-700 rounded-lg px-4 text-xl font-mono tracking-[0.5em] focus:border-red-600 focus:ring-0 transition-colors dark:text-white"
+                      placeholder="XXXXXX"
+                    />
+                    {/* <button className="h-12 px-4 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                      Resend
+                    </button> */}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Justification Log */}
@@ -118,13 +159,18 @@ const BreakGlassModal = ({ isOpen, onClose }) => {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row-reverse gap-4 pt-4">
-              <button className="flex-1 h-14 bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-3 rounded-lg font-black uppercase tracking-widest transition-all shadow-[0_4px_15px_rgba(220,38,38,0.4)] active:scale-[0.98]">
+              <button
+                type="submit"
+                onClick={handleBreakGlass}
+                className=" cursor-pointer flex-1 h-14 bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-3 rounded-lg font-black uppercase tracking-widest transition-all shadow-[0_4px_15px_rgba(220,38,38,0.4)] active:scale-[0.98]"
+              >
                 <ShieldCheck size={20} />
                 Confirm & Enable Access
               </button>
               <button
+                type="button"
                 onClick={onClose}
-                className="flex-1 h-14 bg-transparent border-2 border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center gap-3 rounded-lg font-bold uppercase tracking-widest transition-all"
+                className=" cursor-pointer flex-1 h-14 bg-transparent border-2 border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center gap-3 rounded-lg font-bold uppercase tracking-widest transition-all"
               >
                 Cancel
               </button>
@@ -143,6 +189,8 @@ const BreakGlassModal = ({ isOpen, onClose }) => {
           </div>
         </div>
       </div>
+
+      <OtpModal isOpen={otpmodel} onClose={() => setOtpmodel(false)} />
     </div>
   );
 };

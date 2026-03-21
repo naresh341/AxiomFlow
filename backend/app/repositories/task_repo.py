@@ -28,3 +28,15 @@ class TaskRepository(BaseRepository):
         self.db.commit()
         self.db.refresh(task)
         return task
+
+    def update(self, task: Task, update_data: dict):
+        for key, value in update_data.items():
+            setattr(task, key, value)
+
+        self.db.commit()
+        self.db.refresh(task)
+        return task
+
+    def delete(self, task: Task):
+        self.db.delete(task)
+        self.db.commit()

@@ -47,6 +47,8 @@ class CompliancePolicy(Base):
     name = Column(String, nullable=False)
     description = Column(String)
     regulation_type = Column(Enum(RegulationType))
+    organization_id = Column(Integer, ForeignKey("organizations.id"), index=True)
+
     risk_level = Column(Enum(RiskLevel))
     owner_id = Column(Integer, ForeignKey("users.id"))
     responsible_team_id = Column(Integer, ForeignKey("teams.id"))

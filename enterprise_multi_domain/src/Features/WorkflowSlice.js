@@ -1,12 +1,16 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
+  add_Execution,
+  add_Version,
   createWorkflow,
+  delete_Version,
   get_Workflow_Approvals,
   get_Workflow_Executions,
   get_Workflow_Tasks,
   get_Workflow_Versions,
   getWorkflow,
   getWorkflowById,
+  update_Version,
 } from "../RTKThunk/AsyncThunk";
 
 const WorkflowSlice = createSlice({
@@ -114,6 +118,57 @@ const WorkflowSlice = createSlice({
       .addCase(get_Workflow_Executions.fulfilled, (state, action) => {
         state.loading = false;
         state.currentWorkflowExecutions = action.payload;
+      })
+      .addCase(add_Version.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(add_Version.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentWorkflowVersions.data.unshift(action.payload);
+      })
+      .addCase(add_Version.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(update_Version.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(update_Version.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.currentWorkflowVersions.data.findIndex(
+          (version) => version.id === action.payload.id,
+        );
+        if (index !== -1) {
+          state.currentWorkflowVersions[index] = action.payload;
+        }
+      })
+      .addCase(update_Version.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(delete_Version.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(delete_Version.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentWorkflowVersions = state.currentWorkflowVersions.filter(
+          (version) => version.id !== action.payload,
+        );
+      })
+      .addCase(delete_Version.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(add_Execution.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(add_Execution.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentWorkflowExecutions.unshift(action.payload);
+      })
+      .addCase(add_Execution.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });

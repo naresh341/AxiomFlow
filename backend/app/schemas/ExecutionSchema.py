@@ -15,7 +15,6 @@ class ExecutionBase(BaseModel):
 
 
 class ExecutionCreate(ExecutionBase):
-    workflow_id: int
     task_id: Optional[int] = None
 
 

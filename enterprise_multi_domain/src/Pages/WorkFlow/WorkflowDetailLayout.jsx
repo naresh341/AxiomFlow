@@ -14,6 +14,7 @@ const WorkflowDetailLayout = () => {
   );
   const [lastExecutionId, setLastExecutionId] = useState("");
   const [activeModal, setActiveModal] = useState(null);
+
   const tabs = [
     { name: "Overview", path: "" },
     { name: "Tasks", path: "tasks" },

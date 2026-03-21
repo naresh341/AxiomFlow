@@ -1,14 +1,42 @@
-import {
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  FileUp,
-  X,
-} from "lucide-react";
+import { CheckCircle2, FileUp, X } from "lucide-react";
+import { useState } from "react";
+import { upload_FileTo_Server } from "../RTKThunk/AsyncThunk";
+import { useDispatch, useSelector } from "react-redux";
 
-const UploadAsset = ({ isOpen, onClose }) => {
+const UploadAsset = ({ isOpen, onClose, onUpload }) => {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.islogin.user);
+
+  const orgId = user?.organization_id;
+
+  const handleUpload = async () => {
+    if (!orgId) {
+      alert("Please select a id");
+      return;
+    }
+    if (!selectedFile) {
+      alert("Please select a file");
+      return;
+    }
+
+    const payload = {
+      file: selectedFile,
+      orgId: orgId,
+    };
+
+    try {
+      const res = await dispatch(upload_FileTo_Server(payload)).unwrap();
+
+      onUpload(res.url);
+      onClose();
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed");
+    }
+  };
+
   if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -40,7 +68,7 @@ const UploadAsset = ({ isOpen, onClose }) => {
         {/* FORM BODY */}
         <div className="px-8 py-6 space-y-8 overflow-y-auto">
           {/* Row: Type and Category */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700 dark:text-white">
                 Upload Type
@@ -79,7 +107,7 @@ const UploadAsset = ({ isOpen, onClose }) => {
                 />
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Upload Zone */}
           <div className="space-y-2">
@@ -103,14 +131,14 @@ const UploadAsset = ({ isOpen, onClose }) => {
               </button>
               <input
                 type="file"
+                onChange={(e) => setSelectedFile(e.target.files[0])}
                 className="absolute inset-0 opacity-0 cursor-pointer"
               />
             </div>
           </div>
 
           {/* Row: Date and Notes */}
-          <div className="flex flex-col md:flex-row gap-8 items-start">
-            {/* Simple Date Picker View */}
+          {/* <div className="flex flex-col md:flex-row gap-8 items-start">
             <div className="w-full md:w-65 space-y-2">
               <label className="text-sm font-bold text-slate-700 dark:text-white">
                 Effective Date
@@ -120,7 +148,6 @@ const UploadAsset = ({ isOpen, onClose }) => {
               </div>
             </div>
 
-            {/* Notes */}
             <div className="flex-1 w-full space-y-2 self-stretch flex flex-col">
               <label className="text-sm font-bold text-slate-700 dark:text-white">
                 Notes
@@ -130,7 +157,7 @@ const UploadAsset = ({ isOpen, onClose }) => {
                 placeholder="Add any relevant details or compliance notes here..."
               />
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* FOOTER */}
@@ -141,7 +168,10 @@ const UploadAsset = ({ isOpen, onClose }) => {
           >
             Cancel
           </button>
-          <button className="px-8 py-2.5 rounded-xl bg-[#135bec] text-white text-sm font-black shadow-lg shadow-[#135bec]/20 hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2">
+          <button
+            onClick={() => handleUpload(selectedFile)}
+            className="px-8 py-2.5 rounded-xl bg-[#135bec] text-white text-sm font-black shadow-lg shadow-[#135bec]/20 hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
+          >
             <CheckCircle2 size={18} />
             Upload Asset
           </button>

@@ -1,7 +1,5 @@
 import {
-  AlertCircle,
   Calendar,
-  CheckCircle,
   ChevronDown,
   ChevronRight,
   Clock,
@@ -18,7 +16,10 @@ import { NavLink, useNavigate, useParams } from "react-router-dom";
 import DynamicTable from "../../Components/DynamicTable";
 import FilterButton from "../../Components/MiniComponent/FilterButton";
 import Paginator from "../../Components/Paginator";
-import { get_Workflow_Executions } from "../../RTKThunk/AsyncThunk";
+import {
+  add_Execution,
+  get_Workflow_Executions,
+} from "../../RTKThunk/AsyncThunk";
 import { TableSchemas } from "../../Utils/TableSchemas";
 
 const WorkflowExecution = () => {
@@ -95,6 +96,23 @@ const WorkflowExecution = () => {
     return matchesStatus && matchesPriority && matchesSearch;
   });
 
+  const handleStartExecution = async () => {
+    const payload = {
+      workflow_id_str: workflowId,
+      workflow_version_id: 1,
+      task_key: null,
+      approval_key: null,
+      triggered_by: "system",
+    };
+
+    try {
+      await dispatch(add_Execution({ workflowId, payload }));
+      dispatch(get_Workflow_Executions(workflowId));
+    } catch (err) {
+      console.error("Error starting execution", err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f6f6f8] dark:bg-[#101622] text-[#111318] dark:text-white font-display">
       <main className=" mx-auto p-8 flex flex-col gap-6">
@@ -130,7 +148,10 @@ const WorkflowExecution = () => {
             <button className="flex items-center gap-2 bg-white dark:bg-[#1a212c] border border-[#e5e7eb] dark:border-[#2d333d] text-[#111318] dark:text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors">
               <Download size={18} /> Export CSV
             </button>
-            <button className="bg-[#135bec] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 hover:bg-[#0f49bd] transition-colors">
+            <button
+              onClick={handleStartExecution}
+              className="bg-[#135bec] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 hover:bg-[#0f49bd] transition-colors"
+            >
               <Plus size={18} /> New Execution
             </button>
           </div>
@@ -317,43 +338,6 @@ const StatCard = ({ title, value, sub, trend, accent }) => {
 const FilterDropdown = ({ label, icon }) => (
   <button className="flex items-center gap-2 px-3 py-1.5 bg-[#f0f2f4] dark:bg-[#2d333d] text-[#111318] dark:text-white rounded-lg text-xs font-bold hover:bg-gray-200 dark:hover:bg-[#384152] transition-colors border border-transparent">
     {icon} {label} <ChevronDown size={14} className="opacity-50" />
-  </button>
-);
-
-const StatusBadge = ({ status }) => {
-  const styles = {
-    Running:
-      "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200",
-    Success:
-      "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 border-green-200",
-    Failed:
-      "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 border-red-200",
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase border ${styles[status]}`}
-    >
-      {status === "Running" && (
-        <span className="size-1.5 rounded-full bg-blue-600 animate-pulse" />
-      )}
-      {status === "Success" && <CheckCircle size={12} />}
-      {status === "Failed" && <AlertCircle size={12} />}
-      {status}
-    </span>
-  );
-};
-
-const PaginationBtn = ({ label, icon, active, disabled }) => (
-  <button
-    disabled={disabled}
-    className={`size-9 flex items-center justify-center rounded-lg text-xs font-bold transition-all border ${
-      active
-        ? "bg-[#135bec] text-white border-[#135bec]"
-        : "bg-white dark:bg-[#1a212c] border-[#e5e7eb] dark:border-[#2d333d] text-[#616f89] hover:bg-gray-50 disabled:opacity-50"
-    }`}
-  >
-    {label || icon}
   </button>
 );
 

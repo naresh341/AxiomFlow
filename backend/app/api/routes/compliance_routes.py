@@ -1,9 +1,14 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from app.core.dependencies import get_db
 from app.core.security import get_current_user
-from app.model.complianceModel import ComplianceEvidence
+from app.model.complianceModel import (
+    ComplianceControl,
+    ComplianceEvidence,
+    CompliancePolicy,
+    ComplianceRisk,
+)
 from app.model.UserModel import User
 from app.schemas.complianceSchemas import (
     DocumentRead,
@@ -11,9 +16,9 @@ from app.schemas.complianceSchemas import (
     EvidenceRead,
     PolicyCreate,
     PolicyRead,
+    PolicyUpdate,
     RiskCreate,
     RiskRead,
-    PolicyUpdate,
 )
 from app.services.compliance_service import ComplianceService
 from fastapi import (
@@ -23,11 +28,8 @@ from fastapi import (
     Form,
     HTTPException,
     UploadFile,
-    File,
-    Form,
 )
 from sqlalchemy.orm import Session
-from typing import Optional
 
 router = APIRouter(prefix="/compliance", tags=["Compliance"])
 
@@ -36,18 +38,25 @@ router = APIRouter(prefix="/compliance", tags=["Compliance"])
 # ==========================
 
 
-@router.get("/policies", response_model=List[PolicyRead])
-async def get_all_policies(db: Session = Depends(get_db)):
-    """Fetch all active and inactive policies"""
-    return ComplianceService.get_all_policies(db)
+@router.get("/policies")
+async def get_all_policies(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return ComplianceService.get_all_policies(db, current_user)
 
 
 @router.get("/policies/{policy_id}", response_model=PolicyRead)
-async def get_policy_by_id(policy_id: int, db: Session = Depends(get_db)):
-    """Fetch a single policy by its ID, including its associated risks"""
-    policy = ComplianceService.get_policy(db, policy_id)
+async def get_policy_by_id(
+    policy_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    policy = ComplianceService.get_policy(db, policy_id, current_user)
+
     if not policy:
-        raise HTTPException(status_code=404, detail="Policy not found")
+        raise HTTPException(status_code=404, detail="Policy not found or access denied")
+
     return policy
 
 
@@ -68,11 +77,13 @@ async def create_new_policy(
 async def upload_policy_doc(
     policy_id: int,
     file: UploadFile = File(...),
-    user_id: int = 1,  # Replace with current_user dependency
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Uploads a PDF or document associated with a specific policy"""
-    return await ComplianceService.upload_policy_document(db, policy_id, file, user_id)
+    return await ComplianceService.upload_policy_document(
+        db, policy_id, file, current_user, {}
+    )
 
 
 @router.put("/updatePolicies/{policy_id}", response_model=PolicyRead)
@@ -98,10 +109,17 @@ async def delete_policy(policy_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/controls/evidence", response_model=List[EvidenceRead])
-async def get_all_compliance_evidence(db: Session = Depends(get_db)):
-    """Fetch all evidence for the global Evidence Tracker page"""
-
-    return db.query(ComplianceEvidence).all()
+async def get_all_compliance_evidence(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return (
+        db.query(ComplianceEvidence)
+        .join(ComplianceControl)
+        .join(CompliancePolicy)
+        .filter(CompliancePolicy.organization_id == current_user.organization_id)
+        .all()
+    )
 
 
 @router.post("/controls/{control_id}/evidence", response_model=EvidenceRead)
@@ -175,10 +193,12 @@ async def delete_compliance_evidence(
 # ==========================
 
 
-@router.get("/risks", response_model=List[RiskRead])
-async def get_all_risks(db: Session = Depends(get_db)):
-    """Fetch all identified risks and their scores"""
-    return ComplianceService.get_all_risks(db)
+@router.get("/risks")
+async def get_all_risks(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return ComplianceService.get_all_risks(db, current_user)
 
 
 @router.get("/risks/{risk_id}", response_model=RiskRead)
@@ -218,6 +238,8 @@ async def delete_risk(risk_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/dashboard/stats")
-async def get_compliance_dashboard(db: Session = Depends(get_db)):
-    """Calculates live KPI values for dashboard cards (e.g., Active Policies, Open Risks)"""
-    return ComplianceService.get_compliance_stats(db)
+async def get_compliance_dashboard(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return ComplianceService.get_compliance_stats(db, current_user)

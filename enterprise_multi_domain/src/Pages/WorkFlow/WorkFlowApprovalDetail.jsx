@@ -18,42 +18,123 @@ import {
   User,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { NavLink, useNavigate, useParams } from "react-router-dom";
 import RequestChangesModal from "../../Components/RequestChangesModal";
-import { NavLink } from "react-router-dom";
+import { approve_reject, getApprovalList } from "../../RTKThunk/AsyncThunk";
 
 const WorkFlowApprovalDetail = () => {
+  const { workflowId, approvalId } = useParams(); // URL parameter: /workflows/:id
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [comment, setComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Pull data from Approvals.jsx (Outlet Context)
+  const { approvalData, loading } = useSelector((state) => ({
+    approvalData: state.approval?.data?.data || [], // Use the name your useMemo expects
+    loading: state.approval?.loading || false,
+  }));
+
+  const activeApproval = useMemo(() => {
+    return approvalData?.find(
+      (item) =>
+        String(item.id) === String(approvalId) ||
+        item.approval_key?.trim() === approvalId?.trim(),
+    );
+  }, [approvalData, approvalId]);
+
+  const handleAction = async (actionType) => {
+    if (!activeApproval) return;
+    setIsSubmitting(true);
+
+    const payload = {
+      approval_id: activeApproval.id,
+      comment: comment || `Actioned via Workflow Detail Page`,
+      action_by_name: "System User", // Replace with auth user name if available
+      action_taken: actionType, // "APPROVED" or "REJECTED"
+    };
+
+    try {
+      await dispatch(approve_reject(payload)).unwrap();
+      navigate("/approvals"); // Redirect back to list after success
+    } catch (error) {
+      console.error("Workflow action failed:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  useEffect(() => {
+    // If we have no data and we aren't already loading, fetch the list
+    if (approvalData.length === 0 && !loading) {
+      dispatch(getApprovalList());
+    }
+  }, [dispatch, approvalData.length, loading]);
+
+  if (loading) return <LoadingState />;
+  if (!activeApproval) return <NotFoundState id={approvalId} />;
+
   return (
     <div className="bg-[#f6f6f8] dark:bg-[#101622] text-slate-900 dark:text-slate-100 min-h-screen font-sans">
-      <nav className="flex items-center gap-2 mb-6 text-sm font-medium text-slate-500">
+      {/* Breadcrumbs */}
+      <nav className="flex items-center gap-2 px-8 pt-6 text-sm font-medium text-slate-500">
         <NavLink
-          to="/workflows"
+          to="/approvals"
           className="hover:text-blue-600 transition-colors"
         >
           Workflows
         </NavLink>
         <ChevronRight size={14} />
         <span className="text-slate-900 dark:text-white">
-          Approval Detail - APR-1021
+          Approval Detail - {activeApproval.approval_key?.trim()}
         </span>
       </nav>
-      <main className=" ">
-        <StickySubHeader onOpenModal={() => setIsModalOpen(true)} />
+
+      <main className="p-8 pt-4">
+        <StickySubHeader
+          activeApproval={activeApproval}
+          onOpenModal={() => setIsModalOpen(true)}
+          onApprove={() => handleAction("APPROVED")}
+          onReject={() => handleAction("REJECTED")}
+          isSubmitting={isSubmitting}
+        />
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Main Content Area */}
+          {/* Left Column: Main Info */}
           <div className="flex-1 space-y-8 min-w-0">
-            <SummaryCard />
-            <ApprovalChain />
-            <DecisionSection />
-            <AuditHistory />
+            <SummaryCard activeApproval={activeApproval} />
+            <ApprovalChain activeApproval={activeApproval} />
+
+            <section className="bg-white dark:bg-[#1e293b] rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+              <h3 className="font-bold mb-4 flex items-center gap-2 text-sm">
+                <CheckCircle2 size={18} className="text-[#0f49bd]" /> Decision
+                Comments
+              </h3>
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-[#101622]/50 border border-slate-200 dark:border-slate-700 rounded-lg p-4 text-sm outline-none focus:ring-2 focus:ring-[#0f49bd]/20 transition-all"
+                placeholder="Provide justification for your decision..."
+                rows="4"
+              />
+              <div className="flex justify-between mt-2 text-[10px] font-bold text-slate-500">
+                <span className="flex items-center gap-1 text-green-500">
+                  <Check size={12} /> Audit-ready logging active
+                </span>
+                <span>{comment.length} / 500 characters</span>
+              </div>
+            </section>
+
+            <AuditHistory activeApproval={activeApproval} />
           </div>
 
-          {/* Right Sidebar (Context Panel) */}
+          {/* Right Column: Context Sidebar */}
           <aside className="lg:w-[320px] xl:w-[380px] space-y-6 shrink-0">
-            <WorkflowMetadata />
-            <ComplianceStatus />
+            <WorkflowMetadata activeApproval={activeApproval} />
+            <ComplianceStatus activeApproval={activeApproval} />
             <QuickResources />
             <SystemHealth />
           </aside>
@@ -70,145 +151,177 @@ const WorkFlowApprovalDetail = () => {
   );
 };
 
-/* --- SUB-COMPONENTS --- */
+/* --- REFACTORED SUB-COMPONENTS --- */
 
-const StickySubHeader = ({ onOpenModal }) => (
-  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8 bg-slate-100 dark:bg-[#1e293b] p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+const StickySubHeader = ({
+  activeApproval,
+  onOpenModal,
+  onApprove,
+  onReject,
+  isSubmitting,
+}) => (
+  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8 bg-white dark:bg-[#1e293b] p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm sticky top-0 z-20">
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-black tracking-tight">
-          Approval ID: APR-1021
+        <h1 className="text-2xl font-black tracking-tight uppercase">
+          {activeApproval.approval_key?.trim()}
         </h1>
-        <span className="bg-amber-500/20 text-amber-500 px-3 py-0.5 rounded-full text-xs font-bold uppercase">
-          Pending
+        <span
+          className={`px-3 py-0.5 rounded-full text-xs font-bold uppercase ${
+            activeApproval.status === "PENDING"
+              ? "bg-amber-500/20 text-amber-500"
+              : "bg-green-500/20 text-green-500"
+          }`}
+        >
+          {activeApproval.status}
         </span>
       </div>
       <div className="flex items-center gap-2 text-slate-500">
         <Clock size={16} />
         <p className="text-sm font-medium">
-          2h 15m remaining • SLA Priority: High
+          {activeApproval.sla_hours}h remaining • SLA Priority:{" "}
+          {Number(activeApproval.priority) > 7 ? "High" : "Standard"}
         </p>
       </div>
     </div>
     <div className="flex flex-wrap items-center gap-3">
-      <ActionBtn icon={<Download size={18} />} label="Download" />
-      <ActionBtn icon={<X size={18} />} label="Reject" color="text-red-500" />
+      <ActionBtn icon={<Download size={18} />} label="Export" />
+      <ActionBtn
+        icon={<X size={18} />}
+        label="Reject"
+        color="text-red-600 hover:bg-red-50"
+        onClick={onReject}
+        disabled={isSubmitting}
+      />
       <ActionBtn
         icon={<Edit3 size={18} />}
         onClick={onOpenModal}
         label="Request Changes"
       />
-      <button className="flex items-center gap-2 px-6 py-2 bg-[#0f49bd] hover:bg-blue-700 text-white rounded-lg text-sm font-bold shadow-lg shadow-blue-900/20">
-        <CheckCircle2 size={18} /> Approve
+      <button
+        disabled={isSubmitting}
+        onClick={onApprove}
+        className="flex items-center gap-2 px-6 py-2 bg-[#0f49bd] hover:bg-blue-700 text-white rounded-lg text-sm font-bold shadow-lg shadow-blue-900/20 disabled:opacity-50 transition-all active:scale-95"
+      >
+        {isSubmitting ? (
+          "Processing..."
+        ) : (
+          <>
+            <CheckCircle2 size={18} /> Approve
+          </>
+        )}
       </button>
     </div>
   </div>
 );
 
-const ActionBtn = ({ icon, label, color = "", onClick }) => (
-  <button
-    onClick={onClick}
-    className={`flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-sm font-bold transition-all border border-slate-200 dark:border-slate-700 ${color}`}
-  >
-    {icon} <span>{label}</span>
-  </button>
-);
-
-const SummaryCard = () => (
-  <section className="bg-white dark:bg-[#1e293b] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-    <div className="border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center">
+const SummaryCard = ({ activeApproval }) => (
+  <section className="bg-white dark:bg-[#1e293b] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+    <div className="border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
       <h3 className="font-bold flex items-center gap-2">
-        <FileText size={18} className="text-[#0f49bd]" /> Entity Summary:
-        Invoice #INV-8921
+        <FileText size={18} className="text-[#0f49bd]" /> Entity Summary:{" "}
+        {activeApproval.stage}
       </h3>
-      <span className="text-xs text-slate-500">Triggered: Oct 24, 2023</span>
+      <span className="text-xs text-slate-500 font-mono">
+        ID: {activeApproval.id}
+      </span>
     </div>
     <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div className="space-y-4">
+      <div className="space-y-6">
         <InfoField
           label="Requester"
           value={
             <div className="flex items-center gap-3 mt-1">
-              <div className="size-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-[#0f49bd] font-bold">
-                SJ
+              <div className="size-10 rounded-full bg-[#0f49bd] text-white flex items-center justify-center font-bold">
+                {activeApproval.requester_name?.charAt(0)}
               </div>
               <div>
-                <p className="text-sm font-bold">Sarah Jenkins</p>
-                <p className="text-xs text-slate-500">Finance Specialist</p>
+                <p className="text-sm font-black">
+                  {activeApproval.requester_name}
+                </p>
+                <p className="text-xs text-slate-500">
+                  ID: {activeApproval.requester_id}
+                </p>
               </div>
             </div>
           }
         />
-        <InfoField
-          label="Workflow Source"
-          value="Finance Disbursement Workflow"
-        />
+        <InfoField label="Process Level" value={activeApproval.stage} />
       </div>
-      <div className="space-y-4">
+      <div className="space-y-6">
         <InfoField
-          label="Amount"
+          label="Valuation"
           value={
-            <p className="text-xl font-black text-[#0f49bd] mt-1">
+            <p className="text-2xl font-black text-[#0f49bd] mt-1">
               $42,850.00 USD
             </p>
           }
         />
-        <InfoField label="Cost Center" value="Marketing Operations (MKT-402)" />
+        <InfoField
+          label="Created On"
+          value={new Date(activeApproval.created_at).toLocaleString()}
+        />
       </div>
     </div>
   </section>
 );
 
-const InfoField = ({ label, value }) => (
-  <div>
-    <label className="text-xs uppercase tracking-widest text-slate-500 font-bold">
-      {label}
-    </label>
-    <div className="text-sm mt-1 font-medium">{value}</div>
-  </div>
-);
-
-const ApprovalChain = () => (
-  <section className="bg-white dark:bg-[#1e293b] rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+const ApprovalChain = ({ activeApproval }) => (
+  <section className="bg-white dark:bg-[#1e293b] rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
     <h3 className="font-bold mb-6 flex items-center gap-2">
-      <GitBranch size={18} className="text-[#0f49bd]" /> Approval Chain
+      <GitBranch size={18} className="text-[#0f49bd]" /> Approval Workflow Chain
     </h3>
     <div className="space-y-8">
       <ChainStep
         status="complete"
-        title="Finance Manager"
-        desc="Approved by David Chen • Oct 24, 09:12 AM"
+        title="Initiation"
+        desc={`Created by ${activeApproval.requester_name}`}
         icon={<Check size={12} />}
       />
       <ChainStep
         status="current"
-        title="Department Head (Current)"
-        desc="Awaiting your decision • 21h 45m elapsed"
+        title={activeApproval.stage}
+        desc="Awaiting your decision"
         icon={<Clock size={12} />}
       />
       <ChainStep
         status="upcoming"
-        title="VP Finance"
-        desc="Final review stage"
+        title="Final Governance"
+        desc="System auto-completion"
         icon={<Lock size={12} />}
       />
     </div>
   </section>
 );
 
+// Helper Components
+const InfoField = ({ label, value }) => (
+  <div>
+    <label className="text-[10px] uppercase tracking-widest text-slate-400 font-black">
+      {label}
+    </label>
+    <div className="text-sm mt-1 font-bold dark:text-gray-200">{value}</div>
+  </div>
+);
+
+const ActionBtn = ({ icon, label, color = "", onClick, disabled }) => (
+  <button
+    disabled={disabled}
+    onClick={onClick}
+    className={`flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-sm font-bold transition-all border border-slate-200 dark:border-slate-700 disabled:opacity-50 ${color}`}
+  >
+    {icon} <span>{label}</span>
+  </button>
+);
+
 const ChainStep = ({ status, title, desc, icon }) => {
   const colors = {
     complete: "bg-green-500",
     current: "bg-[#0f49bd] ring-4 ring-blue-500/20",
-    upcoming: "border-2 border-slate-600 text-slate-500",
+    upcoming: "border-2 border-slate-600 text-slate-500 bg-transparent",
   };
   return (
     <div className="relative flex gap-4">
-      {status !== "upcoming" && (
-        <div
-          className={`absolute left-3 top-6 w-0.5 h-10 ${status === "complete" ? "bg-[#0f49bd]" : "bg-slate-700"}`}
-        />
-      )}
       <div
         className={`z-10 size-6 rounded-full flex items-center justify-center shrink-0 text-white ${colors[status]}`}
       >
@@ -216,15 +329,38 @@ const ChainStep = ({ status, title, desc, icon }) => {
       </div>
       <div>
         <p
-          className={`text-sm font-bold ${status === "current" ? "text-[#0f49bd]" : status === "upcoming" ? "opacity-50" : ""}`}
+          className={`text-sm font-black ${status === "current" ? "text-[#0f49bd]" : ""}`}
         >
           {title}
         </p>
-        <p className="text-xs text-slate-500">{desc}</p>
+        <p className="text-xs text-slate-500 font-medium">{desc}</p>
       </div>
     </div>
   );
 };
+
+const LoadingState = () => (
+  <div className="min-h-screen flex items-center justify-center bg-[#f6f6f8] dark:bg-[#101622]">
+    <div className="flex flex-col items-center gap-4">
+      <div className="size-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      <p className="text-sm font-bold text-slate-500">
+        Synchronizing Workflow Data...
+      </p>
+    </div>
+  </div>
+);
+
+const NotFoundState = ({ id }) => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="text-center space-y-4">
+      <AlertCircle size={48} className="mx-auto text-red-500" />
+      <h2 className="text-xl font-bold">Workflow {id} Not Found</h2>
+      <NavLink to="/approvals" className="text-blue-600 underline font-bold">
+        Return to Dashboard
+      </NavLink>
+    </div>
+  </div>
+);
 
 const DecisionSection = () => (
   <section className="bg-white dark:bg-[#1e293b] rounded-xl border border-slate-200 dark:border-slate-800 p-6">
@@ -284,6 +420,13 @@ const AuditItem = ({ title, time, desc, icon }) => (
   </div>
 );
 
+const MetaRow = ({ label, value }) => (
+  <div>
+    <p className="text-xs text-slate-500">{label}</p>
+    <p className="font-bold">{value}</p>
+  </div>
+);
+
 const WorkflowMetadata = () => (
   <div className="bg-white dark:bg-[#1e293b] rounded-xl border border-slate-200 dark:border-slate-800 p-6">
     <h4 className="text-xs uppercase font-black text-slate-500 mb-4 tracking-tighter">
@@ -311,14 +454,6 @@ const WorkflowMetadata = () => (
     </div>
   </div>
 );
-
-const MetaRow = ({ label, value }) => (
-  <div>
-    <p className="text-xs text-slate-500">{label}</p>
-    <p className="font-bold">{value}</p>
-  </div>
-);
-
 const ComplianceStatus = () => (
   <div className="bg-white dark:bg-[#1e293b] rounded-xl border border-slate-200 dark:border-slate-800 p-6">
     <h4 className="text-xs uppercase font-black text-slate-500 mb-4 tracking-tighter">
@@ -343,6 +478,7 @@ const ComplianceStatus = () => (
   </div>
 );
 
+//
 const QuickResources = () => (
   <div className="bg-white dark:bg-[#1e293b] rounded-xl border border-slate-200 dark:border-slate-800 p-6">
     <h4 className="text-xs uppercase font-black text-slate-500 mb-4 tracking-tighter">

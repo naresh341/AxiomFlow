@@ -1,43 +1,86 @@
-import React from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import {
-  Network,
-  Search,
-  ChevronLeft,
-  GitCompareArrows,
-  History,
-  User,
   Calendar,
-  GitFork,
-  Info,
-  FileText,
-  Lock,
-  Zap,
   CheckSquare,
-  UserCheck,
-  Gavel,
+  ChevronLeft,
   ClipboardList,
-  ShieldCheck,
+  FileText,
   Fingerprint,
+  Gavel,
+  GitCompareArrows,
+  GitFork,
+  History,
+  Info,
+  Lock,
+  Network,
+  ShieldCheck,
+  User,
+  Zap,
 } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
+import { get_Workflow_Versions } from "../../RTKThunk/AsyncThunk"; // Ensure path is correct
 
 const WorkFlowVersionDetail = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { versionId, workflowId } = useParams();
 
-  // In a real app, you would fetch version-specific data using versionId
-  const versionData = {
-    id: versionId || "v2.1.0",
-    status: "Active",
-    author: "Sarah J.",
-    date: "Oct 12, 2023",
-    baseVersion: "v2.0.0",
-    hash: "8f2d...e91a",
+  // Accessing the version list from Redux
+  const { currentWorkflowVersions, loading } = useSelector(
+    (state) => state.workflows,
+  );
+
+  // Fetch data if the store is empty (e.g., on direct page refresh)
+  useEffect(() => {
+    if (
+      !currentWorkflowVersions?.data ||
+      currentWorkflowVersions.data.length === 0
+    ) {
+      dispatch(get_Workflow_Versions(workflowId));
+    }
+  }, [dispatch, workflowId, currentWorkflowVersions]);
+
+  // Find the specific version data from the array provided in your JSON
+  const activeVersion = useMemo(() => {
+    return currentWorkflowVersions?.data?.find(
+      (v) => v.id.toString() === versionId || v.version_key === versionId,
+    );
+  }, [currentWorkflowVersions, versionId]);
+
+  // Fallback UI for loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f6f6f8] dark:bg-[#101622]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#0f49bd]"></div>
+      </div>
+    );
+  }
+
+  // Data Mapping: Map API fields to UI fields
+  const displayData = {
+    id: activeVersion?.version_key || "N/A",
+    versionNum: activeVersion?.version || "0.0.0",
+    status: activeVersion?.status || "Unknown",
+    author: activeVersion?.created_by || "System",
+    date: activeVersion?.created_at
+      ? new Date(activeVersion.created_at).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "N/A",
+    hash: activeVersion?.id
+      ? `sha256:8f2d...${activeVersion.id}`
+      : "No Hash Available",
+    // These fields are likely in 'definition' which is null in your JSON,
+    // keeping defaults so components don't break.
+    baseVersion: "v1.0.0-baseline",
   };
 
   return (
     <div className="bg-[#f6f6f8] dark:bg-[#101622] text-slate-900 dark:text-slate-100 min-h-screen font-sans">
-      <main className=" mx-auto px-6 py-8">
+      <main className="mx-auto px-6 py-8">
         {/* Breadcrumbs & Actions */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div className="space-y-2">
@@ -47,15 +90,21 @@ const WorkFlowVersionDetail = () => {
               </button>
               <span>/</span>
               <span className="text-slate-900 dark:text-white font-semibold">
-                {versionData.id}
+                {displayData.id}
               </span>
             </nav>
             <div className="flex items-center gap-4">
               <h1 className="text-4xl md:text-4xl font-black tracking-tight">
-                Workflow Version {versionData.id}
+                Version {displayData.versionNum}
               </h1>
-              <span className="px-3 py-1 bg-[#0f49bd]/10 text-[#0f49bd] border border-[#0f49bd]/20 rounded-full text-xs font-bold uppercase tracking-wider">
-                Current Status: {versionData.status}
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
+                  displayData.status === "ACTIVE"
+                    ? "bg-green-500/10 text-green-500 border-green-500/20"
+                    : "bg-[#0f49bd]/10 text-[#0f49bd] border-[#0f49bd]/20"
+                }`}
+              >
+                {displayData.status}
               </span>
             </div>
           </div>
@@ -71,7 +120,7 @@ const WorkFlowVersionDetail = () => {
               onClick={() => navigate(-1)}
               className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors text-sm font-bold"
             >
-              <ChevronLeft size={18} /> Back to Versions
+              <ChevronLeft size={18} /> Back
             </button>
           </div>
         </div>
@@ -81,17 +130,17 @@ const WorkFlowVersionDetail = () => {
           <MetaCard
             icon={<User size={20} />}
             label="Created By"
-            value={versionData.author}
+            value={displayData.author}
           />
           <MetaCard
             icon={<Calendar size={20} />}
             label="Created On"
-            value={versionData.date}
+            value={displayData.date}
           />
           <MetaCard
             icon={<GitFork size={20} />}
-            label="Based on Version"
-            value={versionData.baseVersion}
+            label="Version Key"
+            value={displayData.id}
           />
         </div>
 
@@ -99,65 +148,56 @@ const WorkFlowVersionDetail = () => {
         <div className="mb-8 p-4 bg-[#0f49bd]/10 border border-[#0f49bd]/20 rounded-xl flex items-center gap-4">
           <Info className="text-[#0f49bd] shrink-0" size={20} />
           <p className="text-sm font-medium text-slate-800 dark:text-blue-100">
-            Changing versions does not affect running executions. Only new
-            executions will use the selected workflow version.
+            {activeVersion?.is_active
+              ? "This version is currently live. Any changes must be made via a new draft."
+              : "This version is in DRAFT. Changes here will not affect the production environment until activated."}
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Main Content */}
           <div className="lg:col-span-8 space-y-8">
-            {/* Version Summary */}
-            <Section title="Version Summary" icon={<FileText size={18} />}>
+            <Section title="Definition Metadata" icon={<FileText size={18} />}>
               <p className="text-slate-600 dark:text-[#9da6b9] text-sm leading-relaxed mb-6">
-                This version includes updated compliance validation steps and a
-                revised escalation path for finance-related triggers. The SLA
-                for the initial review phase has been tightened from 48 hours to
-                24 hours to meet new quarterly performance targets.
+                {activeVersion?.definition
+                  ? JSON.stringify(activeVersion.definition)
+                  : "No custom definition logic defined for this version. This version inherits the base configuration of the parent workflow."}
               </p>
               <div className="flex flex-wrap gap-2">
-                {["SLA Changed", "New Task Added", "Compliance v3"].map(
-                  (tag) => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1 bg-slate-100 dark:bg-[#282e39] text-slate-600 dark:text-slate-300 rounded-md text-xs font-medium border border-slate-200 dark:border-slate-700"
-                    >
-                      {tag}
-                    </span>
-                  ),
-                )}
+                {[
+                  displayData.status,
+                  `ID: ${activeVersion?.id}`,
+                  "V-System",
+                ].map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-3 py-1 bg-slate-100 dark:bg-[#282e39] text-slate-600 dark:text-slate-300 rounded-md text-xs font-medium border border-slate-200 dark:border-slate-700"
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
             </Section>
 
-            {/* Workflow Snapshot */}
-            <Section title="Workflow Snapshot" icon={<Network size={18} />}>
+            {/* Workflow Snapshot - Static UI maintained as requested */}
+            <Section title="Visual Preview" icon={<Network size={18} />}>
               <div className="space-y-0 relative">
                 <WorkflowStep
                   icon={<Zap className="text-blue-500" size={20} />}
-                  title="Trigger: Incoming Invoice"
-                  type="Input Node"
+                  title="Trigger: Incoming Process"
+                  type="System Input"
                   details={{
-                    Source: "ERP Integration API",
-                    Condition: "Amount > $10,000",
+                    "Internal ID": activeVersion?.workflow_id_str || "N/A",
+                    Status: activeVersion?.status || "DRAFT",
                   }}
                   isFirst
                 />
                 <WorkflowStep
                   icon={<CheckSquare className="text-slate-500" size={20} />}
-                  title="Task: Compliance Check"
-                  type="Process Node"
+                  title="Logic Deployment"
+                  type="Cloud Node"
                   details={{
-                    Handler: "Compliance-Service-v2",
-                    Timeout: "5 Minutes",
-                  }}
-                />
-                <WorkflowStep
-                  icon={<UserCheck className="text-amber-500" size={20} />}
-                  title="Approval: Manager Review"
-                  type="Human Node"
-                  details={{
-                    AssignedTo: "Finance Dept Group",
-                    SLA: "24 Hours",
+                    Version: activeVersion?.version || "1.0",
+                    Runtime: "Standard v2",
                   }}
                   isLast
                 />
@@ -165,41 +205,39 @@ const WorkFlowVersionDetail = () => {
             </Section>
           </div>
 
-          {/* Sidebar */}
           <div className="lg:col-span-4 space-y-8">
-            <Section title="Versioned Rules" icon={<Gavel size={18} />}>
+            <Section title="Governance Rules" icon={<Gavel size={18} />}>
               <div className="space-y-4">
                 <RuleBox
-                  label="Escalation Logic"
-                  text="If Approval exceeds SLA, re-route to VP Finance automatically."
+                  label="Active State"
+                  text={
+                    activeVersion?.is_active
+                      ? "Currently handling traffic."
+                      : "Not handling production traffic."
+                  }
                 />
                 <RuleBox
-                  label="Reject Action"
-                  text="Terminal state. Notify ERP system with error code E-401."
+                  label="Permissions"
+                  text={`Only users with system-admin or ${activeVersion?.created_by} privileges can modify.`}
                 />
               </div>
             </Section>
 
-            <Section title="Audit Trail" icon={<ClipboardList size={18} />}>
+            <Section title="System Logs" icon={<ClipboardList size={18} />}>
               <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 <AuditItem
-                  title="Version Created"
-                  time="Oct 12, 14:20"
-                  user="Sarah J. (System Admin)"
+                  title="Snapshot Created"
+                  time={displayData.date}
+                  user={activeVersion?.created_by}
                 />
                 <AuditItem
-                  title="Compared to v2.0.0"
-                  time="Oct 12, 14:15"
-                  user="Sarah J. (System Admin)"
-                />
-                <AuditItem
-                  title="SLA Override Applied"
-                  time="Oct 11, 09:30"
-                  user="Auto-Gen System"
+                  title="DB Synchronization"
+                  time="Sync Complete"
+                  user="Automated System"
                 />
               </div>
               <button className="w-full py-3 bg-slate-50 dark:bg-[#151a26] text-[#0f49bd] text-[11px] font-bold uppercase tracking-wider hover:underline">
-                View Full Logs
+                View Full Audit History
               </button>
             </Section>
           </div>
@@ -210,10 +248,11 @@ const WorkFlowVersionDetail = () => {
       <footer className="max-w-6xl mx-auto px-6 py-8 border-t border-slate-200 dark:border-slate-800 mt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-400 text-[11px]">
         <div className="flex items-center gap-6">
           <span className="flex items-center gap-1">
-            <ShieldCheck size={14} /> Certified Immutable Snapshot
+            <ShieldCheck size={14} /> Certified Immutable
           </span>
           <span className="flex items-center gap-1">
-            <Fingerprint size={14} /> Hash: {versionData.hash}
+            <Fingerprint size={14} /> ID: {activeVersion?.id} | Key:{" "}
+            {displayData.id}
           </span>
         </div>
         <p>© 2026 WorkflowManager Enterprise Governance Suite</p>
@@ -222,6 +261,7 @@ const WorkFlowVersionDetail = () => {
   );
 };
 
+// ... Sub-components remain the same as your provided code ...
 /* --- Sub-Components --- */
 
 const MetaCard = ({ icon, label, value }) => (

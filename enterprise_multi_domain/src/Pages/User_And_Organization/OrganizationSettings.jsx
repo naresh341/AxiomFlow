@@ -8,12 +8,71 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import UploadAsset from "../../Components/UploadAsset";
-
+import { useDispatch } from "react-redux";
+import { create_Organization } from "../../RTKThunk/AsyncThunk";
+import { useNavigate } from "react-router-dom";
 const OrganizationSettings = () => {
   const [ssoEnabled, setSsoEnabled] = useState(true);
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: "",
+    domain: "",
+    logo_url: "",
+    timezone: "",
+    sso_enabled: true,
+    mfa_enabled: false,
+    session_timeout: 60,
+    password_policy: "standard",
+    language: "",
+  });
 
+  const handleCreateOrg = (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.domain) {
+      alert("Name and Domain are required");
+      return;
+    }
+
+    dispatch(create_Organization(formData))
+      .unwrap()
+      .then((res) => {
+        console.log("Org Created:", res);
+
+        alert("Organization Created ✅");
+
+        navigate("/UsersAndOraganization/roles-permissions");
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Error creating organization");
+      });
+  };
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleLogoUpload = (url) => {
+    setFormData((prev) => ({
+      ...prev,
+      logo_url: url,
+    }));
+  };
+
+  const handleRemoveLogo = () => {
+    setFormData((prev) => ({
+      ...prev,
+      logo_url: "",
+    }));
+  };
   return (
     <main className=" overflow-y-auto ">
       <div className="space-y-6 ">
@@ -37,9 +96,12 @@ const OrganizationSettings = () => {
                   Organization Name
                 </label>
                 <input
+                  name="name"
                   type="text"
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-slate-300 dark:border-slate-700 rounded-lg p-2.5 stext-md"
-                  defaultValue="Acme Global Inc."
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Organization Name"
+                  className="w-full bg-slate-50 border dark:bg-slate-800 border-slate-300 dark:border-slate-700 rounded-lg p-2.5 stext-md"
                 />
               </div>
               <div className="space-y-2">
@@ -47,8 +109,12 @@ const OrganizationSettings = () => {
                   Primary Domain
                 </label>
                 <input
+                  name="domain"
                   type="text"
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-slate-300 dark:border-slate-700 rounded-lg p-2.5 stext-md"
+                  value={formData.domain}
+                  placeholder="Domain Name"
+                  onChange={handleChange}
+                  className="w-full bg-slate-50 border dark:bg-slate-800 border-slate-300 dark:border-slate-700 rounded-lg p-2.5 stext-md"
                   defaultValue="acme-global.com"
                 />
               </div>
@@ -59,7 +125,15 @@ const OrganizationSettings = () => {
               </label>
               <div className="flex items-center gap-4">
                 <div className="size-16 rounded-lg bg-slate-100 dark:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center">
-                  <ImageIcon className="text-slate-400" size={24} />
+                  {formData.logo_url ? (
+                    <img
+                      src={formData.logo_url}
+                      alt="logo"
+                      className="size-16 object-cover rounded-lg"
+                    />
+                  ) : (
+                    <ImageIcon className="text-slate-400" size={24} />
+                  )}
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -69,7 +143,10 @@ const OrganizationSettings = () => {
                     >
                       <Upload size={14} /> Upload
                     </button>
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 stext-sm font-bold text-slate-500 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    <button
+                      onClick={handleRemoveLogo}
+                      className="flex items-center gap-1.5 px-3 py-1.5 stext-sm font-bold text-slate-500 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                    >
                       <Trash2 size={14} /> Remove
                     </button>
                   </div>
@@ -100,18 +177,34 @@ const OrganizationSettings = () => {
               <label className="stext-md font-semibold text-slate-700 dark:text-slate-300">
                 Default Timezone
               </label>
-              <select className="w-full bg-slate-50 dark:bg-slate-800 border-slate-300 dark:border-slate-700 rounded-lg p-2.5 stext-md dark:text-white">
-                <option>(UTC-08:00) Pacific Time (US & Canada)</option>
-                <option>(UTC+00:00) London, Dublin</option>
+              <select
+                value={formData.timezone}
+                name="timezone"
+                onChange={handleChange}
+                className="w-full bg-slate-50 border dark:bg-slate-800 border-slate-300 dark:border-slate-700 rounded-lg p-2.5 stext-md dark:text-white"
+              >
+                <option value="" disabled>
+                  Select Timezone
+                </option>
+                <option value="PST">(UTC-08:00) Pacific Time</option>
+                <option value="UTC">(UTC+00:00) London</option>
               </select>
             </div>
             <div className="space-y-2">
               <label className="stext-md font-semibold text-slate-700 dark:text-slate-300">
                 Default Language
               </label>
-              <select className="w-full bg-slate-50 dark:bg-slate-800 border-slate-300 dark:border-slate-700 rounded-lg p-2.5 stext-md dark:text-white">
-                <option>English (United States)</option>
-                <option>Spanish (ES)</option>
+              <select
+                value={formData.language}
+                name="language"
+                onChange={handleChange}
+                className="w-full bg-slate-50 border dark:bg-slate-800 border-slate-300 dark:border-slate-700 rounded-lg p-2.5 stext-md dark:text-white"
+              >
+                <option value="" disabled>
+                  Select language
+                </option>
+                <option value="English">English (United States)</option>
+                <option value="Spanish">Spanish (ES)</option>
               </select>
             </div>
           </div>
@@ -142,7 +235,13 @@ const OrganizationSettings = () => {
                 </p>
               </div>
               <button
-                onClick={() => setSsoEnabled(!ssoEnabled)}
+                onClick={() => {
+                  setSsoEnabled(!ssoEnabled);
+                  setFormData((prev) => ({
+                    ...prev,
+                    sso_enabled: !ssoEnabled,
+                  }));
+                }}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none ${ssoEnabled ? "bg-blue-600" : "bg-slate-200 dark:bg-slate-700"}`}
               >
                 <span
@@ -162,7 +261,13 @@ const OrganizationSettings = () => {
                 </p>
               </div>
               <button
-                onClick={() => setMfaEnabled(!mfaEnabled)}
+                onClick={() => {
+                  setMfaEnabled(!mfaEnabled);
+                  setFormData((prev) => ({
+                    ...prev,
+                    mfa_enabled: !mfaEnabled,
+                  }));
+                }}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none ${mfaEnabled ? "bg-blue-600" : "bg-slate-200 dark:bg-slate-700"}`}
               >
                 <span
@@ -178,18 +283,25 @@ const OrganizationSettings = () => {
                     Session Timeout (min)
                   </label>
                   <input
+                    name="session_timeout"
                     type="number"
-                    defaultValue={60}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border-slate-300 dark:border-slate-700 rounded-lg p-2.5 stext-md dark:text-white"
+                    placeholder=" 60 min"
+                    value={formData.session_timeout}
+                    className="w-full bg-slate-50 border dark:bg-slate-800 border-slate-300 dark:border-slate-700 rounded-lg p-2.5 stext-md dark:text-white"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="stext-md font-semibold text-slate-700 dark:text-slate-300">
                     Password Requirements
                   </label>
-                  <select className="w-full bg-slate-50 dark:bg-slate-800 border-slate-300 dark:border-slate-700 rounded-lg p-2.5 stext-md dark:text-white">
-                    <option>Standard (8+ characters)</option>
-                    <option>Enterprise (SSO Only)</option>
+                  <select
+                    name="password_policy"
+                    onChange={handleChange}
+                    value={formData.password_policy}
+                    className="w-full bg-slate-50 border dark:bg-slate-800 border-slate-300 dark:border-slate-700 rounded-lg p-2.5 stext-md dark:text-white"
+                  >
+                    <option value="standard">Standard (8+ characters)</option>
+                    <option value="SSO">Enterprise (SSO Only)</option>
                   </select>
                 </div>
               </div>
@@ -201,10 +313,17 @@ const OrganizationSettings = () => {
       {/* Sticky Actions Bar */}
       <div className="sticky   p-6    backdrop-blur-md z-10">
         <div className="max-w-4xl mx-auto flex justify-end gap-3">
-          <button className="px-6 py-2 text-md dark:bg-white dark:text-black shadow-md border-slate-200 border font-bold text-slate-600  hover:bg-slate-100  rounded-lg transition-all">
+          <button
+            type="button"
+            className="px-6 py-2 text-md dark:bg-white dark:text-black shadow-md border-slate-200 border font-bold text-slate-600  hover:bg-slate-100  rounded-lg transition-all"
+          >
             Discard
           </button>
-          <button className="px-6 py-2 text-md  font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md shadow-blue-600/20">
+          <button
+            type="submit"
+            onClick={handleCreateOrg}
+            className="px-6 py-2 text-md  font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md shadow-blue-600/20"
+          >
             Save Changes
           </button>
         </div>
@@ -226,7 +345,11 @@ const OrganizationSettings = () => {
         </div>
       </div>
 
-      <UploadAsset isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <UploadAsset
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onUpload={handleLogoUpload}
+      />
     </main>
   );
 };

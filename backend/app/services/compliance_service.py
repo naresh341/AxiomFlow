@@ -29,28 +29,47 @@ LIKE_WEIGHTS = {"LOW": 1, "MEDIUM": 2, "HIGH": 3}
 
 class ComplianceService:
     @staticmethod
-    def get_all_policies(db: Session):
-        return db.query(CompliancePolicy).all()
-
-    @staticmethod
-    def get_policy(db: Session, policy_id: int):
+    def get_all_policies(db: Session, user_obj):
         return (
-            db.query(CompliancePolicy).filter(CompliancePolicy.id == policy_id).first()
+            db.query(CompliancePolicy)
+            .filter(CompliancePolicy.organization_id == user_obj.organization_id)
+            .all()
         )
 
     @staticmethod
-    def get_all_risks(db: Session):
-        return db.query(ComplianceRisk).all()
+    def get_policy(db: Session, policy_id: int, user_obj):
+        return (
+            db.query(CompliancePolicy)
+            .filter(
+                CompliancePolicy.id == policy_id,
+                CompliancePolicy.organization_id == user_obj.organization_id,
+            )
+            .first()
+        )
+
+    @staticmethod
+    def get_all_risks(db: Session, user_obj):
+        return (
+            db.query(ComplianceRisk)
+            .join(CompliancePolicy)
+            .filter(CompliancePolicy.organization_id == user_obj.organization_id)
+            .all()
+        )
 
     @staticmethod
     def get_risk(db: Session, risk_id: int):
         return db.query(ComplianceRisk).filter(ComplianceRisk.id == risk_id).first()
 
     @staticmethod
-    def get_evidence_by_control(db: Session, control_id: int):
+    def get_evidence_by_control(db: Session, control_id: int, user_obj):
         return (
             db.query(ComplianceEvidence)
-            .filter(ComplianceEvidence.control_id == control_id)
+            .join(ComplianceControl)
+            .join(CompliancePolicy)
+            .filter(
+                CompliancePolicy.organization_id == user_obj.organization_id,
+                ComplianceEvidence.control_id == control_id,
+            )
             .all()
         )
 
@@ -64,7 +83,9 @@ class ComplianceService:
         policy_code = f"POL-{uuid.uuid4().hex[:6].upper()}"
 
         db_policy = CompliancePolicy(
-            **policy_data.model_dump(), policy_code=policy_code
+            **policy_data.model_dump(),
+            policy_code=policy_code,
+            organization_id=user_obj.organization_id,
         )
 
         db.add(db_policy)
@@ -358,18 +379,34 @@ class ComplianceService:
     # 4. KPI LOGIC (DYNAMIC)
     # ==========================
     @staticmethod
-    def get_compliance_stats(db: Session):
+    def get_compliance_stats(db, user_obj):
         return {
             "active_policies": db.query(CompliancePolicy)
-            .filter(CompliancePolicy.status == "ACTIVE")
+            .filter(
+                CompliancePolicy.status == "ACTIVE",
+                CompliancePolicy.organization_id == user_obj.organization_id,
+            )
             .count(),
             "open_risks": db.query(ComplianceRisk)
-            .filter(ComplianceRisk.status == "OPEN")
+            .join(CompliancePolicy)
+            .filter(
+                ComplianceRisk.status == "OPEN",
+                CompliancePolicy.organization_id == user_obj.organization_id,
+            )
             .count(),
             "critical_risks": db.query(ComplianceRisk)
-            .filter(ComplianceRisk.impact == "CRITICAL")
+            .join(CompliancePolicy)
+            .filter(
+                ComplianceRisk.impact == "CRITICAL",
+                CompliancePolicy.organization_id == user_obj.organization_id,
+            )
             .count(),
             "pending_evidence": db.query(ComplianceEvidence)
-            .filter(ComplianceEvidence.status == EvidenceStatus.UNDER_REVIEW)
+            .join(ComplianceControl)
+            .join(CompliancePolicy)
+            .filter(
+                ComplianceEvidence.status == EvidenceStatus.UNDER_REVIEW,
+                CompliancePolicy.organization_id == user_obj.organization_id,
+            )
             .count(),
         }

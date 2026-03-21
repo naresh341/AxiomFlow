@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUser } from "../../RTKThunk/AsyncThunk";
+import { Login_Credentials, loginUser } from "../../RTKThunk/AsyncThunk";
 
 const Login = () => {
   const { user, status, error } = useSelector((state) => state.islogin);
@@ -11,18 +11,22 @@ const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!username || !password) return;
-    dispatch(loginUser({ username, password }));
+
+    try {
+      await dispatch(loginUser({ username, password })).unwrap();
+      navigate("/Dashboard");
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   useEffect(() => {
     if (status === "Success") {
       navigate("/Dashboard");
     }
-  }, [status, navigate]);
-
+  }, [status, dispatch, navigate]);
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col font-display transition-colors duration-200">
       {/* Header matching your HTML */}
@@ -124,7 +128,7 @@ const Login = () => {
               <div className="min-h-5">
                 {status === "Success" && (
                   <span className="text-green-500 text-sm font-medium">
-                    Login Successful Welcome {user?.user?.name}
+                    Login Successful Welcome {user?.name}
                   </span>
                 )}
                 {status === "failed" && (

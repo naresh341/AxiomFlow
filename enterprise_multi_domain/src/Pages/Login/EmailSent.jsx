@@ -52,7 +52,12 @@ const EmailSent = () => {
             follow the instructions in the email to reset your password.
           </p>
 
-          <button className="w-full h-12 rounded bg-[#11d411] text-[#111811] text-base font-bold hover:opacity-90 transition-opacity">
+          <button
+            onClick={() =>
+              window.open("https://mail.google.com/mail/u/0/#inbox")
+            }
+            className="w-full h-12 rounded bg-[#11d411] text-[#111811] text-base font-bold hover:opacity-90 transition-opacity"
+          >
             Open Email App
           </button>
 

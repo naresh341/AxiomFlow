@@ -62,6 +62,7 @@ export const TableSchemas = {
     { header: "Created At", field: "created_at", type: "date" },
     { header: "Updated At", field: "updated_at", type: "date" },
     { header: "Due At", field: "due_at", type: "date" },
+    { header: "Action", field: "action" },
   ],
 
   approval: [
@@ -73,12 +74,12 @@ export const TableSchemas = {
     { header: "Status", field: "status" },
     { header: "SLA Hours", field: "sla_hours" },
     { header: "Created At", field: "created_at", type: "date" },
-    { header: "Action", field: "action" },
+    // { header: "Action", field: "action" },
   ],
   versions: [
     { header: "Sr.No", field: "srno" },
     { header: "Version", field: "version" },
-    { header: "Version ID", field: "version_field" },
+    { header: "Version ID", field: "version_key" },
     { header: "Status", field: "status" },
     { header: "Created By", field: "created_by" },
     { header: "Created At", field: "created_at", type: "date" },

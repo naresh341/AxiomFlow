@@ -1,0 +1,83 @@
+# services.py
+from sqlalchemy.orm import Session
+from app.model.Roles_And_OrganizationModel import Organization, Role
+import random
+from fastapi import HTTPException
+
+
+# --- Organization ---
+def get_organization(db: Session, org_id: int):
+    org = db.query(Organization).filter(Organization.id == org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    return org
+
+
+def create_organization(db: Session, data: dict):
+    existing = (
+        db.query(Organization).filter(Organization.domain == data["domain"]).first()
+    )
+
+    if existing:
+        raise HTTPException(status_code=400, detail="Domain already exists")
+
+    org = Organization(**data)
+    db.add(org)
+    db.commit()
+    db.refresh(org)
+
+    return org
+
+
+def update_organization(db: Session, org_id: int, data: dict):
+    org = get_organization(db, org_id)
+    for key, value in data.items():
+        setattr(org, key, value)
+    db.commit()
+    db.refresh(org)
+    return org
+
+
+# --- Roles ---
+def get_roles(db: Session, org_id: int):
+    return db.query(Role).filter(Role.organization_id == org_id).all()
+
+
+def generate_role_code() -> str:
+    """Generate a unique role code like RO-10293"""
+    return f"RO-{random.randint(10000, 99999)}"
+
+
+def create_role(db: Session, org_id: int, data: dict):
+
+    org = db.query(Organization).filter(Organization.id == org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    data["organization_id"] = org_id
+
+    if not data.get("role_code"):
+        data["role_code"] = generate_role_code()
+
+    role = Role(**data)
+    db.add(role)
+    db.commit()
+    db.refresh(role)
+
+    return role
+
+
+def update_role(db: Session, role_id: int, data: dict):
+    role = db.query(Role).filter(Role.id == role_id).first()
+    for key, value in data.items():
+        setattr(role, key, value)
+    db.commit()
+    db.refresh(role)
+    return role
+
+
+def delete_role(db: Session, role_id: int):
+    role = db.query(Role).filter(Role.id == role_id).first()
+    db.delete(role)
+    db.commit()
+    return {"detail": "Role deleted"}

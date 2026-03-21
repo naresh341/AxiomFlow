@@ -1,5 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { addTasks, getTaskList } from "../RTKThunk/AsyncThunk";
+import {
+  addTasks,
+  delete_Tasks,
+  getTaskList,
+  update_Tasks,
+} from "../RTKThunk/AsyncThunk";
 
 const initialState = {
   error: null,
@@ -32,6 +37,33 @@ const TaskSlice = createSlice({
         state.data.unshift(action.payload);
       })
       .addCase(addTasks.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(update_Tasks.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(update_Tasks.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.data.findIndex(
+          (data) => data.id === action.payload.id,
+        );
+        if (index !== -1) {
+          state.data[index] = action.payload;
+        }
+      })
+      .addCase(update_Tasks.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(delete_Tasks.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(delete_Tasks.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = state.data.filter((data) => data.id !== action.payload);
+      })
+      .addCase(delete_Tasks.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

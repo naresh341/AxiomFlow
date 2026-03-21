@@ -1,12 +1,58 @@
 import { AlertCircle, ChevronDown, Info, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { add_Version, get_Workflow_Versions } from "../RTKThunk/AsyncThunk";
 
 const CreateVersionModal = ({
   isOpen,
   onClose,
-  baseVersions = ["v2.0.4", "v2.0.3", "v2.0.2"],
+  onCreate,
+  workflowId,
+  editData,
+  onUpdate,
 }) => {
-  if (!isOpen) return null;
+  const [formData, setFormData] = useState({
+    version: "",
+    status: "DRAFT",
+  });
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleCreateVersion = async () => {
+    try {
+      const payload = {
+        version: formData.version,
+        is_active: formData.status === "ACTIVE",
+      };
+
+      if (editData) {
+        await onUpdate(editData.id, payload);
+      } else {
+        await onCreate(workflowId, payload);
+      }
+      onClose();
+    } catch (error) {
+      console.error("Failed to create version", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!editData) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      ...editData,
+    }));
+  }, [editData]);
+
+  if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Modal Backdrop Overlay */}
@@ -33,7 +79,7 @@ const CreateVersionModal = ({
         {/* Form Body */}
         <div className="px-6 py-8 space-y-6">
           {/* Base Version Dropdown */}
-          <div className="flex flex-col gap-2">
+          {/* <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2 pb-1">
               <label className="text-slate-900 dark:text-slate-200 text-sm font-semibold leading-normal">
                 Base Version
@@ -57,7 +103,7 @@ const CreateVersionModal = ({
                 <ChevronDown size={18} />
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* New Version Number Input */}
           <div className="flex flex-col gap-2">
@@ -66,13 +112,15 @@ const CreateVersionModal = ({
             </label>
             <input
               type="text"
+              name="version"
+              value={formData.version}
+              onChange={handleChange}
               className="w-full rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-4 focus:ring-primary/10 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary h-12 px-4 text-base font-normal transition-all outline-none"
-              defaultValue="v2.1.0"
             />
           </div>
 
           {/* Change Summary Textarea */}
-          <div className="flex flex-col gap-2">
+          {/* <div className="flex flex-col gap-2">
             <label className="text-slate-900 dark:text-slate-200 text-sm font-semibold leading-normal pb-1">
               Change Summary <span className="text-red-500">*</span>
             </label>
@@ -80,7 +128,7 @@ const CreateVersionModal = ({
               className="w-full resize-none rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-4 focus:ring-primary/10 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary min-h-[120px] placeholder:text-slate-400 p-4 text-base font-normal transition-all outline-none"
               placeholder="Describe what has changed in this version (e.g., Fixed webhook timeout, Added validation)..."
             ></textarea>
-          </div>
+          </div> */}
 
           {/* Start As Radio Group */}
           <div className="flex flex-col gap-3">
@@ -94,10 +142,12 @@ const CreateVersionModal = ({
               <label className="flex items-center cursor-pointer group">
                 <div className="relative flex items-center justify-center">
                   <input
-                    defaultChecked
                     className="peer h-5 w-5 cursor-pointer appearance-none rounded-full border border-slate-300 dark:border-slate-600 checked:border-[#0f49bd] transition-all"
                     name="status"
                     type="radio"
+                    value="DRAFT"
+                    onChange={handleChange}
+                    checked={formData.status === "DRAFT"}
                   />
                   <div className="absolute w-2.5 h-2.5 rounded-full bg-[#0f49bd] scale-0 peer-checked:scale-100 transition-transform"></div>
                 </div>
@@ -113,7 +163,10 @@ const CreateVersionModal = ({
                   <input
                     className="peer h-5 w-5 cursor-pointer appearance-none rounded-full border border-slate-300 dark:border-slate-600 checked:border-[#0f49bd] transition-all"
                     name="status"
+                    value="ACTIVE"
+                    checked={formData.status === "ACTIVE"}
                     type="radio"
+                    onChange={handleChange}
                   />
                   <div className="absolute w-2.5 h-2.5 rounded-full bg-[#0f49bd] scale-0 peer-checked:scale-100 transition-transform"></div>
                 </div>
@@ -147,7 +200,10 @@ const CreateVersionModal = ({
           >
             Cancel
           </button>
-          <button className="px-5 py-2.5 text-sm font-semibold text-white bg-[#0f49bd] rounded-lg hover:bg-[#0f49bd]/90 transition-colors shadow-sm shadow-primary/20">
+          <button
+            onClick={handleCreateVersion}
+            className="px-5 py-2.5 text-sm font-semibold text-white bg-[#0f49bd] rounded-lg hover:bg-[#0f49bd]/90 transition-colors shadow-sm shadow-primary/20"
+          >
             Create Version
           </button>
         </div>

@@ -1,8 +1,7 @@
-import { ChevronRight, Download, Plus, Search } from "lucide-react";
+import { ChevronRight, Download, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import CreateTaskModal from "../../Components/CreateTaskModal";
 import DynamicTable from "../../Components/DynamicTable";
 import Paginator from "../../Components/Paginator";
 import { getTaskList } from "../../RTKThunk/AsyncThunk";
@@ -12,7 +11,6 @@ const Tasks = () => {
   const { status } = useParams();
   const activeTab = status || "MyTasks";
   const [searchQuery, setSearchQuery] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [first, setFirst] = useState(0);
@@ -37,64 +35,8 @@ const Tasks = () => {
     },
   ];
   const handleTabChange = (key) => {
-    // 5. Instead of setActiveTab, update the URL
     navigate(`/tasks/${key}`);
   };
-
-  // const tasks = [
-  //   {
-  //     id: "T-101",
-  //     name: "Quarterly Financial Audit",
-  //     status: "In Progress",
-  //     priority: "High",
-  //     assignee: {
-  //       name: "John Doe",
-  //       img: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
-  //     },
-  //     dueDate: "Oct 24, 2023",
-  //     source: "Finance Workflow",
-  //     workflowId: "WF-9921",
-  //   },
-  //   {
-  //     id: "T-102",
-  //     name: "Compliance Document Review",
-  //     status: "In Progress",
-  //     priority: "Med",
-  //     assignee: {
-  //       name: "Sarah Smith",
-  //       img: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-  //     },
-  //     dueDate: "Oct 25, 2023",
-  //     source: "Legal Workflow",
-  //     workflowId: "WF-8842",
-  //   },
-  //   {
-  //     id: "T-103",
-  //     name: "Onboarding Package Setup",
-  //     status: "Completed",
-  //     priority: "Low",
-  //     assignee: {
-  //       name: "Mike Ross",
-  //       img: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike",
-  //     },
-  //     dueDate: "Oct 20, 2023",
-  //     source: "Manual",
-  //     workflowId: null,
-  //   },
-  //   {
-  //     id: "T-104",
-  //     name: "Vendor Security Assessment",
-  //     status: "Overdue",
-  //     priority: "High",
-  //     assignee: {
-  //       name: "Emily Chen",
-  //       img: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emily",
-  //     },
-  //     dueDate: "Oct 22, 2023",
-  //     source: "IT Security Workflow",
-  //     workflowId: "WF-7731",
-  //   },
-  // ];
 
   return (
     <div className="flex-1 flex flex-col bg-[#f6f6f8] dark:bg-[#101622] min-h-screen">
@@ -112,12 +54,6 @@ const Tasks = () => {
           <div className="flex gap-3">
             <button className="flex items-center gap-2 px-4 py-2 bg-[#f0f2f4] dark:bg-gray-800 text-[#111318] dark:text-white rounded-xl font-bold text-sm hover:bg-gray-200 transition-all">
               <Download size={18} /> Export
-            </button>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all"
-            >
-              <Plus size={18} /> New Task
             </button>
           </div>
         </div>
@@ -314,10 +250,6 @@ const Tasks = () => {
           </div>
         </div>
       </section>
-      <CreateTaskModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
     </div>
   );
 };

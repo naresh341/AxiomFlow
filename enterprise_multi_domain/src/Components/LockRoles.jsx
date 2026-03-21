@@ -6,8 +6,39 @@ import {
   ShieldAlert,
   X,
 } from "lucide-react";
-
+import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { LockRolesAction } from "../RTKThunk/AsyncThunk";
 const LockRoles = ({ isOpen, onClose }) => {
+  const [formData, setFormData] = useState({
+    duration: "",
+    justification: "",
+  });
+
+  const dispatch = useDispatch();
+
+  const createlock = () => {
+    try {
+      dispatch(LockRolesAction(formData)).unwrap();
+      setFormData({
+        duration: "",
+        justification: "",
+      });
+      onClose();
+    } catch (error) {
+      console.error("Error", error);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -73,10 +104,18 @@ const LockRoles = ({ isOpen, onClose }) => {
               <label className="text-md font-bold text-slate-400">
                 Duration
               </label>
-              <select className="w-full bg-[#1c2632] border border-[#2d3a4b] rounded-lg p-2 text-md text-white outline-none">
-                <option>Manual Unlock</option>
-                <option>1 Hour</option>
-                <option>24 Hours</option>
+              <select
+                name="duration"
+                value={formData.duration}
+                onChange={handleChange}
+                className="w-full bg-[#1c2632] border border-[#2d3a4b] rounded-lg p-2 text-md text-white outline-none"
+              >
+                <option value="" disabled>
+                  Select Duration
+                </option>
+                <option value="Manual Unlock">Manual Unlock</option>
+                <option value="1 Hour">1 Hour</option>
+                <option value="24 Hour">24 Hours</option>
               </select>
             </div>
 
@@ -85,6 +124,9 @@ const LockRoles = ({ isOpen, onClose }) => {
                 Justification
               </label>
               <textarea
+                name="justification"
+                value={formData.justification}
+                onChange={handleChange}
                 className="w-full h-24 bg-[#1c2632] border border-[#2d3a4b] rounded-lg p-3 text-md text-white outline-none placeholder:text-slate-600"
                 placeholder="Ticket ID..."
               />
@@ -94,12 +136,17 @@ const LockRoles = ({ isOpen, onClose }) => {
 
         {/* Sticky Action Footer */}
         <div className="p-5 bg-[#1c2632] border-t border-[#2d3a4b]">
-          <button className="w-full h-12 bg-[#f2b90d] hover:brightness-110 active:scale-95 text-[#101922] font-black text-lg uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2">
+          <button
+            type="submit"
+            onClick={createlock}
+            className=" cursor-pointer w-full h-12 bg-[#f2b90d] hover:brightness-110 active:scale-95 text-[#101922] font-black text-lg uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2"
+          >
             Execute Lock <ChevronRight size={14} />
           </button>
           <button
+            type="button"
             onClick={onClose}
-            className="w-full mt-3 text-lg font-bold text-slate-500 hover:text-white transition-colors"
+            className=" cursor-pointer w-full mt-3 text-lg font-bold text-slate-500 hover:text-white transition-colors"
           >
             Cancel Process
           </button>

@@ -2,25 +2,59 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 // Import Lucide Icons
 import { CheckCircle, Chrome, Database, Lock, ShieldCheck } from "lucide-react";
+import { RegisterUser } from "../../RTKThunk/AsyncThunk";
+import { useDispatch } from "react-redux";
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
   const [formData, setFormData] = useState({
     email: "",
     fullName: "",
-    companyName: "",
+    username: "",
     password: "",
   });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Creating account:", formData);
-  };
 
+    setLoading(true);
+    setError("");
+
+    try {
+      // 🔥 Split full name
+      const [first_name, ...rest] = formData.fullName.split(" ");
+      const last_name = rest.join(" ") || "User";
+
+      const payload = {
+        username: formData.username,
+        email: formData.email,
+        first_name,
+        last_name,
+        password: formData.password,
+      };
+
+      const res = await dispatch(RegisterUser(payload)).unwrap();
+
+      console.log("User Registered:", res);
+
+      // 🚀 Redirect after success
+      navigate("/login");
+    } catch (err) {
+      console.error(err);
+      setError(err || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col font-display">
       {/* Top Navigation */}
@@ -56,13 +90,40 @@ const SignUp = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium dark:text-gray-200">
-                Work Email
+                Email
               </label>
               <input
                 name="email"
+                value={formData.email}
                 className="w-full rounded-lg border-[#dbdfe6] dark:border-gray-700 bg-white dark:bg-gray-900 h-12 px-4 focus:ring-2 focus:ring-blue-600/20"
                 placeholder="name@company.com"
                 type="email"
+                onChange={handleChange}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium dark:text-gray-200">
+                UserName
+              </label>
+              <input
+                name="username"
+                value={formData.username}
+                className="w-full rounded-lg border-[#dbdfe6] dark:border-gray-700 bg-white dark:bg-gray-900 h-12 px-4 focus:ring-2 focus:ring-blue-600/20"
+                placeholder="User Name"
+                type="text"
+                onChange={handleChange}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium dark:text-gray-200">
+                Full Name
+              </label>
+              <input
+                name="fullName"
+                value={formData.fullName}
+                className="w-full rounded-lg border-[#dbdfe6] dark:border-gray-700 bg-white dark:bg-gray-900 h-12 px-4 focus:ring-2 focus:ring-blue-600/20"
+                placeholder="Full Name"
+                type="text"
                 onChange={handleChange}
               />
             </div>
@@ -91,11 +152,13 @@ const SignUp = () => {
               </div>
             </div>
 
+            {error && <p className="text-red-500 text-sm">{error}</p>}
             <button
-              className="w-full rounded-lg h-12 bg-blue-600 text-white font-bold hover:bg-blue-600/90 transition-all"
               type="submit"
+              disabled={loading}
+              className="w-full rounded-lg h-12 bg-blue-600 text-white font-bold hover:bg-blue-600/90 transition-all"
             >
-              Create Account
+              {loading ? "Creating..." : "Create Account"}
             </button>
 
             <div className="relative py-4 flex items-center">

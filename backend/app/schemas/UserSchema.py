@@ -27,6 +27,7 @@ class UserBase(BaseModel):
     email: EmailStr
     is_active: bool = True
     role: UserRole = UserRole.EMPLOYEE
+    organization_id: int
 
 
 class UserCreate(UserBase):

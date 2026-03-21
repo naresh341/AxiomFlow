@@ -13,9 +13,39 @@ import {
   Workflow,
   X,
 } from "lucide-react";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { create_Roles } from "../RTKThunk/AsyncThunk";
 
 const CreateRole = ({ isOpen, onClose }) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    roleId: "", // optional
+    mfa_required: false,
+    ip_restricted: false,
+    permissions: {},
+  });
+  const dispatch = useDispatch();
+  const selectedOrg = useSelector((state) => state.roleOrg.selectedOrg);
+  const orgId = selectedOrg?.id;
+  // const user = useSelector((state) => state.islogin.user);
+  // const orgId = user?.organization_id;
+  // const orgid = org.id;
+  console.log(orgId, "orgid");
   if (!isOpen) return null;
+
+  const transformPermissions = (permissions) => {
+    const result = {};
+
+    for (const module in permissions) {
+      const actionsObj = permissions[module];
+
+      result[module] = Object.keys(actionsObj).filter((key) => actionsObj[key]);
+    }
+
+    return result;
+  };
 
   const modules = [
     { name: "Users", icon: <Users size={18} />, perms: ["V", "C", "E", "D"] },
@@ -52,6 +82,56 @@ const CreateRole = ({ isOpen, onClose }) => {
       perms: ["V", "C", "E", "D", "A"],
     },
   ];
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    if (!name) return;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handlePermissionChange = (moduleId, action) => {
+    setFormData((prev) => ({
+      ...prev,
+      permissions: {
+        ...prev.permissions,
+        [moduleId]: {
+          ...prev.permissions[moduleId],
+          [action]: !prev.permissions[moduleId]?.[action],
+        },
+      },
+    }));
+  };
+
+  const handleCreateRole = () => {
+    // const formattedPermissions = Object.entries(formData.permissions).map(
+    //   ([module, actions]) => ({
+    //     module,
+    //     actions: Object.keys(actions).filter((key) => actions[key]),
+    //   }),
+    // );
+    const payload = {
+      name: formData.name,
+      description: formData.description,
+      permissions: transformPermissions(formData.permissions),
+      organization_id: orgId,
+      mfa_required: formData.mfa_required,
+      ip_restricted: formData.ip_restricted,
+    };
+
+    dispatch(create_Roles({ id: orgId, payload }))
+      .unwrap()
+      .then((role) => {
+        console.log("Role created:", role);
+        onClose();
+      })
+      .catch((err) => {
+        console.error("Error creating role:", err);
+        alert("Error creating role");
+      });
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
@@ -99,28 +179,49 @@ const CreateRole = ({ isOpen, onClose }) => {
                 <label className="text-slate-700 dark:text-slate-200 text-sm font-bold">
                   Role Name *
                 </label>
-                <input
-                  type="text"
+                <select
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
                   placeholder="e.g. Senior Workflow Manager"
                   className="w-full rounded-xl border border-slate-200 dark:border-[#3b4354] bg-slate-50 dark:bg-[#1c1f27] text-slate-900 dark:text-white px-4 py-3 focus:border-[#135bec] focus:ring-4 focus:ring-[#135bec]/5 outline-none transition-all"
-                />
+                >
+                  <option value="">Select Role</option>
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="MANAGER">Manager</option>
+                  <option value="EMPLOYEE">EMPLOYEE</option>
+                </select>
               </div>
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <label className="text-slate-700 dark:text-slate-200 text-sm font-bold">
-                  Role ID (Optional)
+                  Role Name *
                 </label>
-                <input
-                  type="text"
-                  placeholder="RO-10293"
-                  className="w-full rounded-xl border border-slate-200 dark:border-[#3b4354] bg-slate-50 dark:bg-[#1c1f27] text-slate-900 dark:text-white px-4 py-3 focus:border-[#135bec] outline-none transition-all"
-                />
-              </div>
+                <select
+                  value={formData.organization_id}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      organization_id: e.target.value,
+                    }))
+                  }
+                >
+                  {org.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.name}
+                    </option>
+                  ))}
+                </select>
+              </div> */}
+
               <div className="md:col-span-2 space-y-2">
                 <label className="text-slate-700 dark:text-slate-200 text-sm font-bold">
                   Description
                 </label>
                 <textarea
+                  name="description"
                   rows="3"
+                  value={formData.description}
+                  onChange={handleChange}
                   placeholder="Describe the responsibilities and access scope of this role..."
                   className="w-full rounded-xl border border-slate-200 dark:border-[#3b4354] bg-slate-50 dark:bg-[#1c1f27] text-slate-900 dark:text-white px-4 py-3 focus:border-[#135bec] outline-none transition-all resize-none"
                 />
@@ -176,6 +277,10 @@ const CreateRole = ({ isOpen, onClose }) => {
                           {m.perms.includes(p) ? (
                             <input
                               type="checkbox"
+                              checked={
+                                formData.permissions[m.name]?.[p] || false
+                              }
+                              onChange={() => handlePermissionChange(m.name, p)}
                               className="w-5 h-5 rounded border-slate-300 dark:border-slate-700 text-[#135bec] focus:ring-[#135bec]/20 dark:bg-[#1c1f27]"
                             />
                           ) : (
@@ -199,6 +304,9 @@ const CreateRole = ({ isOpen, onClose }) => {
                 <input
                   type="checkbox"
                   id="mfa"
+                  name="mfa_required"
+                  checked={formData.mfa_required}
+                  onChange={handleChange}
                   className="w-5 h-5 rounded border-slate-300 text-[#135bec] focus:ring-[#135bec]"
                 />
               </div>
@@ -215,6 +323,9 @@ const CreateRole = ({ isOpen, onClose }) => {
                 <input
                   type="checkbox"
                   id="ip"
+                  name="ip_restricted"
+                  checked={formData.ip_restricted}
+                  onChange={handleChange}
                   className="w-5 h-5 rounded border-slate-300 text-[#135bec] focus:ring-[#135bec]"
                 />
               </div>
@@ -237,7 +348,11 @@ const CreateRole = ({ isOpen, onClose }) => {
           >
             Discard Changes
           </button>
-          <button className="bg-[#135bec] hover:bg-[#104ec9] text-white px-10 py-3 rounded-xl text-sm font-black transition-all shadow-xl shadow-[#135bec]/20 flex items-center gap-3 active:scale-[0.98]">
+          <button
+            type="submit"
+            onClick={handleCreateRole}
+            className="bg-[#135bec] hover:bg-[#104ec9] text-white px-10 py-3 rounded-xl text-sm font-black transition-all shadow-xl shadow-[#135bec]/20 flex items-center gap-3 active:scale-[0.98]"
+          >
             Create Role <Send size={18} />
           </button>
         </div>

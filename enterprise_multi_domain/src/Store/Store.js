@@ -8,6 +8,11 @@ import UserOrgReducer from "../Features/User_OrgSlice.js";
 import teamsReducer from "../Features/TeamSlice.js";
 import GovernanceReducer from "../Features/GovernanceSlice.js";
 import ComplianceReducer from "../Features/complianceSlice.js";
+import roleOrgReducer from "../Features/RolesAndOraganizationSlice.js";
+import securityReducer from "../Features/SecuritySlice.js";
+import flagReducer from "../Features/FeatureFlagSlice.js";
+import otpReducer from "../Features/OTPSlice.js";
+import GovActionReducer from "../Features/GovernanceActionSlice.js";
 export const Store = configureStore({
   reducer: {
     islogin: islogin,
@@ -19,5 +24,10 @@ export const Store = configureStore({
     teams: teamsReducer,
     governance: GovernanceReducer,
     compliance: ComplianceReducer,
+    roleOrg: roleOrgReducer,
+    security: securityReducer,
+    flags: flagReducer,
+    otp: otpReducer,
+    GovAction: GovActionReducer,
   },
 });

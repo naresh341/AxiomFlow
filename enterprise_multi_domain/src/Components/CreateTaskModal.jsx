@@ -7,15 +7,36 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useState } from "react";
-import { useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { get_UserOrg } from "../RTKThunk/AsyncThunk";
 
-const CreateTaskModal = ({ isOpen, onClose, onCreate }) => {
+const CreateTaskModal = ({
+  isOpen,
+  onClose,
+  onCreate,
+  workflowId,
+  editData,
+  onUpdate,
+}) => {
+  const dispatch = useDispatch();
+  const { data } = useSelector((state) => state.UserOrg);
+  const roles = [...new Set(data?.map((u) => u.role).filter(Boolean))];
+
+  useEffect(() => {
+    dispatch(get_UserOrg());
+  }, [dispatch]);
+
+  console.log(data, "data");
   const [taskData, setTaskData] = useState({
     name: "",
     type: "webhook",
     description: "",
     mode: "Sequential",
+    assignee_id: "",
+    assignee_role: "",
+    due_at: "",
+
     retry: "Standard (3 attempts)",
     timeout: 30,
     failureBehavior: "Stop Workflow",
@@ -27,9 +48,7 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }) => {
       payload: '{\n  "customer_id": "{{customer_id}}"\n}',
     },
   });
-  const { currentWorkflow, currentWorkflowVersions } = useSelector(
-    (state) => state.workflows,
-  );
+  const { currentWorkflowVersions } = useSelector((state) => state.workflows);
   // Handle Simple Input Changes
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -75,42 +94,70 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }) => {
     }));
   };
 
-  // Submit Logic
-  const handleSubmit = () => {
-    if (
-      !taskData.name ||
-      (taskData.type === "webhook" && !taskData.webhook.url)
-    ) {
-      alert("Please fill in the Task Name and Webhook URL");
-      return;
-    }
-    const activeVersionId =
-      currentWorkflowVersions.length > 0 ? currentWorkflowVersions[0].id : null;
+  const handleSubmit = async () => {
+    try {
+      if (!taskData.name) {
+        alert("Task name is required");
+        return;
+      }
 
-    const finalPayload = {
-      ...taskData,
-      workflow_id: currentWorkflow?.id,
-      workflow_version_id: activeVersionId,
-      input_data: {
-        execution: {
-          mode: taskData.mode,
-          retry: taskData.retry,
-          timeout: taskData.timeout,
-          failureBehavior: taskData.failureBehavior,
+      if (taskData.type === "webhook" && !taskData.webhook.url) {
+        alert("Webhook URL is required");
+        return;
+      }
+
+      const activeVersionId =
+        currentWorkflowVersions?.length > 0
+          ? currentWorkflowVersions[0].id
+          : null;
+
+      const payload = {
+        name: taskData.name,
+        type: taskData.type,
+        priority: Number(taskData.priority) || 5,
+        workflow_id: workflowId,
+        assignee_id: taskData.assignee_id || null,
+        assignee_role: taskData.assignee_role || null,
+        due_at: taskData.due_at || null,
+        workflow_version_id: activeVersionId,
+
+        input_data: {
+          execution: {
+            mode: taskData.mode,
+            retry: taskData.retry,
+            timeout: taskData.timeout,
+            failureBehavior: taskData.failureBehavior,
+          },
+
+          webhook: taskData.webhook,
+
+          parameters: taskData.parameters,
         },
-        webhook: taskData.webhook,
-        parameters: taskData.parameters,
-      },
-    };
+      };
 
-    if (!finalPayload.workflow_id) {
-      console.error("Missing Workflow ID - Check if a workflow is loaded");
-      return;
+      if (!workflowId) {
+        console.error("Workflow ID missing");
+        return;
+      }
+      if (editData) {
+        await onUpdate(editData.id, payload);
+      } else {
+        await onCreate(workflowId, payload);
+      }
+
+      onClose();
+    } catch (error) {
+      console.error("Task creation failed:", error);
     }
-
-    onCreate(finalPayload);
-    onClose();
   };
+
+  useEffect(() => {
+    if (!editData) return;
+    setTaskData((prev) => ({
+      ...prev,
+      ...editData,
+    }));
+  }, [editData]);
 
   if (!isOpen) return null;
 
@@ -174,6 +221,90 @@ const CreateTaskModal = ({ isOpen, onClose, onCreate }) => {
                   <ChevronDown
                     size={16}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-slate-700 dark:text-slate-200 text-sm font-medium">
+                  Priority
+                </label>
+                <div className="relative">
+                  <select
+                    name="priority"
+                    value={taskData.priority}
+                    onChange={handleChange}
+                    className="w-full appearance-none rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white h-11 px-4 text-sm outline-none"
+                  >
+                    <option value={1}>Critical</option>
+                    <option value={3}>High</option>
+                    <option value={5}>Medium</option>
+                    <option value={7}>Low</option>
+                  </select>
+                  <ChevronDown
+                    size={16}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-slate-700 dark:text-slate-200 text-sm font-medium">
+                  Assign To
+                </label>
+                <div className="relative">
+                  <select
+                    name="assignee_id"
+                    value={taskData.assignee_id}
+                    onChange={handleChange}
+                    className="w-full appearance-none rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white h-11 px-4 text-sm outline-none"
+                  >
+                    <option value="">Assign User</option>
+                    {data?.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.first_name} {user.last_name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={16}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-slate-700 dark:text-slate-200 text-sm font-medium">
+                  Assign Role
+                </label>
+                <div className="relative">
+                  <select
+                    name="assignee_role"
+                    value={taskData.assignee_role}
+                    onChange={handleChange}
+                    className="w-full appearance-none rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white h-11 px-4 text-sm outline-none"
+                  >
+                    <option value="">Assign Role</option>
+                    {roles?.map((role) => (
+                      <option key={role} value={role}>
+                        {role}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={16}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-slate-700 dark:text-slate-200 text-sm font-medium">
+                  Due Date
+                </label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    name="due_at"
+                    value={taskData.due_at || ""}
+                    onChange={handleChange}
+                    className="w-full appearance-none rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white h-11 px-4 text-sm outline-none"
                   />
                 </div>
               </div>
