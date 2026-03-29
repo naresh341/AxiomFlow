@@ -1,10 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
-import {
-  create_Flag,
-  get_Flag,
-  toggle_Flag,
-  update_Flag,
-} from "../RTKThunk/AsyncThunk";
+import { create_Flag, get_Flag, toggle_Flag, update_Flag } from "../RTKThunk/GovernanceThunk";
+// import {
+//   create_Flag,
+//   get_Flag,
+//   toggle_Flag,
+//   update_Flag,
+// } from "../RTKThunk/AsyncThunk";
 
 const initialState = {
   flags: [],

@@ -1,36 +1,92 @@
-import { Edit3, Eye, ShieldCheck, UserPlus } from "lucide-react";
+import {
+  BarChart3,
+  CheckCircle2,
+  Edit3,
+  Eye,
+  LayoutGrid,
+  Puzzle,
+  Settings2,
+  ShieldCheck,
+  Users,
+  Workflow,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { get_Roles, update_Roles } from "../../RTKThunk/AsyncThunk";
+// import { get_Roles, update_Roles } from "../../RTKThunk/AsyncThunk";
 import { ROLE_POLICY } from "../../Utils/rbac";
+import {
+  get_Roles,
+  update_Roles,
+} from "../../RTKThunk/RoleAndOrganizationThunk";
 
 const RolesAndPermissions = () => {
-  const dispatch = useDispatch(); 
+  const dispatch = useDispatch();
 
   const { roles } = useSelector((state) => state.roleOrg);
   const user = useSelector((state) => state.islogin.user);
-
   const orgId = user?.organization_id;
-
-  const [activeRole, setActiveRole] = useState(null);
-  const [activeRolePermissions, setActiveRolePermissions] = useState({});
 
   useEffect(() => {
     if (!orgId) return;
     dispatch(get_Roles(orgId));
-  }, [orgId, dispatch]);
+  }, [dispatch, orgId]);
+
+  const [activeRole, setActiveRole] = useState(null);
+  const [activeRolePermissions, setActiveRolePermissions] = useState({});
+
+  const normalizePermissions = (permissions) => {
+    const result = {};
+
+    for (const module in permissions) {
+      const moduleKey = module.toLowerCase(); // normalize key
+
+      result[moduleKey] = {};
+
+      permissions[module].forEach((action) => {
+        result[moduleKey][action] = true;
+      });
+    }
+
+    return result;
+  };
+
+  const denormalizePermissions = (permissions) => {
+    const result = {};
+
+    for (const module in permissions) {
+      const actionsObj = permissions[module];
+
+      // pick only TRUE actions
+      const allowedActions = Object.keys(actionsObj).filter(
+        (action) => actionsObj[action],
+      );
+
+      if (allowedActions.length > 0) {
+        // Capitalize first letter → users → Users
+        const formattedModule =
+          module.charAt(0).toUpperCase() + module.slice(1);
+
+        result[formattedModule] = allowedActions;
+      }
+    }
+
+    return result;
+  };
 
   useEffect(() => {
     if (roles?.length > 0 && !activeRole) {
       const firstRole = roles[0];
-      setActiveRole(firstRole.name);
-      setActiveRolePermissions(firstRole.permissions || {});
+
+      setActiveRole(firstRole); // store full object
+      setActiveRolePermissions(
+        normalizePermissions(firstRole.permissions || {}),
+      );
     }
-  }, [roles]);
+  }, [roles, activeRole]);
 
   const handleSelectRole = (role) => {
-    setActiveRole(role.name);
-    setActiveRolePermissions(role.permissions || {});
+    setActiveRole(role);
+    setActiveRolePermissions(normalizePermissions(role.permissions || {}));
   };
 
   const handlePermissionChange = (moduleId, action) => {
@@ -48,19 +104,18 @@ const RolesAndPermissions = () => {
   };
 
   const handleSavePermissions = async () => {
-    const role = roles.find((r) => r.name === activeRole);
+    const role = activeRole;
     if (!role) return;
 
     const result = await dispatch(
       update_Roles({
-        id: role.id,
+        id: activeRole.id,
         payload: {
-          permissions: activeRolePermissions,
+          permissions: denormalizePermissions(activeRolePermissions),
         },
       }),
     );
 
-    // 🔥 IMPORTANT: refresh roles after update
     if (result?.meta?.requestStatus === "fulfilled") {
       dispatch(get_Roles(orgId));
     }
@@ -79,24 +134,64 @@ const RolesAndPermissions = () => {
 
   const roleIcons = {
     "Super Admin": <ShieldCheck size={18} />,
-    Admin: <UserPlus size={18} />,
-    Manager: <Edit3 size={18} />,
-    Employee: <Eye size={18} />,
+    ADMIN: <ShieldCheck size={18} />,
+    MANAGER: <Edit3 size={18} />,
+    EMPLOYEE: <Eye size={18} />,
   };
-
   const modules = [
-    { id: "dash", name: "Dashboard", perms: ["view", "edit"] },
     {
-      id: "user",
-      name: "Users Management",
-      perms: ["view", "create", "edit", "delete"],
+      id: "users",
+      name: "Users",
+      icon: <Users size={18} />,
+      perms: ["V", "C", "E", "D"],
     },
-    { id: "repo", name: "Reports & Analytics", perms: ["view", "create"] },
-    { id: "bill", name: "Billing & Subscriptions", perms: ["view"] },
     {
-      id: "proj",
-      name: "Project Configuration",
-      perms: ["view", "create", "edit", "delete"],
+      id: "roles",
+      name: "Roles",
+      icon: <ShieldCheck size={18} />,
+      perms: ["V", "C", "E", "D"],
+    },
+    {
+      id: "teams",
+      name: "Teams",
+      icon: <LayoutGrid size={18} />,
+      perms: ["V", "C", "E", "D"],
+    },
+    {
+      id: "workflows",
+      name: "Workflows",
+      icon: <Workflow size={18} />,
+      perms: ["V", "C", "E", "D", "A"],
+    },
+    {
+      id: "tasks",
+      name: "Tasks",
+      icon: <CheckCircle2 size={18} />,
+      perms: ["V", "C", "E", "D"],
+    },
+    {
+      id: "approvals",
+      name: "Approvals",
+      icon: <CheckCircle2 size={18} />,
+      perms: ["V", "A"],
+    },
+    {
+      id: "analytics",
+      name: "Analytics",
+      icon: <BarChart3 size={18} />,
+      perms: ["V", "C"],
+    },
+    {
+      id: "integrations",
+      name: "Integrations",
+      icon: <Puzzle size={18} />,
+      perms: ["V", "C", "E", "D"],
+    },
+    {
+      id: "admin_governance",
+      name: "Admin & Governance",
+      icon: <Settings2 size={18} />,
+      perms: ["V", "C", "E", "D", "A"],
     },
   ];
 
@@ -129,7 +224,7 @@ const RolesAndPermissions = () => {
                     key={role.id}
                     onClick={() => handleSelectRole(role)}
                     className={`cursor-pointer transition-colors ${
-                      activeRole === role.name
+                      activeRole?.id === role.id
                         ? "bg-blue-50/50 dark:bg-blue-900/10 border-l-4 border-l-blue-600"
                         : "hover:bg-gray-50/50 dark:hover:bg-gray-800/30"
                     }`}
@@ -139,7 +234,7 @@ const RolesAndPermissions = () => {
                         <span className="text-blue-600">
                           {roleIcons[role.name]}
                         </span>
-                        <span className="font-semibold dark:text-white">
+                        <span className="px-6 py-4 font-medium dark:text-gray-200 flex items-center gap-2">
                           {role.name}
                         </span>
                       </div>
@@ -184,7 +279,7 @@ const RolesAndPermissions = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between px-2 mt-3">
           <h2 className="text-xl font-bold dark:text-white">
-            Permissions: {activeRole} Role
+            Permissions: {activeRole?.name} Role
           </h2>
 
           <div className="flex gap-2">
@@ -194,7 +289,7 @@ const RolesAndPermissions = () => {
 
             <button
               onClick={handleSavePermissions}
-              className="px-4 py-2 text-sm font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
+              className=" cursor-pointer px-4 py-2 text-sm font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
             >
               Save Changes
             </button>
@@ -227,12 +322,16 @@ const RolesAndPermissions = () => {
                     key={mod.id}
                     className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors"
                   >
-                    <td className="px-6 py-4 font-medium dark:text-gray-200">
+                    <td className="px-6 py-4 flex items-center gap-3 font-medium dark:text-gray-200">
+                      {mod.icon}
                       {mod.name}
                     </td>
 
-                    {["view", "create", "edit", "delete"].map((action) => (
-                      <td key={action} className="px-6 py-4 text-center">
+                    {["V", "C", "E", "D"].map((action) => (
+                      <td
+                        key={`${mod.id}-${action}`}
+                        className="px-6 py-4 text-center"
+                      >
                         <input
                           type="checkbox"
                           checked={!!activeRolePermissions?.[mod.id]?.[action]}

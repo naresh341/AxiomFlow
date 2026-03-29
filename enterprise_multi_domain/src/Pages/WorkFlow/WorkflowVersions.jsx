@@ -16,41 +16,67 @@ import { NavLink, useNavigate, useParams } from "react-router-dom";
 import CreateVersionModal from "../../Components/CreateVersionModal";
 import DynamicTable from "../../Components/DynamicTable";
 import FilterButton from "../../Components/MiniComponent/FilterButton";
+import { useNotify } from "../../Components/MiniComponent/useNotify";
 import Paginator from "../../Components/Paginator";
 import {
   add_Version,
   delete_Version,
   get_Workflow_Versions,
   update_Version,
-} from "../../RTKThunk/AsyncThunk";
+} from "../../RTKThunk/WorkflowThunk";
 import { TableSchemas } from "../../Utils/TableSchemas";
 
 const WorkflowVersions = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
   const { workflowId } = useParams();
-  const [first, setfirst] = useState(0);
+  const [page, setPage] = useState(1);
   const rows = 10;
   const dispatch = useDispatch();
   const menuStatus = useRef(null);
+  const notify = useNotify();
   const [filters, setFilters] = useState({
     status: "All",
-    priority: "All",
   });
-  const [searchQuery, setSearchQuery] = useState("");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedVersion, setSelectedVersion] = useState(null);
-  const { loading, currentWorkflowVersions } = useSelector(
+  const { loading, currentWorkflowVersions, total } = useSelector(
     (state) => state.workflows,
   );
-  const versionData = currentWorkflowVersions.data || [];
+  const versionData = currentWorkflowVersions || [];
   console.log(versionData);
   useEffect(() => {
-    dispatch(get_Workflow_Versions(workflowId));
-  }, [workflowId, dispatch]);
+    try {
+      dispatch(
+        get_Workflow_Versions({
+          workflowId,
+          page,
+          limit: rows,
+          search: debouncedSearch,
+          status: filters.status,
+        }),
+      );
+    } catch (error) {
+      notify.error(error?.message || " Something Went Wrong");
+    }
+  }, [workflowId, dispatch, notify, page, debouncedSearch, filters.status]);
 
-  const onPageChange = (page) => {
-    setfirst((page + 1) * rows);
+  const onPageChange = (selectedPage) => {
+    setPage(selectedPage + 1);
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400); // delay
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, filters.status]);
 
   const handleRowClick = (event) => {
     const rowData = event.data;
@@ -70,9 +96,13 @@ const WorkflowVersions = () => {
     try {
       await dispatch(add_Version({ workflowId, payload })).unwrap();
       console.log("workflowId in dashboard:", workflowId);
-      await dispatch(get_Workflow_Versions(workflowId)).unwrap();
+      await dispatch(
+        get_Workflow_Versions({ workflowId, page, limit: rows }),
+      ).unwrap();
+      notify.success("Successful");
     } catch (error) {
       console.error("Error creating task:", error);
+      notify.error(error?.message || " Something Went Wrong");
     }
   };
 
@@ -85,9 +115,13 @@ const WorkflowVersions = () => {
     try {
       await dispatch(delete_Version({ id })).unwrap();
 
-      await dispatch(get_Workflow_Versions(workflowId)).unwrap();
+      await dispatch(
+        get_Workflow_Versions({ workflowId, page, limit: rows }),
+      ).unwrap();
+      notify.success("Successful");
     } catch (error) {
       console.error("Delete failed:", error);
+      notify.error(error?.message || " Something Went Wrong");
     }
   };
 
@@ -95,9 +129,13 @@ const WorkflowVersions = () => {
     try {
       await dispatch(update_Version({ id, payload })).unwrap();
 
-      await dispatch(get_Workflow_Versions(workflowId)).unwrap();
+      await dispatch(
+        get_Workflow_Versions({ workflowId, page, limit: rows }),
+      ).unwrap();
+      notify.success("Successful");
     } catch (error) {
       console.error("Update failed:", error);
+      notify.error(error?.message || " Something Went Wrong");
     }
   };
 
@@ -121,49 +159,6 @@ const WorkflowVersions = () => {
     },
   ];
 
-  // const versions = [
-  //   {
-  //     id: "v2.0.0",
-  //     status: "Active",
-  //     lineage: "Cloned from v1.2.0",
-  //     lineageIcon: <Copy size={14} />,
-  //     author: "Jane Doe",
-  //     date: "Oct 24, 2023",
-  //     summary:
-  //       "Added conditional logic to the approval step and optimized API call frequency...",
-  //     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane",
-  //   },
-  //   {
-  //     id: "v2.1.0",
-  //     status: "Draft",
-  //     lineage: "New Workflow",
-  //     lineageIcon: <Plus size={14} />,
-  //     author: "John Smith",
-  //     date: "Oct 26, 2023",
-  //     summary: "Initial draft for the new Q4 customer onboarding flow...",
-  //     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
-  //   },
-  //   {
-  //     id: "v1.0.0",
-  //     status: "Archived",
-  //     lineage: "Initial baseline",
-  //     author: "Jane Doe",
-  //     date: "Sep 12, 2023",
-  //     summary: "Legacy version kept for compliance and audit requirements...",
-  //     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane",
-  //   },
-  // ];
-  const filteredData = versionData.filter((item) => {
-    const matchesSearch =
-      !searchQuery ||
-      item.version_key?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus =
-      filters.status === "All" ||
-      item.status?.toLowerCase() === filters.status.toLowerCase();
-
-    return matchesStatus && matchesSearch;
-  });
   return (
     <div className="bg-[#f6f6f8] dark:bg-[#101622] text-slate-900 dark:text-slate-100 min-h-screen font-display">
       <main className="mx-auto px-10 py-8">
@@ -223,12 +218,12 @@ const WorkflowVersions = () => {
               className="w-full h-full pl-10 pr-4 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-[#1f2937] text-sm focus:ring-2 focus:ring-[#0f49bd] outline-none shadow-md "
               type="text"
               placeholder="Search by Version ID"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
-            {searchQuery && (
+            {search && (
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => setSearch("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X size={14} />
@@ -288,116 +283,16 @@ const WorkflowVersions = () => {
         {/* Table Component */}
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            {/* <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                  <th className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
-                    Version
-                  </th>
-                  <th className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
-                    Source Lineage
-                  </th>
-                  <th className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
-                    Created By
-                  </th>
-                  <th className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
-                    Created On
-                  </th>
-                  <th className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
-                    Change Summary
-                  </th>
-                  <th className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider text-right">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                {versions.map((v) => (
-                  <tr
-                    key={v.id}
-                    onClick={() => handleRowClick(v.id)}
-                    className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer ${v.status === "Archived" ? "opacity-75" : ""}`}
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1.5">
-                        <span className="text-slate-900 dark:text-white font-bold text-sm">
-                          {v.id}
-                        </span>
-                        <StatusBadge status={v.status} />
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
-                        {v.lineageIcon} {v.lineage}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={v.avatar}
-                          className="size-8 rounded-full border border-slate-200"
-                          alt={v.author}
-                        />
-                        <span className="text-slate-900 dark:text-slate-200 text-sm font-medium">
-                          {v.author}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-500">
-                      {v.date}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 max-w-[300px]">
-                        <p className="text-slate-500 dark:text-slate-400 text-sm truncate">
-                          {v.summary}
-                        </p>
-                        <Info
-                          size={14}
-                          className="text-slate-300 cursor-help"
-                        />
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {v.status === "Draft" ? (
-                        <div className="flex justify-end gap-2">
-                          <button className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold rounded hover:bg-slate-200 transition-colors">
-                            Edit
-                          </button>
-                          <button className="px-3 py-1.5 bg-[#0f49bd]/10 text-[#0f49bd] text-xs font-bold rounded hover:bg-[#0f49bd]/20 transition-colors">
-                            Activate
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex justify-end gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
-                          <ActionButton
-                            icon={<Copy size={18} />}
-                            title="Clone"
-                          />
-                          <ActionButton
-                            icon={<Archive size={18} />}
-                            title="Archive"
-                          />
-                          <ActionButton
-                            icon={<MoreVertical size={18} />}
-                            title="More"
-                          />
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table> */}
             {loading ? (
               <div className="flex justify-center items-center h-48">
                 <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#137fec]"></div>
               </div>
             ) : (
               <DynamicTable
-                tableData={filteredData}
+                tableData={versionData}
                 tableHead={TableSchemas.versions}
                 rows={rows}
-                first={first}
+                first={(page - 1) * rows}
                 handleRowClick={handleRowClick}
                 onEdit={handleEdit}
                 onDelete={handleDeleteVersion}
@@ -407,9 +302,9 @@ const WorkflowVersions = () => {
           {/* Pagination */}
           <div className="flex items-center justify-center px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50">
             <Paginator
-              first={first}
+              first={(page - 1) * rows}
               rows={rows}
-              totalRecords={filteredData.length}
+              totalRecords={total}
               onPageChange={onPageChange}
             />
           </div>

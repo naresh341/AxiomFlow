@@ -1,10 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
-import {
-  addTeams,
-  delete_Teams,
-  get_teams,
-  update_Teams,
-} from "../RTKThunk/AsyncThunk";
+import { addTeams, delete_Teams, get_teams, update_Teams } from "../RTKThunk/RoleAndOrganizationThunk";
+// import {
+//   addTeams,
+//   delete_Teams,
+//   get_teams,
+//   update_Teams,
+// } from "../RTKThunk/AsyncThunk";
 
 const initialState = {
   data: [],

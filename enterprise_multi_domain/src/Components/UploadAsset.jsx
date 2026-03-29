@@ -1,7 +1,8 @@
 import { CheckCircle2, FileUp, X } from "lucide-react";
 import { useState } from "react";
-import { upload_FileTo_Server } from "../RTKThunk/AsyncThunk";
+// import { upload_FileTo_Server } from "../RTKThunk/AsyncThunk";
 import { useDispatch, useSelector } from "react-redux";
+import { upload_FileTo_Server } from "../RTKThunk/RoleAndOrganizationThunk";
 
 const UploadAsset = ({ isOpen, onClose, onUpload }) => {
   const [selectedFile, setSelectedFile] = useState(null);

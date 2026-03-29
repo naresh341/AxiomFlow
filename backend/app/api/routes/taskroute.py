@@ -14,11 +14,22 @@ def fetch_task(
     db: Session = Depends(get_db),
     status: Optional[str] = None,
     workflow_id: Optional[int] = None,
+    page: int = 1,
+    limit: int = 10,
+    search: Optional[str] = None,
+    priority: Optional[str] = None,
 ):
     service = TaskService(db)
-    tasks = service.list_task(workflow_id=workflow_id, status=status)
+    tasks = service.list_task(
+        workflow_id=workflow_id,
+        status=status,
+        page=page,
+        limit=limit,
+        search=search,
+        priority=priority,
+    )
 
-    return {"total": len(tasks), "data": tasks}
+    return tasks
 
 
 @router.post("/createTask", response_model=TaskResponse)

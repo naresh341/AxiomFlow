@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 // Import Lucide Icons
 import { CheckCircle, Chrome, Database, Lock, ShieldCheck } from "lucide-react";
-import { RegisterUser } from "../../RTKThunk/AsyncThunk";
 import { useDispatch } from "react-redux";
+import { RegisterUser } from "../../RTKThunk/AuthThunk";
 
 const SignUp = () => {
   const navigate = useNavigate();

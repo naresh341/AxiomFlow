@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { get_UserOrg } from "../RTKThunk/AsyncThunk";
+import { get_UserOrg } from "../RTKThunk/RoleAndOrganizationThunk";
+// import { get_UserOrg } from "../RTKThunk/AsyncThunk";
 
 const CreateTaskModal = ({
   isOpen,

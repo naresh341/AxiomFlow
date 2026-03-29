@@ -1,22 +1,22 @@
 from app.core.dependencies import get_db
 from app.model.approval import Approval
 from app.model.execution import Execution
+from app.model.WorkflowVersion import WorkflowVersion
 from app.model.task import Task
-from app.schemas.TaskSchema import TaskCreate, TaskUpdate
-from app.schemas.WorkflowSchema import WorflowSchema, WorkflowCreate, WorkflowResponse
-from app.services.workflow_service import WorkflowService
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from app.schemas.WorkflowVersionSchema import (
-    WorkflowVersionCreate,
-    WorkflowVersionSchema,
-    UpdateWorkflowVersion,
-)
 from app.schemas.ExecutionSchema import (
     ExecutionBase,
     ExecutionCreate,
-    ExecutionResponse,
 )
+from app.schemas.TaskSchema import TaskCreate, TaskUpdate
+from app.schemas.WorkflowSchema import WorflowSchema, WorkflowCreate, WorkflowResponse
+from app.schemas.WorkflowVersionSchema import (
+    UpdateWorkflowVersion,
+    WorkflowVersionCreate,
+    WorkflowVersionSchema,
+)
+from app.services.workflow_service import WorkflowService
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/workflows", tags=["Workflows"])
 
@@ -24,9 +24,14 @@ router = APIRouter(prefix="/workflows", tags=["Workflows"])
 @router.get("/fetchAll", response_model=WorkflowResponse)
 def list_workflows(
     status: str = None,
+    page: int = 1,
+    limit: int = 10,
+    search: str = None,
     db: Session = Depends(get_db),
 ):
-    return WorkflowService(db).list_workflows(status=status)
+    return WorkflowService(db).list_workflows(
+        status=status, page=page, limit=limit, search=search
+    )
 
 
 @router.get("/{workflow_id}", response_model=WorflowSchema)
@@ -52,14 +57,34 @@ def create_workflow(workflow_data: WorkflowCreate, db: Session = Depends(get_db)
 
 
 @router.get("/{workflow_id}/tasks")
-def get_tasks(workflow_id: str, db: Session = Depends(get_db)):
-    return WorkflowService(db).get_workflow_by_status(workflow_id, Task)
+def get_tasks(
+    workflow_id: str,
+    db: Session = Depends(get_db),
+    page: int = 1,
+    limit: int = 10,
+    status: str = None,
+    priority: str = None,
+    search: str = None,
+):
+    return WorkflowService(db).get_workflow_by_status(
+        workflow_id, Task, page, limit, status, priority, search
+    )
 
 
 @router.get("/{workflow_id}/approvals")
-def get_approvals_for_workflow(workflow_id: str, db: Session = Depends(get_db)):
+def get_approvals_for_workflow(
+    workflow_id: str,
+    db: Session = Depends(get_db),
+    page: int = 1,
+    limit: int = 10,
+    status: str = None,
+    priority: str = None,
+    search: str = None,
+):
     service = WorkflowService(db)
-    approvals = service.get_workflow_by_status(workflow_id, Approval)
+    approvals = service.get_workflow_by_status(
+        workflow_id, Approval, page, limit, status, priority, search
+    )
 
     if approvals is None:
         raise HTTPException(
@@ -70,9 +95,18 @@ def get_approvals_for_workflow(workflow_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/{workflow_id}/executions")
-def get_executions_for_workflow(workflow_id: str, db: Session = Depends(get_db)):
+def get_executions_for_workflow(
+    workflow_id: str,
+    db: Session = Depends(get_db),
+    page: int = 1,
+    limit: int = 10,
+    status: str = None,
+    search: str = None,
+):
     service = WorkflowService(db)
-    executions = service.get_workflow_by_status(workflow_id, Execution)
+    executions = service.get_workflow_by_status(
+        workflow_id, Execution, page, limit, status, None, search
+    )
 
     if executions is None:
         raise HTTPException(
@@ -83,17 +117,26 @@ def get_executions_for_workflow(workflow_id: str, db: Session = Depends(get_db))
 
 
 @router.get("/{workflow_id}/versions")
-def get_versions_for_workflow(workflow_id: str, db: Session = Depends(get_db)):
+def get_versions_for_workflow(
+    workflow_id: str,
+    db: Session = Depends(get_db),
+    page: int = 1,
+    limit: int = 10,
+    status: str = None,
+    search: str = None,
+):
     service = WorkflowService(db)
     # versions = service.get_workflow_by_status(workflow_id, WorkflowVersion)
-    versions = service.get_versions_for_workflow(workflow_id)
+    versions = service.get_workflow_by_status(
+        workflow_id, WorkflowVersion, page, limit, status, None, search
+    )
 
     if versions is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Workflow not found"
         )
 
-    return {"total": len(versions), "data": versions}
+    return versions
 
 
 @router.post("/{workflow_id}/tasks")

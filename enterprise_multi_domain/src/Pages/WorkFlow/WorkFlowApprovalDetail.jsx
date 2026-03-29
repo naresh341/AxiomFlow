@@ -22,7 +22,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
 import RequestChangesModal from "../../Components/RequestChangesModal";
-import { approve_reject, getApprovalList } from "../../RTKThunk/AsyncThunk";
+import { approve_reject, getApprovalList } from "../../RTKThunk/WorkflowThunk";
+// import { approve_reject, getApprovalList } from "../../RTKThunk/AsyncThunk";
 
 const WorkFlowApprovalDetail = () => {
   const { workflowId, approvalId } = useParams(); // URL parameter: /workflows/:id

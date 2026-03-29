@@ -20,6 +20,14 @@ class WorkflowRepository(BaseRepository):
             query = query.filter(Workflow.status == status.upper())
         return query.all()
 
+    def base_query(self, status: str = None):
+        query = self.db.query(Workflow)
+
+        if status:
+            query = query.filter(Workflow.status == status.upper())
+
+        return query.order_by(Workflow.id.desc())
+
     def get_by_id(self, workflow_id: int):
         return self.db.query(Workflow).filter(Workflow.id == workflow_id).first()
 

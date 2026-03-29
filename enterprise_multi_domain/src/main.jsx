@@ -9,6 +9,7 @@ import "primereact/resources/themes/lara-light-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import { PrimeReactProvider } from "primereact/api";
+import GlobalNotificationModal from "./Components/MiniComponent/GlobalNotificationModal.jsx";
 const primeReactConfig = {
   ripple: true,
   hideOverlaysOnDocumentScrolling: true,
@@ -19,6 +20,7 @@ createRoot(document.getElementById("root")).render(
       <Provider store={Store}>
         <ThemeProvider>
           <App />
+          <GlobalNotificationModal />
         </ThemeProvider>
       </Provider>
     </BrowserRouter>

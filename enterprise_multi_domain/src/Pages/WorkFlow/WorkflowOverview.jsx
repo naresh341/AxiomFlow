@@ -65,19 +65,6 @@ const WorkflowOverview = () => {
     },
   ];
 
-  // const workflowId = currentWorkflow?.workflow_id_str;
-  // useEffect(() => {
-  //   if (workflowId) {
-  //     // Pass the workflowId to your thunk so it knows which executions to fetch
-  //     dispatch(get_Workflow_Executions());
-  //   }
-  // }, [dispatch, workflowId]);
-
-  // const executions = useMemo(() => {
-  //   return Array.isArray(currentWorkflowExecutions)
-  //     ? currentWorkflowExecutions
-  //     : [];
-  // }, [currentWorkflowExecutions]);
   return (
     <div className="grid grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="col-span-12 lg:col-span-9 space-y-6">
@@ -187,7 +174,7 @@ const WorkflowOverview = () => {
           <div className="overflow-x-auto">
             <DynamicTable
               tableHead={TableSchemas.execution}
-              // tableData={executions}
+              tableData={currentWorkflow}
             />
             <div className="flex justify-end">
               <Paginator />

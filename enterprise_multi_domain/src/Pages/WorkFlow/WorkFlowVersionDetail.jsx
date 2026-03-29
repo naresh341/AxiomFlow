@@ -19,7 +19,8 @@ import {
 import { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { get_Workflow_Versions } from "../../RTKThunk/AsyncThunk"; // Ensure path is correct
+import { get_Workflow_Versions } from "../../RTKThunk/WorkflowThunk";
+// import { get_Workflow_Versions } from "../../RTKThunk/AsyncThunk"; // Ensure path is correct
 
 const WorkFlowVersionDetail = () => {
   const navigate = useNavigate();

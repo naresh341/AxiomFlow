@@ -16,7 +16,8 @@ import {
   X,
   Navigation,
 } from "lucide-react";
-import { get_Workflow_Executions } from "../../RTKThunk/AsyncThunk";
+import { get_Workflow_Executions } from "../../RTKThunk/WorkflowThunk";
+// import { get_Workflow_Executions } from "../../RTKThunk/AsyncThunk";
 
 const WorkFlowExecutionDetail = () => {
   const { workflowId, executionId } = useParams();

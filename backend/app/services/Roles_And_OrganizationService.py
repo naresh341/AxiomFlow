@@ -4,6 +4,8 @@ from app.model.Roles_And_OrganizationModel import Organization, Role
 import random
 from fastapi import HTTPException
 
+from app.model.UserModel import User
+
 
 # --- Organization ---
 def get_organization(db: Session, org_id: int):
@@ -39,8 +41,8 @@ def update_organization(db: Session, org_id: int, data: dict):
 
 
 # --- Roles ---
-def get_roles(db: Session, org_id: int):
-    return db.query(Role).filter(Role.organization_id == org_id).all()
+def get_roles(db: Session, user: User):
+    return db.query(Role).filter(Role.organization_id == user.organization_id).all()
 
 
 def generate_role_code() -> str:
@@ -48,11 +50,10 @@ def generate_role_code() -> str:
     return f"RO-{random.randint(10000, 99999)}"
 
 
-def create_role(db: Session, org_id: int, data: dict):
+def create_role(db: Session, data: dict, user: User):
 
-    org = db.query(Organization).filter(Organization.id == org_id).first()
-    if not org:
-        raise HTTPException(status_code=404, detail="Organization not found")
+    # 🔒 ALWAYS take org from user
+    org_id = user.organization_id
 
     data["organization_id"] = org_id
 
@@ -67,17 +68,33 @@ def create_role(db: Session, org_id: int, data: dict):
     return role
 
 
-def update_role(db: Session, role_id: int, data: dict):
+def update_role(db: Session, role_id: int, data: dict, user: User):
     role = db.query(Role).filter(Role.id == role_id).first()
+
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
+
+    if role.organization_id != user.organization_id:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
     for key, value in data.items():
         setattr(role, key, value)
+
     db.commit()
     db.refresh(role)
     return role
 
 
-def delete_role(db: Session, role_id: int):
+def delete_role(db: Session, role_id: int, user: User):
     role = db.query(Role).filter(Role.id == role_id).first()
+
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
+
+    if role.organization_id != user.organization_id:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
     db.delete(role)
     db.commit()
+
     return {"detail": "Role deleted"}

@@ -15,10 +15,26 @@ class OrganizationSchema(BaseModel):
     password_policy: Optional[str] = "standard"
 
 
-class RoleSchema(BaseModel):
+class RoleResponseSchema(BaseModel):
+    id: int
     name: str
     description: Optional[str]
     permissions: Dict[str, List[str]]
-    # organization_id: int
+    mfa_required: bool
+    ip_restricted: bool
+    organization_id: int
+
+    class Config:
+        from_attributes = True
+
+
+class RoleCreateSchema(BaseModel):
+    name: str
+    description: Optional[str] = None
+    permissions: Dict[str, List[str]]
     mfa_required: Optional[bool] = False
     ip_restricted: Optional[bool] = False
+
+
+class updateSchema(BaseModel):
+    permissions: Dict[str, List[str]]

@@ -12,12 +12,13 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { get_auditLogs } from "../../RTKThunk/AsyncThunk";
+// import { get_auditLogs } from "../../RTKThunk/AsyncThunk";
 import DynamicTable from "../../Components/DynamicTable";
 import { TableSchemas } from "../../Utils/TableSchemas";
 import Paginator from "../../Components/Paginator";
 import FilterButton from "../../Components/MiniComponent/FilterButton";
 import { Menu } from "primereact/menu";
+import { get_auditLogs } from "../../RTKThunk/GovernanceThunk";
 
 const AdminActions = () => {
   const dispatch = useDispatch();

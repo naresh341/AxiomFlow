@@ -1,8 +1,9 @@
 import axios from "axios";
 axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 axios.defaults.withCredentials = true;
+
 // ========================================== LOGIN ===========================================
-export const Login = async ({ username, password }) => {
+export const loginApi = async ({ username, password }) => {
   try {
     const response = await axios.post("/auth/login", { username, password });
     console.log(response.data.user);
@@ -63,10 +64,15 @@ export const LoginCredentials = async (token) => {
 };
 
 // ========================================WORKFLOW===================================================
-export const WorkflowData = async (status = "active") => {
+export const WorkflowData = async (params) => {
   try {
     const response = await axios.get("/workflows/fetchAll", {
-      params: { status },
+      params: {
+        status: params.activeTab,
+        page: params.page,
+        limit: params.limit,
+        search: params.search,
+      },
     });
     return response.data;
   } catch (error) {
@@ -95,10 +101,16 @@ export const workflowById = async (workflow_id) => {
   }
 };
 
-export const fetcAllTask = async (status) => {
+export const fetcAllTask = async ({
+  status,
+  page = 1,
+  limit = 10,
+  search = "",
+  priority = "All",
+}) => {
   try {
     const response = await axios.get("/tasks/fetchAll", {
-      params: { status },
+      params: { status, page, limit, search, priority },
     });
     return response.data;
   } catch (error) {
@@ -107,11 +119,23 @@ export const fetcAllTask = async (status) => {
   }
 };
 
-export const fetchAllApproval = async (status) => {
+export const fetchAllApproval = async ({
+  status,
+  page = 1,
+  limit = 10,
+  search = "",
+  priority = "",
+  date = "",
+}) => {
   try {
     const response = await axios.get("/approval/fetchAll", {
       params: {
         status,
+        page,
+        limit,
+        search,
+        priority,
+        date,
       },
     });
     return response.data;
@@ -131,36 +155,70 @@ export const approveRejectTask = async (data) => {
   }
 };
 
-export const getWorkflowTasks = async (workflowById) => {
+export const getWorkflowTasks = async ({
+  workflowId,
+  page = 1,
+  limit = 10,
+  status,
+  priority,
+  search,
+}) => {
   try {
-    const response = await axios.get(`/workflows/${workflowById}/tasks`);
+    const response = await axios.get(`/workflows/${workflowId}/tasks`, {
+      params: { page, limit, status, priority, search },
+    });
     return response.data;
   } catch (error) {
     console.error("Error while fetching workflow tasks", error);
     throw error;
   }
 };
-export const getWorkflowApproval = async (workflowById) => {
+export const getWorkflowApproval = async ({
+  workflowId,
+  page = 1,
+  limit = 10,
+  status,
+  priority,
+  search,
+}) => {
   try {
-    const response = await axios.get(`/workflows/${workflowById}/approvals`);
+    const response = await axios.get(`/workflows/${workflowId}/approvals`, {
+      params: { page, limit, status, priority, search },
+    });
     return response.data;
   } catch (error) {
     console.error("Error while fetching workflow approvals", error);
     throw error;
   }
 };
-export const getWorkflowVersions = async (workflowById) => {
+export const getWorkflowVersions = async ({
+  workflowId,
+  page = 1,
+  limit = 10,
+  status,
+  search,
+}) => {
   try {
-    const response = await axios.get(`/workflows/${workflowById}/versions`);
+    const response = await axios.get(`/workflows/${workflowId}/versions`, {
+      params: { page, limit, status, search },
+    });
     return response.data;
   } catch (error) {
     console.error("Error while fetching workflow versions", error);
     throw error;
   }
 };
-export const getWorkflowExecutions = async (workflowById) => {
+export const getWorkflowExecutions = async ({
+  workflowId,
+  page = 1,
+  limit = 10,
+  status,
+  search,
+}) => {
   try {
-    const response = await axios.get(`/workflows/${workflowById}/executions`);
+    const response = await axios.get(`/workflows/${workflowId}/executions`, {
+      params: { page, limit, status, search },
+    });
     return response.data;
   } catch (error) {
     console.error("Error while fetching workflow executions", error);
@@ -552,21 +610,19 @@ export const updateOrganization = async (id, payload) => {
     throw error;
   }
 };
-export const getRoles = async (id) => {
+export const getRoles = async () => {
   try {
-    const response = await axios.get(`/rolesAndOrg/${id}/roles`);
+    const response = await axios.get(`/rolesAndOrg/roles`);
     return response.data;
   } catch (error) {
     console.error("Error While Fetching  Organization", error);
     throw error;
   }
 };
-export const createRoles = async (id, payload) => {
+
+export const createRoles = async (payload) => {
   try {
-    const response = await axios.post(
-      `/rolesAndOrg/${id}/rolesCreate`,
-      payload,
-    );
+    const response = await axios.post(`/rolesAndOrg/rolesCreate`, payload);
     return response.data;
   } catch (error) {
     console.error("Error While Fetching  Organization", error);
@@ -760,5 +816,177 @@ export const fetchGovernanceStatus = async () => {
     return res.data;
   } catch (err) {
     console.error(err);
+  }
+};
+// ============================== Organization=======================
+
+export const fetchOrganization = async () => {
+  try {
+    const response = await axios.get(`/organization/fetchOrganization`);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Fetching  Security", error);
+    throw error;
+  }
+};
+export const updateOrg = async (data) => {
+  try {
+    const response = await axios.put(`/organization/updateOrganization`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Creating Security", error);
+    throw error;
+  }
+};
+
+export const uploadlogo = async (payload) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", payload.file);
+    console.log("FILE:", formData.get("file"));
+    const res = await axios.post("/organization/logo", formData);
+    return res.data;
+  } catch (error) {
+    console.error("Error while Uploading File", error);
+    throw error;
+  }
+};
+
+export const fetchSubscription = async () => {
+  try {
+    const response = await axios.get(`/organization/fetchSubscription`);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Fectching Subscription", error);
+    throw error;
+  }
+};
+export const updateSubscription = async (data) => {
+  try {
+    const response = await axios.put(`/organization/updateSubscription`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Fectching Subscription", error);
+    throw error;
+  }
+};
+export const fetchBilling = async () => {
+  try {
+    const response = await axios.get(`/organization/fetchBilling`);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Fectching Billing", error);
+    throw error;
+  }
+};
+export const updateBilling = async (data) => {
+  try {
+    const response = await axios.put(`/organization/updateBilling`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Fectching Subscription", error);
+    throw error;
+  }
+};
+export const fetchCompliance = async () => {
+  try {
+    const response = await axios.get(`/organization/fetchCompliance`);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Fectching Compliance", error);
+    throw error;
+  }
+};
+export const fetchSecurity = async () => {
+  try {
+    const response = await axios.get(`/organization/fetchSecurity`);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Fectching Security", error);
+    throw error;
+  }
+};
+export const updateOrgSecurity = async (data) => {
+  try {
+    const response = await axios.put(`/organization/updateSecurity`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Fectching Security", error);
+    throw error;
+  }
+};
+
+export const fetchAllOrg = async () => {
+  try {
+    const response = await axios.get(`/organization/full`);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Fectching Security", error);
+    throw error;
+  }
+};
+export const fetchInvoices = async () => {
+  try {
+    const response = await axios.get(`/organization/invoices`);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Fectching Security", error);
+    throw error;
+  }
+};
+// ====================================== Integration ================================
+export const fetchIntegration = async () => {
+  try {
+    const response = await axios.get(`/integrations/fetchIntegration`);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Fectching Integration", error);
+    throw error;
+  }
+};
+export const connectIntegration = async (data) => {
+  try {
+    const response = await axios.post(`/integrations/connect`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Connect Integration", error);
+    throw error;
+  }
+};
+export const disconnectIntegration = async (data) => {
+  try {
+    const response = await axios.post(`/integrations/disconnect`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Disconnet Integration", error);
+    throw error;
+  }
+};
+export const fetchUserIntegration = async () => {
+  try {
+    const response = await axios.get(`/integrations/user`);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Fectching User Intergation", error);
+    throw error;
+  }
+};
+
+export const createIntegration = async (data) => {
+  try {
+    const response = await axios.post(`/integrations/createIntegration`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error While Creating Integration", error);
+    throw error;
+  }
+};
+export const saveIntegration = async (id, data) => {
+  try {
+    const response = await axios.post(`/integrations/configure/${id}`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error While configure Integration", error);
+    throw error;
   }
 };

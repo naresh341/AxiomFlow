@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { Send_OTP, Verify_OTP } from "../RTKThunk/AsyncThunk";
+import { Send_OTP, Verify_OTP } from "../RTKThunk/GovernanceThunk";
+// import { Send_OTP, Verify_OTP } from "../RTKThunk/AsyncThunk";
 
 const initialState = {
   otp: null, // 1. Change from [] to null

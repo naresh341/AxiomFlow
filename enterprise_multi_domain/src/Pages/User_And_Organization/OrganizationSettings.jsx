@@ -9,8 +9,9 @@ import {
 import { useState } from "react";
 import UploadAsset from "../../Components/UploadAsset";
 import { useDispatch } from "react-redux";
-import { create_Organization } from "../../RTKThunk/AsyncThunk";
+// import { create_Organization } from "../../RTKThunk/AsyncThunk";
 import { useNavigate } from "react-router-dom";
+import { create_Organization } from "../../RTKThunk/RoleAndOrganizationThunk";
 const OrganizationSettings = () => {
   const [ssoEnabled, setSsoEnabled] = useState(true);
   const [mfaEnabled, setMfaEnabled] = useState(false);

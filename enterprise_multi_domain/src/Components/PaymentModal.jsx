@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   X,
   CreditCard,
@@ -9,21 +9,69 @@ import {
 } from "lucide-react";
 import PaymentSuccessModal from "./PaymentSuccessModal";
 
-const ConfirmPaymentModal = ({ isOpen, onClose, selectedPlan }) => {
+const ConfirmPaymentModal = ({
+  isOpen,
+  onClose,
+  payload,
+  onSuccess,
+  onFailure,
+}) => {
   const [agreed, setAgreed] = useState(false);
   const [successModal, setSuccessModal] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
-  // Data values
-  const planName = "Enterprise Pro";
-  const seatCount = 50;
-  const pricePerSeat = 20;
-  const subtotal = 12000.0;
-  const prorationCredit = 450.0;
-  const taxAmount = 924.0;
-  const finalTotal = subtotal - prorationCredit + taxAmount;
+  // ===============================
+  // 🧠 SOURCE OF TRUTH (BACKEND DRIVEN)
+  // ===============================
+  const subscription = payload?.subscription;
+  const billing = payload?.billing;
 
-  if (!isOpen) return null;
+  const planName = subscription?.plan_name || "N/A";
+  const billingCycle = subscription?.billing_cycle || "MONTHLY";
+  const addons = subscription?.addons || [];
+  const basePrice = subscription?.price || 0;
 
+  // optional metadata
+  const billingEmail = billing?.billing_email || "";
+  const billingContact = billing?.billing_contact_name || "";
+
+  // ===============================
+  // 💰 COMPUTED FINANCIALS
+  // ===============================
+  const finalTotal = useMemo(() => {
+    return basePrice;
+  }, [basePrice]);
+
+  // ===============================
+  // 🚀 PAYMENT EXECUTION FLOW
+  // ===============================
+  const handleConfirmPayment = async () => {
+    try {
+      setProcessing(true);
+
+      // simulate payment gateway call (replace with Stripe/Razorpay/etc.)
+      const fakePaymentResult = {
+        id: "pay_" + Date.now(),
+        status: "SUCCESS",
+      };
+
+      const finalPayload = {
+        ...payload,
+        payment_id: fakePaymentResult.id,
+        status: "PAID",
+      };
+
+      await onSuccess?.(finalPayload);
+
+      setSuccessModal(true);
+    } catch (err) {
+      onFailure?.(err);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  if (!isOpen || !payload) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 lg:p-10 bg-slate-900/80 backdrop-blur-sm">
       <div className="w-full max-w-6xl bg-white dark:bg-[#101622] rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-300">

@@ -1,20 +1,120 @@
-import {
-  ArrowUpRight,
-  Cpu,
-  FileText,
-  LayoutGrid,
-  MessageSquare,
-  Plus,
-  Search,
-  Terminal,
-  Webhook,
-} from "lucide-react";
+import { FileText, Plus, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { connectIntegrationThunk, disconnectIntegrationThunk, fetchIntegrationsThunk, fetchUserIntegrationsThunk } from "../RTKThunk/IntegrationThunk";
+// import {
+//   connectIntegrationThunk,
+//   disconnectIntegrationThunk,
+//   fetchIntegrationsThunk,
+//   fetchUserIntegrationsThunk,
+// } from "../RTKThunk/AsyncThunk";
 const Integrations = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [searchTerm, setSearchTerm] = useState("");
 
+  const { integrations, userIntegrations, loading } = useSelector(
+    (state) => state.integration,
+  );
+  console.log(integrations, "integration");
+  useEffect(() => {
+    dispatch(fetchIntegrationsThunk());
+    dispatch(fetchUserIntegrationsThunk());
+  }, [dispatch]);
+
+  const isConnected = (integration) =>
+    userIntegrations?.some((item) => {
+      if (integration.source === "system") {
+        return (
+          item.integration_id === integration.id && item.status === "connected"
+        );
+      }
+
+      return (
+        item.custom_integration_id === integration.id &&
+        item.status === "connected"
+      );
+    });
+
+  const handleToggle = async (integration) => {
+    if (isConnected(integration)) {
+      console.log("checking:", integration);
+      await dispatch(
+        disconnectIntegrationThunk({
+          integration_id: integration.id,
+          source: integration.source,
+        }),
+      );
+    } else {
+      await dispatch(
+        connectIntegrationThunk({
+          integration_id: integration.id,
+          source: integration.source,
+        }),
+      );
+    }
+
+    dispatch(fetchUserIntegrationsThunk());
+  };
+
+  const filteredIntegrations = useMemo(() => {
+    if (!integrations) return [];
+
+    return integrations.filter((integration) => {
+      const query = searchTerm.toLowerCase();
+
+      return (
+        integration.name?.toLowerCase().includes(query) ||
+        integration.description?.toLowerCase().includes(query)
+      );
+    });
+  }, [integrations, searchTerm]);
+
+  if (loading) {
+    return (
+      <div className="p-10 text-gray-500 font-semibold">
+        Loading integrations...
+      </div>
+    );
+  }
+
+  if (!integrations || integrations.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-300">
+          No Integrations Available
+        </h2>
+
+        <p className="mt-2 text-gray-500 max-w-md">
+          Your system currently has no integrations configured.
+        </p>
+
+        <button
+          onClick={() => navigate("createIntegration")}
+          className="mt-6 px-5 py-2 rounded-lg bg-blue-600 text-white font-semibold"
+        >
+          Create Integration
+        </button>
+      </div>
+    );
+  }
+
+  // if (!filteredIntegrations.length && searchTerm) {
+  //   return (
+  //     <div className="flex flex-col items-center justify-center py-20 text-center">
+  //       <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">
+  //         No Results Found
+  //       </div>
+
+  //       <p className="mt-2 text-gray-500 max-w-md">
+  //         We couldn’t match any integrations for "<b>{searchTerm}</b>".
+  //       </p>
+  //     </div>
+  //   );
+  // }
   const handleConfigure = (id) => {
-    navigate(`/Integrations/configure/${id.toLowerCase()}`);
+    navigate(`/Integrations/configure/${id}`);
   };
   return (
     <main className="mx-auto w-full px-4 lg:px-10 py-8 space-y-8">
@@ -56,13 +156,15 @@ const Integrations = () => {
           />
           <input
             type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a242f] py-3 pl-12 pr-4 text-[#111418] dark:text-white focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 outline-none transition-all"
             placeholder="Search by name or keyword..."
           />
         </div>
 
         {/* Category Chips */}
-        <div className="flex flex-wrap gap-2">
+        {/* <div className="flex flex-wrap gap-2">
           <button className="cursor-pointer flex h-11 items-center gap-2 rounded-xl bg-blue-600 px-5 text-white shadow-sm">
             <span className="text-sm font-semibold">All</span>
           </button>
@@ -78,12 +180,12 @@ const Integrations = () => {
             <Terminal size={18} />
             <span className="text-sm font-semibold">Developer Tools</span>
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* CRM Section */}
       <section className="mb-12">
-        <div className="mb-6 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
+        {/* <div className="mb-6 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
           <h2 className="text-xl font-bold tracking-tight text-[#111418] dark:text-white">
             Customer Relationship Management
           </h2>
@@ -93,30 +195,28 @@ const Integrations = () => {
           >
             View All CRM <ArrowUpRight size={14} />
           </a>
-        </div>
+        </div> */}
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          <IntegrationCard
-            name="Salesforce"
-            desc="Automatically sync leads, accounts, and custom objects between platforms."
-            img="https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg"
-            connected
-            onAction={() => handleConfigure("salesforce")}
-          />
-          <IntegrationCard
-            name="HubSpot"
-            desc="Integrate your marketing automation and sales pipeline tools."
-            img="https://upload.wikimedia.org/wikipedia/commons/3/3f/HubSpot_Logo.svg"
-          />
-          <IntegrationCard
-            name="Pipedrive"
-            desc="Manage your sales cycle and track contact communications."
-            img="https://upload.wikimedia.org/wikipedia/commons/b/b5/Pipedrive_logo.svg"
-          />
+          {filteredIntegrations.map((integration) => {
+            const connected = isConnected(integration);
+            return (
+              <IntegrationCard
+                key={`${integration.source}-${integration.id}`}
+                name={integration.name}
+                desc={integration.description}
+                img={integration.logo}
+                icon={integration.icon}
+                connected={connected}
+                statusText={connected ? "Connected" : "Not Connected"}
+                onAction={() => handleToggle(integration)}
+                onConfigure={() => handleConfigure(integration.id)}
+              />
+            );
+          })}
         </div>
       </section>
-      {/* Communication and aterts */}
-      <section className="mb-12">
+      {/* <section className="mb-12">
         <div className="mb-6 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
           <h2 className="text-xl font-bold tracking-tight text-[#111418] dark:text-white">
             Communication and Alerts
@@ -143,7 +243,6 @@ const Integrations = () => {
           />
         </div>
       </section>
-      {/* Dev Tools Section */}
       <section className="mb-12">
         <div className="mb-6 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
           <h2 className="text-xl font-bold tracking-tight text-[#111418] dark:text-white">
@@ -177,7 +276,7 @@ const Integrations = () => {
             connected
           />
         </div>
-      </section>
+      </section> */}
     </main>
   );
 };
@@ -191,6 +290,7 @@ const IntegrationCard = ({
   connected,
   statusText,
   onAction,
+  onConfigure,
 }) => (
   <div className="group flex flex-col rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a242f] p-5 shadow-sm hover:shadow-lg hover:border-blue-600/30 transition-all duration-300">
     <div className="mb-4 flex items-start justify-between">
@@ -216,7 +316,7 @@ const IntegrationCard = ({
     <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
       {desc}
     </p>
-    <div className="mt-6">
+    <div className="mt-6 flex items-center gap-3">
       <button
         onClick={onAction}
         className={`w-full rounded-lg py-2.5 text-sm font-bold transition-all active:scale-95 ${
@@ -225,8 +325,20 @@ const IntegrationCard = ({
             : "bg-gray-100 dark:bg-gray-800 text-[#111418] dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
         }`}
       >
-        {connected ? "Configure" : "Connect"}
+        {connected ? "Disconnect" : "Connect"}
       </button>
+      {connected && (
+        <button
+          onClick={onConfigure}
+          className={`w-full rounded-lg py-2.5 text-sm font-bold transition-all active:scale-95 ${
+            connected
+              ? "bg-blue-600 text-white hover:bg-blue-600/90 shadow-md shadow-blue-600/10"
+              : "bg-gray-100 dark:bg-gray-800 text-[#111418] dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
+          }`}
+        >
+          Configure
+        </button>
+      )}
     </div>
   </div>
 );

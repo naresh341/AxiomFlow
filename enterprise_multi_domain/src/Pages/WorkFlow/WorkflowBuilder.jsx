@@ -6,7 +6,8 @@ import { useDispatch, useSelector } from "react-redux";
 import PropertiesPanel from "../../Components/PropertiesPanel";
 import SidebarWorkflowBuilder from "../../Components/SidebarWorkflowBuilder";
 import WorkflowCanvas from "../../Components/WorkflowCanvas";
-import { createWorkflow } from "../../RTKThunk/AsyncThunk";
+import { createWorkflow } from "../../RTKThunk/WorkflowThunk";
+// import { createWorkflow } from "../../RTKThunk/AsyncThunk";
 const WorkflowBuilder = () => {
   const canvasRef = useRef();
 

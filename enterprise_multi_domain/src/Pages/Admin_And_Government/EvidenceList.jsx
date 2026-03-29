@@ -5,8 +5,9 @@ import { useDispatch, useSelector } from "react-redux";
 import DynamicTable from "../../Components/DynamicTable";
 import FilterButton from "../../Components/MiniComponent/FilterButton";
 import Paginator from "../../Components/Paginator";
-import { delete_Evidence, getControlEvidence } from "../../RTKThunk/AsyncThunk";
+// import { delete_Evidence, getControlEvidence } from "../../RTKThunk/AsyncThunk";
 import { TableSchemas } from "../../Utils/TableSchemas";
+import { delete_Evidence, getControlEvidence } from "../../RTKThunk/GovernanceThunk";
 
 const EvidenceList = ({ onEdit }) => {
   const dispatch = useDispatch();

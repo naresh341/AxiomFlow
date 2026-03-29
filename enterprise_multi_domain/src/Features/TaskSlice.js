@@ -4,12 +4,15 @@ import {
   delete_Tasks,
   getTaskList,
   update_Tasks,
-} from "../RTKThunk/AsyncThunk";
+} from "../RTKThunk/WorkflowThunk";
 
 const initialState = {
   error: null,
   loading: false,
   data: [],
+  total: 0,
+  page: 1,
+  totalPages: 0,
 };
 
 const TaskSlice = createSlice({
@@ -23,7 +26,10 @@ const TaskSlice = createSlice({
       })
       .addCase(getTaskList.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload;
+        state.data = action.payload.data;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.total_pages;
       })
       .addCase(getTaskList.rejected, (state, action) => {
         state.loading = false;

@@ -75,7 +75,7 @@ const UsersAndOrg = () => {
                 <button
                   key={i}
                   onClick={() => setActiveModal(btn.label)}
-                  className={`px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition ${
+                  className={`cursor-pointer px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition ${
                     btn.primary
                       ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/20"
                       : "border bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700"

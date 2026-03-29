@@ -1,9 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
-import {
-  delete_AuditLogs,
-  get_auditLogs,
-  update_AuditLogs,
-} from "../RTKThunk/AsyncThunk";
+import { delete_AuditLogs, get_auditLogs, update_AuditLogs } from "../RTKThunk/GovernanceThunk";
+// import {
+//   delete_AuditLogs,
+//   get_auditLogs,
+//   update_AuditLogs,
+// } from "../RTKThunk/AsyncThunk";
 
 const initialState = {
   auditdata: [],
@@ -17,7 +18,7 @@ const GovernanceSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(get_auditLogs.pending, (state) => {
+      .addCase(get_auditLogs?.pending, (state) => {
         state.loading = true;
       })
       .addCase(get_auditLogs.fulfilled, (state, action) => {

@@ -8,7 +8,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { LockRolesAction } from "../RTKThunk/AsyncThunk";
+import { LockRolesAction } from "../RTKThunk/GovernanceThunk";
+// import { LockRolesAction } from "../RTKThunk/AsyncThunk";
 const LockRoles = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
     duration: "",

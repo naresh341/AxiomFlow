@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Login_Credentials, loginUser } from "../../RTKThunk/AsyncThunk";
+import { Link, useNavigate } from "react-router-dom";
+import { loginUser } from "../../RTKThunk/AuthThunk";
 
 const Login = () => {
   const { user, status, error } = useSelector((state) => state.islogin);

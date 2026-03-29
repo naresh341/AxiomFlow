@@ -1,31 +1,48 @@
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import DynamicTable from "../../Components/DynamicTable";
 import Paginator from "../../Components/Paginator";
-import { getWorkflow } from "../../RTKThunk/AsyncThunk";
 import { TableSchemas } from "../../Utils/TableSchemas";
+import { getWorkflow } from "../../RTKThunk/WorkflowThunk";
+
 const WorkFlows = () => {
   const { status } = useParams;
   const [activeTab, setActiveTab] = useState(status || "active");
   const navigate = useNavigate();
-
+  const [page, setPage] = useState(1);
+  const rows = 10;
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const handleRowClick = (row) => {
     const workflow_id_str = row.data.workflow_id_str;
     navigate(`/workflows/${workflow_id_str}`);
   };
   const dispatch = useDispatch();
-  const { data, loading } = useSelector((state) => state.workflows);
-  const [first, setFirst] = useState(0);
-  const rows = 10;
+  const { data, total, loading } = useSelector((state) => state.workflows);
 
   useEffect(() => {
-    dispatch(getWorkflow(activeTab));
-  }, [dispatch, activeTab]);
+    dispatch(
+      getWorkflow({
+        activeTab,
+        page: page,
+        limit: rows,
+        search: debouncedSearch,
+      }),
+    );
+  }, [dispatch, activeTab, page, debouncedSearch]);
 
-  const onPageChange = (pageIndex) => {
-    setFirst(pageIndex * rows);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400); // delay
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const onPageChange = (selectedPage) => {
+    setPage(selectedPage + 1);
   };
 
   return (
@@ -41,16 +58,27 @@ const WorkFlows = () => {
               Manage and automate your enterprise operations logic.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="relative w-64 hidden md:block">
+          <div className="flex w-full items-center gap-3">
+            <div className="flex-1  relative">
               <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#616f89]"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                 size={18}
               />
               <input
-                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-white/5 border border-[#dbdfe6] dark:border-[#2d3748] rounded-lg text-sm focus:ring-2 focus:ring-blue-500/50 outline-none text-[#111318] dark:text-white"
-                placeholder="Search workflows..."
+                type="text"
+                placeholder="Search WorkflowID and WorkflowName..."
+                className="w-full shadow-md pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-600 outline-none transition-all"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
             <button
               onClick={() => navigate("/workflows/create")}
@@ -84,7 +112,7 @@ const WorkFlows = () => {
                         : "bg-[#f0f2f4] dark:bg-white/5"
                     }`}
                   >
-                    {tab === "active" ? `${data.total}` : `${data.total}`}
+                    {tab === "active"}
                   </span>
                 )}
               </div>
@@ -105,20 +133,21 @@ const WorkFlows = () => {
                   tableData={data.data}
                   tableHead={TableSchemas.workflows}
                   handleRowClick={handleRowClick}
-                  first={first}
+                  first={(page - 1) * rows}
+                  rows={rows}
                 />
 
                 <div className="flex items-center justify-between px-6 py-4 bg-[#f8fafc] dark:bg-white/5 border-t border-[#dbdfe6] dark:border-[#2d3748]">
                   <p className="text-sm text-[#616f89] dark:text-gray-400 font-medium">
-                    Showing {first + 1} to {Math.min(first + rows, data.total)}{" "}
-                    of {data.total} workflows
+                    Showing {page + 1} to {Math.min(page + rows, data.total)} of{" "}
+                    {data.total} workflows
                   </p>
                   <div className="flex items-center gap-2">
                     <Paginator
-                      totalRecords={data.total}
+                      first={(page - 1) * rows}
                       rows={rows}
-                      first={first}
                       onPageChange={onPageChange}
+                      totalRecords={total}
                     />
                   </div>
                 </div>

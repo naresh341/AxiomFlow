@@ -10,10 +10,19 @@ import {
   Terminal,
 } from "lucide-react";
 import { useState } from "react";
+import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
+import { createIntegrationThunk } from "../../RTKThunk/IntegrationThunk";
+// import { createIntegrationThunk } from "../../RTKThunk/AsyncThunk";
 
 const CustomIntegrationBuilder = () => {
+  const dispatch = useDispatch();
   const [showSecret, setShowSecret] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    type: "API",
+    description: "",
+  });
   const navigate = useNavigate();
   const [mappings, setMappings] = useState([
     {
@@ -45,6 +54,33 @@ const CustomIntegrationBuilder = () => {
     setMappings(mappings.filter((m) => m.id !== id));
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleCreate = () => {
+    const payload = {
+      ...formData,
+      mappings,
+    };
+
+    console.log("🚀 Sending Payload:", payload);
+
+    dispatch(createIntegrationThunk(payload))
+      .unwrap()
+      .then(() => {
+        alert("Integration Created Successfully ✅");
+        navigate("/Integrations");
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Failed to create integration ❌");
+      });
+  };
   return (
     <div className="bg-[#f6f6f8] dark:bg-[#101622] font-sans text-[#111318] dark:text-white min-h-screen">
       <main className=" mx-auto px-6 py-8 pb-32">
@@ -96,6 +132,9 @@ const CustomIntegrationBuilder = () => {
                   Integration Name
                 </label>
                 <input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
                   className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-[#135bec]/20 outline-none transition-all"
                   placeholder="e.g. CRM Sync Pro"
                 />
@@ -104,10 +143,18 @@ const CustomIntegrationBuilder = () => {
                 <label className="text-xs font-black uppercase tracking-widest text-slate-500">
                   Integration Type
                 </label>
-                <select className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-[#135bec]/20 outline-none cursor-pointer">
-                  <option>API</option>
-                  <option>Webhook</option>
-                  <option>Scheduled Sync</option>
+                <select
+                  name="type"
+                  value={formData.type}
+                  onChange={handleChange}
+                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-[#135bec]/20 outline-none cursor-pointer"
+                >
+                  <option value="" disabled>
+                    Select Integration Type
+                  </option>
+                  <option value="API">API</option>
+                  <option value="WebHook">Webhook</option>
+                  <option value="Scheduled Sync">Scheduled Sync</option>
                 </select>
               </div>
               <div className="md:col-span-2 space-y-2">
@@ -115,7 +162,10 @@ const CustomIntegrationBuilder = () => {
                   Description
                 </label>
                 <textarea
-                  className="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-[#135bec]/20 outline-none min-h-[120px]"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  className="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-[#135bec]/20 outline-none min-h-30"
                   placeholder="Briefly describe the business logic..."
                 ></textarea>
               </div>
@@ -282,7 +332,10 @@ const CustomIntegrationBuilder = () => {
           <button className="px-8 py-2.5 border border-slate-200 dark:border-slate-700 text-sm font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
             Discard Changes
           </button>
-          <button className="px-10 py-2.5 bg-[#135bec] text-white text-sm font-black rounded-xl shadow-xl shadow-[#135bec]/30 hover:brightness-110 active:scale-95 transition-all">
+          <button
+            onClick={handleCreate}
+            className="px-10 py-2.5 bg-[#135bec] text-white text-sm font-black rounded-xl shadow-xl shadow-[#135bec]/30 hover:brightness-110 active:scale-95 transition-all"
+          >
             Save & Publish
           </button>
         </div>

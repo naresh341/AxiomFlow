@@ -13,7 +13,8 @@ import { NavLink } from "react-router-dom";
 import OverrideModal from "../../Components/OverrideModal";
 import LockRoles from "../../Components/LockRoles";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchStatus } from "../../RTKThunk/AsyncThunk";
+import { fetchStatus } from "../../RTKThunk/GovernanceThunk";
+// import { fetchStatus } from "../../RTKThunk/AsyncThunk";
 
 const Governance = () => {
   const dispatch = useDispatch();

@@ -7,9 +7,10 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
-import { OverRideAction, Send_OTP } from "../RTKThunk/AsyncThunk";
+// import { OverRideAction, Send_OTP } from "../RTKThunk/AsyncThunk";
 import { useDispatch } from "react-redux";
 import OtpModal from "./MiniComponent/OtpModal";
+import { OverRideAction, Send_OTP } from "../RTKThunk/GovernanceThunk";
 
 const OverrideModal = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
@@ -85,12 +86,12 @@ const OverrideModal = ({ isOpen, onClose }) => {
       setLoading(true);
 
       const payload = {
+        mfa_code: formData.mfa_code,
         justification: formData.justification,
         duration: formData.duration,
         metadata: {
           ...formData.metadata,
         },
-        mfa_code: formData.mfa_code,
       };
 
       const res = await dispatch(OverRideAction(payload)).unwrap();

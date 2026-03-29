@@ -7,8 +7,9 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { BreakGlassAction, Send_OTP } from "../RTKThunk/AsyncThunk";
+// import { BreakGlassAction, Send_OTP } from "../RTKThunk/AsyncThunk";
 import OtpModal from "./MiniComponent/OtpModal";
+import { BreakGlassAction, Send_OTP } from "../RTKThunk/GovernanceThunk";
 
 const BreakGlassModal = ({ isOpen, onClose }) => {
   const [mfaCode, setMfaCode] = useState("");

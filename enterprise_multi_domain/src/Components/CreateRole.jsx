@@ -14,8 +14,9 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { create_Roles } from "../RTKThunk/AsyncThunk";
+import { useDispatch } from "react-redux";
+import { create_Roles } from "../RTKThunk/RoleAndOrganizationThunk";
+// import { create_Roles } from "../RTKThunk/AsyncThunk";
 
 const CreateRole = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
@@ -27,12 +28,6 @@ const CreateRole = ({ isOpen, onClose }) => {
     permissions: {},
   });
   const dispatch = useDispatch();
-  const selectedOrg = useSelector((state) => state.roleOrg.selectedOrg);
-  const orgId = selectedOrg?.id;
-  // const user = useSelector((state) => state.islogin.user);
-  // const orgId = user?.organization_id;
-  // const orgid = org.id;
-  console.log(orgId, "orgid");
   if (!isOpen) return null;
 
   const transformPermissions = (permissions) => {
@@ -106,31 +101,21 @@ const CreateRole = ({ isOpen, onClose }) => {
   };
 
   const handleCreateRole = () => {
-    // const formattedPermissions = Object.entries(formData.permissions).map(
-    //   ([module, actions]) => ({
-    //     module,
-    //     actions: Object.keys(actions).filter((key) => actions[key]),
-    //   }),
-    // );
-    const payload = {
-      name: formData.name,
-      description: formData.description,
-      permissions: transformPermissions(formData.permissions),
-      organization_id: orgId,
-      mfa_required: formData.mfa_required,
-      ip_restricted: formData.ip_restricted,
-    };
+    try {
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        permissions: transformPermissions(formData.permissions),
+        mfa_required: formData.mfa_required,
+        ip_restricted: formData.ip_restricted,
+      };
 
-    dispatch(create_Roles({ id: orgId, payload }))
-      .unwrap()
-      .then((role) => {
-        console.log("Role created:", role);
-        onClose();
-      })
-      .catch((err) => {
-        console.error("Error creating role:", err);
-        alert("Error creating role");
-      });
+      dispatch(create_Roles(payload)).unwrap();
+    } catch (err) {
+      console.error("Error creating role:", err);
+      alert("Error creating role");
+    }
+    onClose();
   };
 
   return (
@@ -160,7 +145,7 @@ const CreateRole = ({ isOpen, onClose }) => {
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors p-2"
+            className="cursor-pointer text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors p-2"
           >
             <X size={24} />
           </button>
@@ -344,14 +329,14 @@ const CreateRole = ({ isOpen, onClose }) => {
         <div className="px-8 py-6 border-t border-slate-200 dark:border-[#282e39] bg-slate-50/50 dark:bg-[#111318] flex items-center justify-end gap-4">
           <button
             onClick={onClose}
-            className="px-6 py-3 text-sm font-bold text-slate-600 dark:text-white hover:bg-slate-200 dark:hover:bg-[#282e39] rounded-xl transition-all"
+            className="cursor-pointer px-6 py-3 text-sm font-bold text-slate-600 dark:text-white hover:bg-slate-200 dark:hover:bg-[#282e39] rounded-xl transition-all"
           >
             Discard Changes
           </button>
           <button
             type="submit"
             onClick={handleCreateRole}
-            className="bg-[#135bec] hover:bg-[#104ec9] text-white px-10 py-3 rounded-xl text-sm font-black transition-all shadow-xl shadow-[#135bec]/20 flex items-center gap-3 active:scale-[0.98]"
+            className="cursor-pointer bg-[#135bec] hover:bg-[#104ec9] text-white px-10 py-3 rounded-xl text-sm font-black transition-all shadow-xl shadow-[#135bec]/20 flex items-center gap-3 active:scale-[0.98]"
           >
             Create Role <Send size={18} />
           </button>

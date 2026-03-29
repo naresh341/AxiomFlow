@@ -9,10 +9,62 @@ import {
   Save,
   User,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
+import { fetchIntegrationsThunk, fetchUserIntegrationsThunk, saveMappingThunk } from "../../RTKThunk/IntegrationThunk";
+// import {
+//   fetchIntegrationsThunk,
+//   fetchUserIntegrationsThunk,
+//   saveMappingThunk,
+// } from "../../RTKThunk/AsyncThunk";
 
 const Configure = () => {
   const { id } = useParams();
+  const dispatch = useDispatch();
+  const { integrations, userIntegrations } = useSelector(
+    (state) => state.integration,
+  );
+  const integration = integrations?.find((item) => item.id === Number(id));
+
+  const [mappings, setMappings] = useState([
+    { source: "email", target: "Contact.Email", direction: "both" },
+  ]);
+
+  const isConnected = userIntegrations?.some((item) => {
+    if (integration?.source === "system") {
+      return (
+        item.integration_id === integration.id && item.status === "connected"
+      );
+    }
+    return (
+      item.custom_integration_id === integration.id &&
+      item.status === "connected"
+    );
+  });
+
+  useEffect(() => {
+    if (!integrations?.length) {
+      dispatch(fetchIntegrationsThunk());
+    }
+  }, [dispatch]);
+
+  const handleChange = (index, value) => {
+    const updated = [...mappings];
+    updated[index].target = value;
+    setMappings(updated);
+  };
+
+  const handleSave = async () => {
+    await dispatch(
+      saveMappingThunk({
+        id,
+        mappings,
+      }),
+    );
+    dispatch(fetchUserIntegrationsThunk());
+  };
+
   return (
     <main className="mx-auto w-full  grow   ">
       {/* Breadcrumb Navigation */}
@@ -32,25 +84,25 @@ const Configure = () => {
       {/* Header Section */}
       <div className="flex flex-wrap items-center justify-between gap-6 pb-8">
         <div className="flex items-center gap-5">
-          <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white dark:bg-[#1a242f] p-3 shadow-md border border-gray-200 dark:border-gray-700">
+          {/* <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white dark:bg-[#1a242f] p-3 shadow-md border border-gray-200 dark:border-gray-700">
             <img
               alt="Salesforce"
               className="max-h-full"
               src="https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg"
             />
-          </div>
+          </div> */}
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3">
               <h1 className="text-4xl font-black leading-tight tracking-tight text-[#111418] dark:text-white">
-                Salesforce Integration
+                {integration?.name} Integration
               </h1>
               <span className="flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-green-700 dark:bg-green-900/30 dark:text-green-400">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
-                Connected
+                {isConnected ? "Connected" : "Not Connected"}
               </span>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Configure data synchronization between NexusMarket and your CRM.
+              {integration?.description}
             </p>
           </div>
         </div>
@@ -60,7 +112,11 @@ const Configure = () => {
             <RefreshCw size={18} />
             <span>Test Connection</span>
           </button>
-          <button className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-blue-600/90 shadow-md shadow-blue-600/20 transition-all active:scale-95">
+          <button
+            type="submit"
+            onClick={handleSave}
+            className="cursor-pointer flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-blue-600/90 shadow-md shadow-blue-600/20 transition-all active:scale-95"
+          >
             <Save size={18} />
             <span>Save Configuration</span>
           </button>
@@ -141,7 +197,7 @@ const Configure = () => {
                     Field Mapping
                   </h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Map attributes to Salesforce objects.
+                    Map attributes to {integration?.name} objects.
                   </p>
                 </div>
                 <button className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-xs font-bold text-[#111418] dark:text-white hover:bg-gray-50 transition-colors">
@@ -156,40 +212,19 @@ const Configure = () => {
                   <tr>
                     <th className="px-6 py-4">NexusMarket Field</th>
                     <th className="px-6 py-4 text-center">Direction</th>
-                    <th className="px-6 py-4">Salesforce Field</th>
+                    <th className="px-6 py-4"> {integration?.name} Field</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  <MappingRow
-                    label="Email Address"
-                    icon={<Mail size={18} />}
-                    direction="both"
-                    value="Contact.Email"
-                  />
-                  <MappingRow
-                    label="First Name"
-                    icon={<User size={18} />}
-                    direction="right"
-                    value="Contact.FirstName"
-                  />
-                  <MappingRow
-                    label="Last Name"
-                    icon={<User size={18} />}
-                    direction="right"
-                    value="Contact.LastName"
-                  />
-                  <MappingRow
-                    label="Company Name"
-                    icon={<Building2 size={18} />}
-                    direction="both"
-                    value="Account.Name"
-                  />
-                  <MappingRow
-                    label="Usage Status"
-                    icon={<Database size={18} />}
-                    direction="right"
-                    value="Account.Nexus_Health__c"
-                  />
+                  {mappings.map((map, index) => (
+                    <MappingRow
+                      key={index}
+                      label={map.source}
+                      value={map.target}
+                      direction={map.direction}
+                      onChange={(newValue) => handleChange(index, newValue)}
+                    />
+                  ))}
                 </tbody>
               </table>
             </div>

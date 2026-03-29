@@ -1,19 +1,20 @@
 import { createSlice } from "@reduxjs/toolkit";
-import {
-  addNewPolicy,
-  addRisk,
-  delete_Evidence,
-  delete_Policies,
-  delete_Risk,
-  getComplianceStats,
-  getControlEvidence,
-  getPolicies,
-  getRisks,
-  update_Evidence,
-  update_Policies,
-  update_Risk,
-  uploadControlEvidence,
-} from "../RTKThunk/AsyncThunk";
+import { addNewPolicy, addRisk, delete_Evidence, delete_Policies, delete_Risk, getComplianceStats, getControlEvidence, getPolicies, getRisks, update_Evidence, update_Policies, update_Risk, uploadControlEvidence } from "../RTKThunk/GovernanceThunk";
+// import {
+//   addNewPolicy,
+//   addRisk,
+//   delete_Evidence,
+//   delete_Policies,
+//   delete_Risk,
+//   getComplianceStats,
+//   getControlEvidence,
+//   getPolicies,
+//   getRisks,
+//   update_Evidence,
+//   update_Policies,
+//   update_Risk,
+//   uploadControlEvidence,
+// } from "../RTKThunk/AsyncThunk";
 
 const complianceSlice = createSlice({
   name: "compliance",

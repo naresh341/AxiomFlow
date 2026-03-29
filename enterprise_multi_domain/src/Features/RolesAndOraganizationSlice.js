@@ -1,13 +1,14 @@
 import { createSlice } from "@reduxjs/toolkit";
-import {
-  create_Organization,
-  create_Roles,
-  delete_Roles,
-  get_Organization,
-  get_Roles,
-  update_Organization,
-  update_Roles,
-} from "../RTKThunk/AsyncThunk";
+import { create_Organization, create_Roles, delete_Roles, get_Organization, get_Roles, update_Organization, update_Roles } from "../RTKThunk/RoleAndOrganizationThunk";
+// import {
+//   create_Organization,
+//   create_Roles,
+//   delete_Roles,
+//   get_Organization,
+//   get_Roles,
+//   update_Organization,
+//   update_Roles,
+// } from "../RTKThunk/AsyncThunk";
 
 const initialState = {
   roles: [],

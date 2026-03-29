@@ -1,8 +1,9 @@
 import { useDispatch } from "react-redux";
 import DynamicTable from "../../Components/DynamicTable";
 import Paginator from "../../Components/Paginator";
-import { delete_Policies } from "../../RTKThunk/AsyncThunk";
+// import { delete_Policies } from "../../RTKThunk/AsyncThunk";
 import { TableSchemas } from "../../Utils/TableSchemas";
+import { delete_Policies } from "../../RTKThunk/GovernanceThunk";
 
 const PolicyList = ({
   policies,

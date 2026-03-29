@@ -1,10 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
-import {
-  addUser,
-  delete_User,
-  get_UserOrg,
-  update_User,
-} from "../RTKThunk/AsyncThunk";
+import { addUser, delete_User, get_UserOrg, update_User } from "../RTKThunk/RoleAndOrganizationThunk";
+// import {
+//   addUser,
+//   delete_User,
+//   get_UserOrg,
+//   update_User,
+// } from "../RTKThunk/AsyncThunk";
 
 const initialState = {
   data: [],

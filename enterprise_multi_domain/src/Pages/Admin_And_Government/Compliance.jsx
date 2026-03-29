@@ -11,17 +11,19 @@ import { useDispatch, useSelector } from "react-redux";
 import AssessmentModal from "../../Components/AssessmentModal";
 import EvidenceModal from "../../Components/EvidenceModal";
 import RiskModal from "../../Components/RiskModal";
-import {
-  addNewPolicy,
-  addRisk,
-  get_UserOrg,
-  getPolicies,
-  update_Policies,
-  uploadControlEvidence,
-} from "../../RTKThunk/AsyncThunk";
+// import {
+//   addNewPolicy,
+//   addRisk,
+//   get_UserOrg,
+//   getPolicies,
+//   update_Policies,
+//   uploadControlEvidence,
+// } from "../../RTKThunk/AsyncThunk";
 import EvidenceList from "./EvidenceList";
 import PolicyList from "./PolicyList";
 import RiskMatrix from "./RiskMatrix";
+import { addNewPolicy, addRisk, getPolicies, update_Policies, uploadControlEvidence } from "../../RTKThunk/GovernanceThunk";
+import { get_UserOrg } from "../../RTKThunk/RoleAndOrganizationThunk";
 
 const Compliance = () => {
   const rows = 10;

@@ -1,10 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
-import {
-  create_Security,
-  delete_Security,
-  get_Security,
-  update_Security,
-} from "../RTKThunk/AsyncThunk";
+import { create_Security, delete_Security, get_Security, update_Security } from "../RTKThunk/GovernanceThunk";
+// import {
+//   create_Security,
+//   delete_Security,
+//   get_Security,
+//   update_Security,
+// } from "../RTKThunk/AsyncThunk";
 
 const initialState = {
   loading: false,

@@ -1,5 +1,5 @@
 from app.core.dependencies import get_db
-from app.schemas.ApprovalSchema import Approval, ApprovalSchema
+from app.schemas.ApprovalSchema import ApprovalSchema
 from app.services.approval_service import ApprovalService
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -11,11 +11,23 @@ router = APIRouter(prefix="/approval", tags=["Approval"])
 @router.get("/fetchAll", response_model=ApprovalSchema)
 def fetchApproval(
     status: str = None,
+    page: int = 1,
+    limit: int = 10,
+    search: str = None,
+    priority: str = None,
+    date: str = None,
     db: Session = Depends(get_db),
 ):
 
     service = ApprovalService(db)
-    return service.list_approval(status=status)
+    return service.list_approval(
+        status=status,
+        page=page,
+        limit=limit,
+        search=search,
+        priority=priority,
+        date=date,
+    )
 
 
 @router.post("/decide")
@@ -45,7 +57,6 @@ def update_approval(approval_id: int, payload: dict, db: Session = Depends(get_d
 
 @router.delete("/deleteApproval/{approval_id}")
 def delete_approval(approval_id: int, db: Session = Depends(get_db)):
-    """Soft deletes an approval by setting status to CLOSED"""
     service = ApprovalService(db)
     success = service.delete_approval(approval_id)
     if not success:

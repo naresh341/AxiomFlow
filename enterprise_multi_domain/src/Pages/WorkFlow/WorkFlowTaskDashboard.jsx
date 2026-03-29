@@ -14,13 +14,13 @@ import CreateTaskModal from "../../Components/CreateTaskModal";
 import DynamicTable from "../../Components/DynamicTable";
 import FilterButton from "../../Components/MiniComponent/FilterButton";
 import Paginator from "../../Components/Paginator";
+import { TableSchemas } from "../../Utils/TableSchemas";
 import {
   addTasks,
   delete_Tasks,
   get_Workflow_Tasks,
   update_Tasks,
-} from "../../RTKThunk/AsyncThunk";
-import { TableSchemas } from "../../Utils/TableSchemas";
+} from "../../RTKThunk/WorkflowThunk";
 
 const WorkFlowTaskDashboard = ({
   data,
@@ -30,17 +30,19 @@ const WorkFlowTaskDashboard = ({
   first,
   rows,
   loading,
+  totalRecords,
+  search,
+  setSearch,
+  status,
+  priority,
+  filters,
+  setFilters,
 }) => {
   const menuStatus = useRef(null);
   const dispatch = useDispatch();
-  const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const menuPriority = useRef(null);
-  const [filters, setFilters] = useState({
-    status: "All",
-    priority: "All",
-  });
 
   const handleCreateTask = async (workflowId, payload) => {
     try {
@@ -81,12 +83,24 @@ const WorkFlowTaskDashboard = ({
       command: () => setFilters((prev) => ({ ...prev, status: "All" })),
     },
     {
-      label: "Escalated",
-      command: () => setFilters((prev) => ({ ...prev, status: "ESCALATED" })),
+      label: "In Progress",
+      command: () => setFilters((prev) => ({ ...prev, status: "IN_PROGRESS" })),
     },
     {
       label: "Pending",
       command: () => setFilters((prev) => ({ ...prev, status: "PENDING" })),
+    },
+    {
+      label: "Completed",
+      command: () => setFilters((prev) => ({ ...prev, status: "COMPLETED" })),
+    },
+    {
+      label: "Failed",
+      command: () => setFilters((prev) => ({ ...prev, status: "FAILED" })),
+    },
+    {
+      label: "Skipped",
+      command: () => setFilters((prev) => ({ ...prev, status: "SKIPPED" })),
     },
   ];
 
@@ -126,29 +140,6 @@ const WorkFlowTaskDashboard = ({
       command: () => setFilters((f) => ({ ...f, priority: "Low" })),
     },
   ];
-
-  const filteredData = data.filter((item) => {
-    // 1. Status Filter
-
-    const matchesSearch =
-      !searchQuery ||
-      item.task_key?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus =
-      filters.status === "All" ||
-      item.status?.toLowerCase() === filters.status.toLowerCase();
-
-    // 2. Priority Filter (Mapping numeric 1-10 to High/Medium/Low)
-    const p = Number(item.priority);
-    let itemPriorityBucket = "Low";
-    if (p >= 8) itemPriorityBucket = "High";
-    else if (p >= 5) itemPriorityBucket = "Medium";
-
-    const matchesPriority =
-      filters.priority === "All" || itemPriorityBucket === filters.priority;
-
-    return matchesStatus && matchesPriority && matchesSearch;
-  });
 
   return (
     <div className="min-h-screen bg-[#f6f6f8] dark:bg-[#101622] font-display text-[#111318] dark:text-white">
@@ -272,12 +263,12 @@ const WorkFlowTaskDashboard = ({
                 className="w-full h-full pl-10 pr-4 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-[#1f2937] text-sm focus:ring-2 focus:ring-[#0f49bd] outline-none shadow-md "
                 type="text"
                 placeholder="Search by TASK ID"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
-              {searchQuery && (
+              {search && (
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => setSearch("")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   <X size={14} />
@@ -319,72 +310,13 @@ const WorkFlowTaskDashboard = ({
 
         {/* Table Section */}
         <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#101622] shadow-sm overflow-hidden">
-          {/* <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-[#1f2937] border-b border-slate-200 dark:border-slate-700">
-                <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Task Name
-                </th>
-                <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Task ID
-                </th>
-                <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Duration
-                </th>
-                <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {tasks.map((task) => (
-                <tr
-                  key={task.id}
-                  onClick={() => onRowClick(task.id)}
-                  className="hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors group"
-                >
-                  <td className="px-6 py-4 font-bold text-slate-900 dark:text-white group-hover:text-[#0f49bd]">
-                    {task.name}
-                  </td>
-                  <td className="px-6 py-4 font-mono text-xs text-slate-500">
-                    {task.id}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
-                    {task.type}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusStyles(task.status)}`}
-                    >
-                      {task.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm font-medium font-mono text-slate-700 dark:text-slate-300">
-                    {task.duration}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <ChevronRight
-                      size={18}
-                      className="inline text-slate-400 group-hover:text-[#0f49bd]"
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table> */}
           {loading ? (
             <div className="flex justify-center items-center h-48">
               <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#137fec]"></div>
             </div>
           ) : (
             <DynamicTable
-              tableData={filteredData}
+              tableData={data}
               tableHead={TableSchemas.task}
               handleRowClick={onRowClick}
               first={first}
@@ -398,8 +330,8 @@ const WorkFlowTaskDashboard = ({
               <Paginator
                 first={first}
                 rows={rows}
-                onPageChange={handlePageChange}
-                totalRecords={filteredData.length}
+                totalRecords={totalRecords}
+                onPageChange={(e) => handlePageChange(e.page + 1)}
               />
             </div>
           </div>

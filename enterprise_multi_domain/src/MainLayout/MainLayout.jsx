@@ -3,7 +3,7 @@ import Sidebar from "../Navigation/Sidebar";
 import Topbar from "../Navigation/Topbar";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { Login_Credentials } from "../RTKThunk/AsyncThunk";
+import { Login_Credentials } from "../RTKThunk/AuthThunk";
 
 const MainLayout = () => {
   const dispatch = useDispatch();

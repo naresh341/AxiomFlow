@@ -11,8 +11,9 @@ import {
   Globe,
 } from "lucide-react";
 import { useState } from "react";
-import { create_Flag, get_Flag } from "../RTKThunk/AsyncThunk";
+// import { create_Flag, get_Flag } from "../RTKThunk/AsyncThunk";
 import { useDispatch } from "react-redux";
+import { create_Flag, get_Flag } from "../RTKThunk/GovernanceThunk";
 
 const CreateFeatureFlagModal = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();

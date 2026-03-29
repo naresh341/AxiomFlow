@@ -3,11 +3,15 @@ import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import DynamicTable from "../../Components/DynamicTable";
 import Paginator from "../../Components/Paginator";
-import { delete_User, get_UserOrg } from "../../RTKThunk/AsyncThunk";
+// import { delete_User, get_UserOrg } from "../../RTKThunk/AsyncThunk";
 import { TableSchemas } from "../../Utils/TableSchemas";
 import FilterButton from "../../Components/MiniComponent/FilterButton";
 import { Menu } from "primereact/menu";
 import InviteUser from "../../Components/InviteUser";
+import {
+  delete_User,
+  get_UserOrg,
+} from "../../RTKThunk/RoleAndOrganizationThunk";
 
 const Users = () => {
   const rows = 10;

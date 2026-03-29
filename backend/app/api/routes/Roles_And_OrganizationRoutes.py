@@ -1,18 +1,26 @@
 # routes.py
+from typing import List
+
+from app.core.dependencies import get_db
+from app.core.security import get_current_user
+from app.model.UserModel import User
+from app.schemas.Roles_And_OrganizationSchema import (
+    OrganizationSchema,
+    RoleCreateSchema,
+    RoleResponseSchema,
+    updateSchema,
+)
+from app.services.Roles_And_OrganizationService import (
+    create_organization,
+    create_role,
+    delete_role,
+    get_organization,
+    get_roles,
+    update_organization,
+    update_role,
+)
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.services.Roles_And_OrganizationService import (
-    get_organization,
-    update_organization,
-    get_roles,
-    create_role,
-    update_role,
-    delete_role,
-    create_organization,
-)
-from app.schemas.Roles_And_OrganizationSchema import OrganizationSchema, RoleSchema
-from app.core.dependencies import get_db
-from typing import List
 
 router = APIRouter(prefix="/rolesAndOrg", tags=["Organization"])
 
@@ -36,19 +44,31 @@ def add_organization(org_data: OrganizationSchema, db: Session = Depends(get_db)
     return org
 
 
-@router.get("/{org_id}/roles", response_model=List[RoleSchema])
-def fetch_roles(org_id: int, db: Session = Depends(get_db)):
-    return get_roles(db, org_id)
+@router.get("/roles", response_model=List[RoleResponseSchema])
+def fetch_roles(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    return get_roles(db, user)
 
 
-@router.post("/{org_id}/rolesCreate")
-def add_role(org_id: int, role_data: RoleSchema, db: Session = Depends(get_db)):
-    return create_role(db, org_id, role_data.model_dump())
+@router.post("/rolesCreate")
+def add_role(
+    role_data: RoleCreateSchema,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    return create_role(db, role_data.model_dump(), user)
 
 
 @router.put("/updateRoles/{role_id}")
-def modify_role(role_id: int, role_data: RoleSchema, db: Session = Depends(get_db)):
-    return update_role(db, role_id, role_data.dict())
+def modify_role(
+    role_id: int,
+    role_data: updateSchema,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    return update_role(db, role_id, role_data.dict(), user)
 
 
 @router.delete("/deleteRoles/{role_id}")

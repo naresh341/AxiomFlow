@@ -15,27 +15,44 @@ import { NavLink, useNavigate, useParams } from "react-router-dom";
 import DynamicTable from "../../Components/DynamicTable";
 import FilterButton from "../../Components/MiniComponent/FilterButton";
 import Paginator from "../../Components/Paginator";
-import { get_Workflow_Approvals } from "../../RTKThunk/AsyncThunk";
 import { TableSchemas } from "../../Utils/TableSchemas";
+import { get_Workflow_Approvals } from "../../RTKThunk/WorkflowThunk";
 const WorkflowApprovals = () => {
   const navigate = useNavigate();
-  const rows = 10;
   const { workflowId } = useParams();
   const dispatch = useDispatch();
   const menuStatus = useRef(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const menuPriority = useRef(null);
   const [filters, setFilters] = useState({
     status: "All",
     priority: "All",
   });
-  const [first, setfirst] = useState(0);
-  const { loading, currentWorkflowApprovals } = useSelector(
+  const [page, setPage] = useState(1);
+  const rows = 10;
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const { loading, currentWorkflowApprovals, total } = useSelector(
     (state) => state.workflows,
   );
   useEffect(() => {
-    dispatch(get_Workflow_Approvals(workflowId));
-  }, [dispatch, workflowId]);
+    dispatch(
+      get_Workflow_Approvals({
+        workflowId,
+        page,
+        limit: rows,
+        status: filters.status === "All" ? null : filters.status,
+        priority: filters.priority === "All" ? null : filters.priority,
+        search: debouncedSearch,
+      }),
+    );
+  }, [
+    dispatch,
+    workflowId,
+    page,
+    filters.status,
+    filters.priority,
+    debouncedSearch,
+  ]);
 
   const approvalData = currentWorkflowApprovals || [];
 
@@ -46,8 +63,8 @@ const WorkflowApprovals = () => {
     }
   };
 
-  const onPageChange = (page) => {
-    setfirst((page + 1) * rows);
+  const onPageChange = (selectedPage) => {
+    setPage(selectedPage + 1);
   };
 
   const statusItems = [
@@ -79,7 +96,7 @@ const WorkflowApprovals = () => {
           {item.label}
         </div>
       ),
-      command: () => setFilters((f) => ({ ...f, priority: "High" })),
+      command: () => setFilters((f) => ({ ...f, priority: "HIGH" })),
     },
     {
       label: "Medium (5-7)",
@@ -89,7 +106,7 @@ const WorkflowApprovals = () => {
           {item.label}
         </div>
       ),
-      command: () => setFilters((f) => ({ ...f, priority: "Medium" })),
+      command: () => setFilters((f) => ({ ...f, priority: "MEDIUM" })),
     },
     {
       label: "Low (1-4)",
@@ -99,30 +116,21 @@ const WorkflowApprovals = () => {
           {item.label}
         </div>
       ),
-      command: () => setFilters((f) => ({ ...f, priority: "Low" })),
+      command: () => setFilters((f) => ({ ...f, priority: "LOW" })),
     },
   ];
 
-  const filteredData = approvalData.filter((item) => {
-    const matchesSearch =
-      !searchQuery ||
-      item.approval_key?.toLowerCase().includes(searchQuery.toLowerCase());
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400); // delay
 
-    const matchesStatus =
-      filters.status === "All" ||
-      item.status?.toLowerCase() === filters.status.toLowerCase();
+    return () => clearTimeout(timer);
+  }, [search]);
 
-    // 2. Priority Filter (Mapping numeric 1-10 to High/Medium/Low)
-    const p = Number(item.priority);
-    let itemPriorityBucket = "Low";
-    if (p >= 8) itemPriorityBucket = "High";
-    else if (p >= 5) itemPriorityBucket = "Medium";
-
-    const matchesPriority =
-      filters.priority === "All" || itemPriorityBucket === filters.priority;
-
-    return matchesStatus && matchesPriority && matchesSearch;
-  });
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, filters.status]);
 
   return (
     <div className="flex-1 space-y-6 p-10 bg-[#f6f6f8] dark:bg-[#101622] min-h-screen font-sans">
@@ -215,12 +223,12 @@ const WorkflowApprovals = () => {
               className="w-full h-full pl-10 pr-4 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-[#1f2937] text-sm focus:ring-2 focus:ring-[#0f49bd] outline-none shadow-md "
               type="text"
               placeholder="Search by Approval ID"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
-            {searchQuery && (
+            {search && (
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => setSearch("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X size={14} />
@@ -281,9 +289,7 @@ const WorkflowApprovals = () => {
             />
 
             {/* The Calendar Component */}
-            {(filters.status !== "All" ||
-              filters.priority !== "All" ||
-              filters.dateRange) && (
+            {(filters.status !== "All" || filters.priority !== "All") && (
               <>
                 <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2"></div>
                 <button
@@ -291,7 +297,6 @@ const WorkflowApprovals = () => {
                     setFilters({
                       status: "All",
                       priority: "All",
-                      dateRange: null,
                     })
                   }
                   className="text-[#135bec] text-xs font-black uppercase tracking-tight hover:text-blue-700 cursor-pointer transition-colors"
@@ -308,19 +313,20 @@ const WorkflowApprovals = () => {
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <DynamicTable
-            tableData={filteredData}
+            tableData={approvalData}
             loading={loading}
             handleRowClick={(id) => handleRowClick(id)}
-            first={first}
+            first={(page - 1) * rows}
+            rows={rows}
             tableHead={TableSchemas.approval}
           />
         </div>
         <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <Paginator
-            first={first}
+            first={(page - 1) * rows}
             rows={rows}
             onPageChange={onPageChange}
-            totalRecords={filteredData.length}
+            totalRecords={total}
           />
         </div>
       </div>

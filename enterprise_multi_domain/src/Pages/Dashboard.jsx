@@ -6,7 +6,8 @@ import { TableSchemas } from "../Utils/TableSchemas";
 import { useEffect, useState } from "react";
 import Paginator from "../Components/Paginator";
 import Linechart from "../Components/LineChart";
-import { getApprovalList } from "../RTKThunk/AsyncThunk";
+import { getApprovalList } from "../RTKThunk/WorkflowThunk";
+// import { getApprovalList } from "../RTKThunk/AsyncThunk";
 
 const Dashboard = () => {
   const dispatch = useDispatch();

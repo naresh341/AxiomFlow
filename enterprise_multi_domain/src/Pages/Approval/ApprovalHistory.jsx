@@ -1,15 +1,15 @@
-import { Calendar, ChevronDown, Filter, Grid, Search, X } from "lucide-react";
-import { useOutletContext } from "react-router-dom";
-import DynamicTable from "../../Components/DynamicTable";
-import Paginator from "../../Components/Paginator";
-import { TableSchemas } from "../../Utils/TableSchemas";
-import { Menu } from "primereact/menu";
+import { Calendar, ChevronDown, Search, X } from "lucide-react";
 import { Calendar as PrimeCalendar } from "primereact/calendar";
-import { useRef, useState } from "react";
+import { Menu } from "primereact/menu";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useLocation } from "react-router-dom";
+import DynamicTable from "../../Components/DynamicTable";
 import FilterButton from "../../Components/MiniComponent/FilterButton";
+import Paginator from "../../Components/Paginator";
+import { getApprovalList } from "../../RTKThunk/WorkflowThunk";
+import { TableSchemas } from "../../Utils/TableSchemas";
 const ApprovalHistory = () => {
-  const { approvalData, loading, first, rows, onPageChange } =
-    useOutletContext();
   const menuStatus = useRef(null);
   const menuPriority = useRef(null);
   const calendarRef = useRef(null);
@@ -18,7 +18,44 @@ const ApprovalHistory = () => {
     priority: "All",
     dateRange: null,
   });
-  const [searchQuery, setSearchQuery] = useState("");
+  const location = useLocation();
+  const [page, setPage] = useState(1);
+  const rows = 10;
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const { data, total, loading } = useSelector((state) => state.approval);
+  const dispatch = useDispatch();
+  const isHistoryTab = location.pathname.includes("history");
+  const onPageChange = (selectedPage) => {
+    setPage(selectedPage + 1);
+  };
+
+  useEffect(() => {
+    setFilters((prev) => {
+      if (isHistoryTab) {
+        return { ...prev, status: "HISTORY" };
+      }
+
+      if (prev.status === "HISTORY") {
+        return { ...prev, status: "ALL_PENDING" };
+      }
+
+      return prev; // keep user selection
+    });
+  }, [isHistoryTab]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, filters.status, filters.priority, filters.dateRange]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400); // delay
+
+    return () => clearTimeout(timer); // cleanup
+  }, [search]);
+
   const statusItems = [
     {
       label: "All",
@@ -81,39 +118,25 @@ const ApprovalHistory = () => {
     });
   };
 
-  const filteredData = approvalData.filter((item) => {
-    // 1. Search Filter (by ID)
-    const matchesSearch =
-      !searchQuery ||
-      item.approval_key?.toLowerCase().includes(searchQuery.toLowerCase());
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      dispatch(
+        getApprovalList({
+          status: filters.status,
+          page: page,
+          limit: rows,
+          search: debouncedSearch,
+          priority: filters.priority,
+          date: filters.dateRange
+            ? filters.dateRange.toISOString().split("T")[0]
+            : "",
+        }),
+      );
+    }, 500);
 
-    // 2. Status Filter
-    const matchesStatus =
-      filters.status === "All" ||
-      item.status?.toLowerCase() === filters.status.toLowerCase();
+    return () => clearTimeout(delay);
+  }, [search, page, filters, dispatch, debouncedSearch]);
 
-    // 3. Priority Filter (Mapping numeric 1-10 to High/Medium/Low)
-    const p = Number(item.priority);
-    let itemPriorityBucket = "Low";
-    if (p >= 8) itemPriorityBucket = "High";
-    else if (p >= 5) itemPriorityBucket = "Medium";
-
-    const matchesPriority =
-      filters.priority === "All" || itemPriorityBucket === filters.priority;
-
-    let matchesDate = true;
-    if (filters.dateRange) {
-      const itemDate = new Date(item.created_at);
-      const selectedDate = new Date(filters.dateRange);
-
-      matchesDate =
-        itemDate.getDate() === selectedDate.getDate() &&
-        itemDate.getMonth() === selectedDate.getMonth() &&
-        itemDate.getFullYear() === selectedDate.getFullYear();
-    }
-
-    return matchesStatus && matchesPriority && matchesDate && matchesSearch;
-  });
   return (
     <div className="flex flex-col h-full min-h-0 bg-[#f6f6f8] dark:bg-[#101622] ">
       {/* --- Main Content --- */}
@@ -129,14 +152,14 @@ const ApprovalHistory = () => {
                 />
                 <input
                   className="w-full pl-10 pr-4 py-2.5 bg-gray-50 shadow-md dark:bg-gray-800 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#135bec]/20 outline-none"
-                  placeholder="Search Approval ID"
+                  placeholder="Search Approval ID ,Stage And Requester Name"
                   type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                 />
-                {searchQuery && (
+                {search && (
                   <button
-                    onClick={() => setSearchQuery("")}
+                    onClick={() => setSearch("")}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
                     <X size={14} />
@@ -278,17 +301,17 @@ const ApprovalHistory = () => {
               ) : (
                 <DynamicTable
                   tableHead={TableSchemas.approval}
-                  tableData={filteredData}
-                  first={first}
+                  tableData={data}
+                  first={(page - 1) * rows}
                   rows={rows}
                 />
               )}
 
               <Paginator
-                first={first}
+                first={(page - 1) * rows}
                 rows={rows}
                 onPageChange={onPageChange}
-                totalRecords={filteredData.length}
+                totalRecords={total}
               />
             </div>
           </div>

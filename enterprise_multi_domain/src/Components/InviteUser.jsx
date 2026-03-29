@@ -13,7 +13,12 @@ import {
 import { MultiSelect } from "primereact/multiselect";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { addUser, get_teams, update_User } from "../RTKThunk/AsyncThunk";
+import {
+  addUser,
+  get_teams,
+  update_User,
+} from "../RTKThunk/RoleAndOrganizationThunk";
+// import { addUser, get_teams, update_User } from "../RTKThunk/AsyncThunk";
 
 const InviteUser = ({ isOpen, onClose, editData = null }) => {
   const isEditMode = !!editData;
@@ -87,33 +92,6 @@ const InviteUser = ({ isOpen, onClose, editData = null }) => {
     }));
   };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-
-  //   const payload = {
-  //     ...formData,
-  //     is_active: formData.is_active === "True" || formData.is_active === true,
-  //     team_ids: formData.teams,
-  //   };
-  //   try {
-  //     await dispatch(addUser(payload)).unwrap();
-
-  //     setFormData({
-  //       email: "",
-  //       first_name: "",
-  //       last_name: "",
-  //       role: "",
-  //       password: "",
-  //       teams: [],
-  //       is_active: "",
-  //       sendEmail: true,
-  //     });
-
-  //     onClose();
-  //   } catch (error) {
-  //     console.error("User creation failed", error);
-  //   }
-  // };
 
   const teamOptions = teams.map((team) => ({
     label: team.name,

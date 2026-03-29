@@ -1,14 +1,15 @@
+from datetime import datetime, timezone
+
+from app.GlobalException.GlobalExceptionError import AppException
+from app.model.execution import Execution
+from app.model.task import Task
 from app.model.workflow import Workflow
 from app.model.WorkflowVersion import WorkflowVersion
 from app.repositories.workflow_repo import WorkflowRepository
-from app.schemas.WorkflowSchema import WorkflowCreate
-from sqlalchemy import desc
-from sqlalchemy.orm import Session
-from app.model.task import Task
-from fastapi import HTTPException
-from app.model.execution import Execution
-from datetime import datetime, timezone
 from app.schemas.ExecutionSchema import ExecutionCreate
+from fastapi import HTTPException
+from sqlalchemy import desc, or_
+from sqlalchemy.orm import Session
 
 
 class WorkflowService:
@@ -16,9 +17,27 @@ class WorkflowService:
         self.db = db
         self.repo = WorkflowRepository(db)
 
-    def list_workflows(self, status: str = None):
-        workflows = self.repo.list_all(status=status)
-        return {"total": len(workflows), "data": workflows}
+    def list_workflows(
+        self,
+        status: str = None,
+        page: int = 1,
+        limit: int = 10,
+        search: str = None,
+    ):
+        query = self.repo.base_query(status=status)
+        if search:
+            query = query.filter(Workflow.name.ilike(f"%{search}%"))
+        total = query.count()
+        offset = (page - 1) * limit
+        workflows = query.offset(offset).limit(limit).all()
+
+        return {
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "total_pages": (total + limit - 1) // limit,
+            "data": workflows,
+        }
 
     def get_workflow_by_id(self, workflow_id: str):
         if workflow_id.startswith("WRKFLW-"):
@@ -51,7 +70,11 @@ class WorkflowService:
             .first()
         )
         if not workflow:
-            raise HTTPException(status_code=404, detail="Workflow not found")
+            raise AppException(
+                status_code=404,
+                code="WORKFLOW_NOT_FOUND",
+                message="Workflow not found",
+            )
 
         # Create execution
         new_exec = Execution(
@@ -78,31 +101,127 @@ class WorkflowService:
         self.db.commit()
         return workflow
 
-    def get_versions_for_workflow(self, workflow_id_str: str):
+    # def get_versions_for_workflow(
+    #     self,
+    #     workflow_id_str: str,
+    #     page=1,
+    #     limit=10,
+    #     status: str = None,
+    #     search: str = None,
+    # ):
+
+    #     workflow = self.get_workflow_by_id(workflow_id_str)
+
+    #     if not workflow:
+    #         raise AppException(404, "WORKFLOW_NOT_FOUND", "Workflow not found")
+
+    #     versions = (
+    #         self.db.query(WorkflowVersion)
+    #         .filter(WorkflowVersion.workflow_id == workflow.id)
+    #         .order_by(WorkflowVersion.id.desc())
+    #         .all()
+    #     )
+
+    #     return versions
+    def get_executions_for_workflow(
+        self,
+        workflow_id_str: str,
+        page=1,
+        limit=10,
+        status: str = None,
+        search: str = None,
+    ):
 
         workflow = self.get_workflow_by_id(workflow_id_str)
 
         if not workflow:
-            raise HTTPException(status_code=404, detail="Workflow not found")
+            raise AppException(404, "WORKFLOW_NOT_FOUND", "Workflow not found")
 
-        versions = (
-            self.db.query(WorkflowVersion)
-            .filter(WorkflowVersion.workflow_id == workflow.id)
-            .order_by(WorkflowVersion.id.desc())
-            .all()
-        )
+        query = self.db.query(Execution).filter(Execution.workflow_id == workflow.id)
 
-        return versions
+        if status:
+            query = query.filter(Execution.status == status)
 
-    def get_workflow_by_status(self, workflow_id_str: str, model):
+        if search:
+            query = query.filter(Execution.execution_id_str.ilike(f"%{search}%"))
+
+        query = query.order_by(Execution.started_at.desc())
+
+        total = query.count()
+        offset = (page - 1) * limit
+
+        data = query.offset(offset).limit(limit).all()
+
+        return {
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "total_pages": (total + limit - 1) // limit,
+            "data": data,
+        }
+
+    def get_workflow_by_status(
+        self,
+        workflow_id_str: str,
+        model,
+        page=1,
+        limit=10,
+        status: str = None,
+        priority: str = None,
+        search: str = None,
+    ):
 
         workflow = self.get_workflow_by_id(workflow_id_str)
 
         if not workflow:
-            return None
+            raise AppException(404, "WORKFLOW_NOT_FOUND", "Workflow not found")
 
         query = self.db.query(model).filter(model.workflow_id == workflow.id)
 
+        if hasattr(model, "status") and status:
+            if isinstance(status, list):
+                query = query.filter(model.status.in_(status))
+            elif status.lower() != "all":
+                query = query.filter(model.status == status)
+
+        if priority and hasattr(model, "priority"):
+            priority = str(priority).upper()
+
+            if priority == "HIGH":
+                query = query.filter(model.priority >= 8)
+
+            elif priority == "MEDIUM":
+                query = query.filter(model.priority.between(5, 7))
+
+            elif priority == "LOW":
+                query = query.filter(model.priority <= 4)
+
+            elif priority.isdigit():
+                query = query.filter(model.priority == int(priority))
+
+        if search:
+            search_filters = []
+
+            # dynamically check columns
+            possible_fields = [
+                "name",
+                "version_key",
+                "execution_id_str",
+                "approval_key",
+                "task_key",
+                "requester_name",
+                "stage",
+                "created_by",
+                "workflow_id_str",
+            ]
+
+            for field in possible_fields:
+                if hasattr(model, field):
+                    column = getattr(model, field)
+                    search_filters.append(column.ilike(f"%{search}%"))
+
+            if search_filters:
+                query = query.filter(or_(*search_filters))
         # choose correct ordering column
         if hasattr(model, "started_at"):
             query = query.order_by(model.started_at.desc())
@@ -112,41 +231,18 @@ class WorkflowService:
 
         else:
             query = query.order_by(model.id.desc())
+        total = query.count()
+        offset = (page - 1) * limit
 
-        return query.all()
+        data = query.offset(offset).limit(limit).all()
 
-    # def get_workflow_task(self, workflow_id_str: str):
-    #     workflow = self.get_workflow_by_id(workflow_id_str)
-    #     if not workflow:
-    #         return None
-
-    #     if workflow.status == "ACTIVE":
-    #         active_version = (
-    #             self.db.query(WorkflowVersion)
-    #             .filter(
-    #                 WorkflowVersion.workflow_id == workflow.id,
-    #                 WorkflowVersion.is_active == True,
-    #             )
-    #             .first()
-    #         )
-    #         if not active_version:
-    #             return []
-
-    #         return (
-    #             self.db.query(Task)
-    #             .filter(Task.workflow_version_id == active_version.id)
-    #             .order_by(Task.priority.asc())
-    #             .all()
-    #         )
-    #     else:
-    #         return (
-    #             self.db.query(Task)
-    #             .filter(
-    #                 Task.workflow_id == workflow.id, Task.workflow_version_id == None
-    #             )
-    #             .order_by(Task.priority.asc())
-    #             .all()
-    #         )
+        return {
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "total_pages": (total + limit - 1) // limit,
+            "data": data,
+        }
 
     def create_task_for_workflow(self, workflow_id_str: str, payload):
 
@@ -167,7 +263,11 @@ class WorkflowService:
         )
 
         if not active_version:
-            raise HTTPException(status_code=400, detail="No active workflow version")
+            raise AppException(
+                status_code=400,
+                code="NO_ACTIVE_VERSION",
+                message="No active workflow version",
+            )
 
         # 3️⃣ Create task
         task = Task(
@@ -228,7 +328,11 @@ class WorkflowService:
         task = self.db.query(Task).filter(Task.id == task_id).first()
 
         if not task:
-            raise HTTPException(status_code=404, detail="Task not found")
+            raise AppException(
+                status_code=404,
+                code="TASK_NOT_FOUND",
+                message="Task not found",
+            )
 
         # Update fields only if provided
         update_data = payload.dict(exclude_unset=True)
@@ -318,7 +422,11 @@ class WorkflowService:
         )
 
         if not version:
-            raise ValueError("Version not found")
+            raise AppException(
+                status_code=404,
+                code="VERSION_NOT_FOUND",
+                message="Version not found",
+            )
 
         # deactivate other versions
         self.db.query(WorkflowVersion).filter(
@@ -425,7 +533,11 @@ class WorkflowService:
         )
 
         if not execution:
-            raise ValueError("Execution not found")
+            raise AppException(
+                status_code=404,
+                code="EXECUTION_NOT_FOUND",
+                message="Execution not found",
+            )
 
         execution.status = payload.get("status", execution.status)
         execution.logs = payload.get("logs")

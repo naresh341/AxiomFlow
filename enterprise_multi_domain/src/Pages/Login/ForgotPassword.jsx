@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import EmailSent from "./EmailSent";
 import { useDispatch, useSelector } from "react-redux";
-import { Forget_Password } from "../../RTKThunk/AsyncThunk";
+import { Forget_Password } from "../../RTKThunk/AuthThunk";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");

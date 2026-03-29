@@ -16,17 +16,21 @@ import { NavLink, useNavigate, useParams } from "react-router-dom";
 import DynamicTable from "../../Components/DynamicTable";
 import FilterButton from "../../Components/MiniComponent/FilterButton";
 import Paginator from "../../Components/Paginator";
+
+import { TableSchemas } from "../../Utils/TableSchemas";
 import {
   add_Execution,
   get_Workflow_Executions,
-} from "../../RTKThunk/AsyncThunk";
-import { TableSchemas } from "../../Utils/TableSchemas";
+} from "../../RTKThunk/WorkflowThunk";
+import { useNotify } from "../../Components/MiniComponent/useNotify";
 
 const WorkflowExecution = () => {
+  const [page, setPage] = useState(1);
   const rows = 10;
   const navigate = useNavigate();
   const { workflowId } = useParams();
   const dispatch = useDispatch();
+  const notify = useNotify();
 
   const handleRowClick = (executionId) => {
     const id = executionId.data.execution_id_str || " ";
@@ -36,23 +40,44 @@ const WorkflowExecution = () => {
   };
 
   const menuStatus = useRef(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
   const [filters, setFilters] = useState({
     status: "All",
-    priority: "All",
   });
-  const [first, setfirst] = useState(0);
-  const { loading, currentWorkflowExecutions } = useSelector(
+  const { loading, currentWorkflowExecutions, total } = useSelector(
     (state) => state.workflows,
   );
-  useEffect(() => {
-    dispatch(get_Workflow_Executions(workflowId));
-  }, [dispatch, workflowId]);
 
   const executionData = currentWorkflowExecutions || [];
 
-  const onPageChange = (page) => {
-    setfirst((page + 1) * rows);
+  useEffect(() => {
+    dispatch(
+      get_Workflow_Executions({
+        workflowId,
+        page,
+        limit: rows,
+        search: debouncedSearch,
+        status: filters.status,
+      }),
+    );
+  }, [dispatch, workflowId, page, debouncedSearch, filters.status]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400); // delay
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, filters.status]);
+
+  const onPageChange = (selectedPage) => {
+    setPage(selectedPage + 1);
   };
 
   const statusItems = [
@@ -75,27 +100,6 @@ const WorkflowExecution = () => {
     },
   ];
 
-  const filteredData = executionData.filter((item) => {
-    const matchesSearch =
-      !searchQuery ||
-      item.execution_id_str?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus =
-      filters.status === "All" ||
-      item.status?.toLowerCase() === filters.status.toLowerCase();
-
-    // 2. Priority Filter (Mapping numeric 1-10 to High/Medium/Low)
-    const p = Number(item.priority);
-    let itemPriorityBucket = "Low";
-    if (p >= 8) itemPriorityBucket = "High";
-    else if (p >= 5) itemPriorityBucket = "Medium";
-
-    const matchesPriority =
-      filters.priority === "All" || itemPriorityBucket === filters.priority;
-
-    return matchesStatus && matchesPriority && matchesSearch;
-  });
-
   const handleStartExecution = async () => {
     const payload = {
       workflow_id_str: workflowId,
@@ -108,8 +112,10 @@ const WorkflowExecution = () => {
     try {
       await dispatch(add_Execution({ workflowId, payload }));
       dispatch(get_Workflow_Executions(workflowId));
-    } catch (err) {
-      console.error("Error starting execution", err);
+      notify.success("Successful");
+    } catch (error) {
+      console.error("Error starting execution", error);
+      notify.error(error.message || "Error while Execution");
     }
   };
 
@@ -183,7 +189,30 @@ const WorkflowExecution = () => {
         {/* Filters and Table Container */}
         <div className="bg-white dark:bg-[#1a212c] rounded-xl shadow-sm border border-[#e5e7eb] dark:border-[#2d333d] overflow-hidden">
           {/* Toolbar */}
-          <div className="p-4 border-b border-[#f0f2f4] dark:border-[#2d333d] flex flex-wrap items-center justify-between gap-4">
+          <div className="p-4 border-b border-[#f0f2f4] dark:border-[#2d333d] flex  items-center  gap-4">
+            <div className="flex  items-center gap-3 w-full  ">
+              <div className="relative w-full">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[#616f89]"
+                  size={18}
+                />
+                <input
+                  className="w-full h-10 pl-10 pr-4 rounded-lg bg-[#f0f2f4] dark:bg-[#2d333d] border border-gray-300 shadow-md text-sm focus:ring-2 focus:ring-[#135bec]/50 outline-none placeholder-[#616f89]"
+                  placeholder="Search Execution ID... "
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="flex flex-wrap items-center gap-2">
               <Menu
                 model={statusItems}
@@ -212,51 +241,22 @@ const WorkflowExecution = () => {
                 icon={<ChevronDown size={14} />}
                 onClick={(e) => menuStatus.current.toggle(e)}
               />
-              <FilterDropdown
-                label="Last 7 Days"
-                icon={<Calendar size={14} />}
-              />
-
-              {(filters.status !== "All" || filters.priority !== "All") && (
-                <>
-                  <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2"></div>
-                  <button
-                    onClick={() =>
-                      setFilters({
-                        status: "All",
-                        priority: "All",
-                      })
-                    }
-                    className="text-[#135bec] text-xs font-black uppercase tracking-tight hover:text-blue-700 cursor-pointer transition-colors"
-                  >
-                    Clear All
-                  </button>
-                </>
-              )}
             </div>
-
-            <div className="flex items-center gap-3 flex-1 min-w-60 max-w-md">
-              <div className="relative w-full">
-                <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[#616f89]"
-                  size={18}
-                />
-                <input
-                  className="w-full h-10 pl-10 pr-4 rounded-lg bg-[#f0f2f4] dark:bg-[#2d333d] border border-gray-300 shadow-md text-sm focus:ring-2 focus:ring-[#135bec]/50 outline-none placeholder-[#616f89]"
-                  placeholder="Search Execution ID... "
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-            </div>
+            {filters.status !== "All" && (
+              <>
+                <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2"></div>
+                <button
+                  onClick={() =>
+                    setFilters({
+                      status: "All",
+                    })
+                  }
+                  className="text-[#135bec] text-xs whitespace-nowrap font-black uppercase tracking-tight hover:text-blue-700 cursor-pointer transition-colors"
+                >
+                  Clear All
+                </button>
+              </>
+            )}
           </div>
 
           {/* Table */}
@@ -271,9 +271,9 @@ const WorkflowExecution = () => {
               <>
                 <DynamicTable
                   tableHead={TableSchemas.execution}
-                  first={first}
+                  first={(page - 1) * rows}
                   rows={rows}
-                  tableData={filteredData}
+                  tableData={executionData}
                   handleRowClick={handleRowClick}
                 />
               </>
@@ -283,9 +283,9 @@ const WorkflowExecution = () => {
           {/* Pagination */}
           <div className="px-6 py-4 bg-[#f8f9fa] dark:bg-[#252c38] border-t border-[#e5e7eb] dark:border-[#2d333d] flex items-center justify-center">
             <Paginator
-              first={first}
+              first={(page - 1) * rows}
               rows={rows}
-              totalRecords={filteredData.length}
+              totalRecords={total}
               onPageChange={onPageChange}
             />
           </div>

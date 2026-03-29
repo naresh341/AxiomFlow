@@ -2,7 +2,7 @@ import { ArrowLeft, Lock } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Reset_Password } from "../../RTKThunk/AsyncThunk";
+import { Reset_Password } from "../../RTKThunk/AuthThunk";
 
 const PasswordReset = () => {
   const [searchParams] = useSearchParams();

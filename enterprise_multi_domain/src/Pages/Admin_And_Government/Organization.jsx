@@ -9,32 +9,107 @@ import {
   Search,
   ShieldCheck,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { fetch_Org, update_logo, update_Org } from "../../RTKThunk/GovernanceThunk";
+// import { fetch_Org, update_logo, update_Org } from "../../RTKThunk/AsyncThunk";
 const Organization = () => {
-  const [retentionYears, setRetentionYears] = useState(5);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [preview, setPreview] = useState(null);
+
+  const [formData, setFormData] = useState({
+    name: "",
+    region: "",
+    timezone: "",
+    retention_years: 5,
+  });
+
+  const { organization, loading, error } = useSelector(
+    (state) => state.organization,
+  );
+
+  useEffect(() => {
+    dispatch(fetch_Org());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (organization) {
+      setFormData({
+        name: organization.name || "",
+        region: organization.region || "",
+        timezone: organization.timezone || "",
+        retention_years: organization.retention_years || 5,
+      });
+    }
+  }, [organization]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSave = () => {
+    dispatch(update_Org(formData));
+  };
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setPreview(URL.createObjectURL(file));
+    dispatch(update_logo({ file }));
+    dispatch(fetch_Org());
+  };
   const complianceItems = [
     {
       label: "SOC2 Type II",
-      status: "Active",
-      color:
-        "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+      status: organization?.compliance?.soc2_status || "N/A",
     },
     {
       label: "GDPR Readiness",
-      status: "Verified",
-      color:
-        "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+      status: organization?.compliance?.gdpr_status || "N/A",
     },
     {
       label: "HIPAA",
-      status: "N/A",
-      color: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-500",
-      opacity: "opacity-60",
+      status: organization?.compliance?.hipaa_status || "N/A",
     },
   ];
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Active":
+      case "Verified":
+        return "bg-emerald-100 text-emerald-700";
+
+      case "Pending":
+        return "bg-yellow-100 text-yellow-700";
+
+      case "Expired":
+      case "Failed":
+        return "bg-red-100 text-red-600";
+
+      default:
+        return "bg-gray-100 text-gray-500";
+    }
+  };
+
+  const handleUpdatePolicy = () => {
+    dispatch(
+      update_Org({
+        retention_years: formData.retention_years,
+      }),
+    );
+    dispatch(fetch_Org());
+  };
+
+  {
+    error && <p className="text-red-500 text-sm">{error}</p>;
+  }
   return (
     <main className="min-h-screen bg-[#f6f7f8] dark:bg-[#101922] p-6 lg:p-12 transition-colors duration-300">
       <div className=" mx-auto">
@@ -66,7 +141,9 @@ const Organization = () => {
                     </label>
                     <input
                       type="text"
-                      defaultValue="Acme International Holdings"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
                       className="w-full h-14 px-5 rounded-xl border border-[#dbe0e6] dark:border-gray-700 dark:bg-gray-800 text-lg focus:ring-2 focus:ring-blue-600 outline-none transition-all"
                     />
                   </div>
@@ -75,15 +152,21 @@ const Organization = () => {
                     <label className="text-lg font-bold dark:text-gray-200">
                       Company Logo
                     </label>
-                    <div className="flex flex-col items-center justify-center border-2 border-dashed border-[#dbe0e6] dark:border-gray-600 rounded-2xl py-12 bg-[#f8fafc] dark:bg-[#101922] group hover:border-blue-500 transition-colors cursor-pointer">
-                      <CloudUpload className="w-12 h-12 text-[#617589] mb-4 group-hover:text-blue-500 transition-colors" />
+                    <label className="  flex flex-col items-center justify-center border-2 border-dashed border-[#dbe0e6] dark:border-gray-600 rounded-2xl py-12 bg-[#f8fafc] dark:bg-[#101922] group hover:border-blue-500 transition-colors cursor-pointer">
+                      {preview ? (
+                        <img src={preview} className="h-20 mb-4" />
+                      ) : (
+                        <CloudUpload className="w-12 h-12 text-[#617589] mb-4 group-hover:text-blue-500 transition-colors" />
+                      )}
+                      <input type="file" hidden onChange={handleLogoUpload} />
+
                       <p className="text-xl font-bold dark:text-white">
                         Upload Logo
                       </p>
                       <p className="text-gray-500 dark:text-gray-400 mt-1">
                         Drag and drop or browse files
                       </p>
-                    </div>
+                    </label>
                   </div>
 
                   <div className="flex flex-col gap-3">
@@ -105,7 +188,10 @@ const Organization = () => {
                 </div>
               </div>
               <footer className="px-8 py-5 bg-gray-50 dark:bg-gray-800/50 flex justify-end">
-                <button className="bg-blue-600 text-white px-8 py-3 rounded-xl font-black text-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20">
+                <button
+                  onClick={handleSave}
+                  className="bg-blue-600 text-white px-8 py-3 rounded-xl font-black text-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
+                >
                   Save Changes
                 </button>
               </footer>
@@ -122,10 +208,18 @@ const Organization = () => {
                     <label className="text-lg font-bold dark:text-gray-200">
                       Geographic Region
                     </label>
-                    <select className="h-14 px-4 rounded-xl border-[#dbe0e6] dark:border-gray-700 dark:bg-gray-800 text-lg outline-none focus:ring-2 focus:ring-blue-600 transition-all">
-                      <option>North America</option>
-                      <option>Europe</option>
-                      <option>Asia Pacific</option>
+                    <select
+                      name="region"
+                      value={formData.region}
+                      onChange={handleChange}
+                      className="h-14 px-4 rounded-xl border-[#dbe0e6] dark:border-gray-700 dark:bg-gray-800 text-lg outline-none focus:ring-2 focus:ring-blue-600 transition-all"
+                    >
+                      <option value="" disabled>
+                        Select Region
+                      </option>
+                      <option value="North America">North America</option>
+                      <option value="Europe">Europe</option>
+                      <option value="Asia Pacific">Asia Pacific</option>
                     </select>
                   </div>
                   <div className="flex flex-col gap-3">
@@ -139,7 +233,9 @@ const Organization = () => {
                       />
                       <input
                         type="text"
-                        defaultValue="(GMT-08:00) Pacific Time"
+                        name="timezone"
+                        value={formData.timezone}
+                        onChange={handleChange}
                         className="w-full h-14 pl-12 pr-4 rounded-xl border-[#dbe0e6] dark:border-gray-700 dark:bg-gray-800 text-lg outline-none focus:ring-2 focus:ring-blue-600 transition-all"
                       />
                     </div>
@@ -160,15 +256,20 @@ const Organization = () => {
                       Retention Period
                     </p>
                     <span className="text-2xl font-black text-blue-600">
-                      {retentionYears} Years
+                      {formData.retention_years} Years
                     </span>
                   </div>
                   <input
                     type="range"
                     min="1"
                     max="10"
-                    value={retentionYears}
-                    onChange={(e) => setRetentionYears(e.target.value)}
+                    value={formData.retention_years}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        retention_years: Number(e.target.value),
+                      })
+                    }
                     className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
                   />
                   <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 p-6 rounded-2xl flex gap-5">
@@ -185,8 +286,11 @@ const Organization = () => {
                 </div>
               </div>
               <footer className="px-8 py-5 bg-gray-50 dark:bg-gray-800/50 flex justify-end">
-                <button className="bg-blue-600 text-white px-8 py-3 rounded-xl font-black text-lg hover:bg-blue-700 transition-all">
-                  Update Policy
+                <button
+                  onClick={handleUpdatePolicy}
+                  className="cursor-pointer bg-blue-600 text-white px-8 py-3 rounded-xl font-black text-lg hover:bg-blue-700 transition-all"
+                >
+                  {loading ? "Updating..." : "Update Policy"}
                 </button>
               </footer>
             </section>
@@ -204,10 +308,11 @@ const Organization = () => {
               </div>
               <div className="mb-8">
                 <p className="text-4xl font-black text-blue-600 mb-2">
-                  Premium Enterprise
+                  {organization?.subscription?.plan_name || "Not Selected Plan"}
                 </p>
                 <p className="text-lg text-gray-500 font-medium">
-                  Annual Billing Cycle
+                  {organization?.subscription?.billing_cycle ||
+                    " No Billing Cycle"}
                 </p>
               </div>
               <button
@@ -234,7 +339,9 @@ const Organization = () => {
                       {item.label}
                     </span>
                     <span
-                      className={`px-3 py-1 text-xs font-black rounded-full uppercase tracking-widest ${item.color}`}
+                      className={`px-3 py-1 text-xs font-black rounded-full uppercase tracking-widest ${getStatusColor(
+                        item.status,
+                      )}`}
                     >
                       {item.status}
                     </span>

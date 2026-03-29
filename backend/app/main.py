@@ -3,6 +3,9 @@ from app.api.routes.approvalroute import router as approvalRouter
 from app.api.routes.auditLogsroute import router as auditLogs
 from app.api.routes.compliance_routes import router as complianceRoute
 from app.api.routes.FeatureFlag_route import router as flag
+from app.api.routes.GovernanceAction_Routes import router as GovAction
+from app.api.routes.IntegrationRoute import router as integration
+from app.api.routes.otp_routes import router as otp
 from app.api.routes.Roles_And_OrganizationRoutes import router as role_oraganization
 from app.api.routes.Security_routes import router as security
 from app.api.routes.taskroute import router as taskRouter
@@ -13,14 +16,19 @@ from app.api.routes.workflow import router as workflow_router
 from app.auth.routes import (
     router as auth_router,
 )
-from app.api.routes.otp_routes import router as otp
-from app.api.routes.GovernanceAction_Routes import router as GovAction
 
 # To create the table In the Postgres
 # Base.metadata.create_all(bind=engine)
 from app.core.cloudinary_config import init_cloudinary
 from app.core.config import settings
 from app.core.database import engine
+from app.GlobalException.GlobalExceptionError import (
+    AppException,
+    app_exception_handler,
+    global_exception_handler,
+    integrity_exception_handler,
+    validation_exception_handler,
+)
 from app.model.approval import Approval
 from app.model.AuditLogsModel import AuditLog
 from app.model.base import Base
@@ -33,6 +41,14 @@ from app.model.complianceModel import (
 )
 from app.model.execution import Execution
 from app.model.FeatureFlagModel import FeatureFlag
+from app.model.GovernanceActionModel import GovernanceAction
+from app.model.IntegrationModel import (
+    CustomIntegration,
+    Integration,
+    IntegrationAction,
+    UserIntegration,
+)
+from app.model.OTPModel import OTP
 from app.model.PasswordResetTokenModel import PasswordResetToken
 from app.model.Roles_And_OrganizationModel import Organization, Permission, Role
 from app.model.SecurityModel import SecurityModel
@@ -42,10 +58,10 @@ from app.model.TeamModel import Team
 from app.model.UserModel import User
 from app.model.workflow import Workflow
 from app.model.WorkflowVersion import WorkflowVersion
-from app.model.OTPModel import OTP
-from app.model.GovernanceActionModel import GovernanceAction
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import IntegrityError
 
 
 async def lifespan(app: FastAPI):
@@ -74,6 +90,15 @@ app.include_router(security)
 app.include_router(flag)
 app.include_router(otp)
 app.include_router(GovAction)
+app.include_router(integration)
+
+
+#  Exception Handler
+
+app.add_exception_handler(AppException, app_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(IntegrityError, integrity_exception_handler)
+app.add_exception_handler(Exception, global_exception_handler)
 
 app.add_middleware(
     CORSMiddleware,

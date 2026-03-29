@@ -9,44 +9,66 @@ import {
 } from "lucide-react";
 import { Calendar as PrimeCalendar } from "primereact/calendar";
 import { Menu } from "primereact/menu";
-import { useRef, useState } from "react";
-import { useDispatch } from "react-redux";
-import { useOutletContext, useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useLocation, useOutletContext, useParams } from "react-router-dom";
 import ApprovalDecisionModal from "../../Components/ApprovalDecisionModal";
 import DynamicTable from "../../Components/DynamicTable";
 import FilterButton from "../../Components/MiniComponent/FilterButton";
 import Paginator from "../../Components/Paginator";
 import RejectConfirmationModal from "../../Components/RejectConfirmationModal";
-import { approve_reject } from "../../RTKThunk/AsyncThunk";
 import { TableSchemas } from "../../Utils/TableSchemas";
+import { useNotify } from "../../Components/MiniComponent/useNotify";
+import { approve_reject, getApprovalList } from "../../RTKThunk/WorkflowThunk";
 
 const PendingApprovals = () => {
   const { status } = useParams();
+  const notify = useNotify();
+  const location = useLocation();
   const [activeId, setActiveId] = useState(status);
   const [notes, setNotes] = useState("");
-  const {
-    isDrawerOpen,
-    setIsDrawerOpen,
-    approvalData,
-    loading,
-    first,
-    rows,
-    onPageChange,
-  } = useOutletContext();
+  const { isDrawerOpen, setIsDrawerOpen } = useOutletContext();
+  const isHistoryTab = location.pathname.includes("history");
+  const [page, setPage] = useState(1);
+  const rows = 10;
   const [modalStep, setModalStep] = useState(null);
   const [rejectionData, setRejectionData] = useState(null);
   const menuStatus = useRef(null);
   const menuPriority = useRef(null);
   const calendarRef = useRef(null);
+  const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({
-    status: "All",
+    status: "ALL_PENDING",
     priority: "All",
     dateRange: null,
   });
+  const { data, total, loading } = useSelector((state) => state.approval);
   const dispatch = useDispatch();
-  const activeApproval = approvalData.find(
+  const activeApproval = data.find(
     (item) => item.approval_key?.trim() == activeId?.trim(),
   );
+
+  const onPageChange = (selectedPage) => {
+    setPage(selectedPage + 1);
+  };
+
+  useEffect(() => {
+    setFilters((prev) => {
+      if (isHistoryTab) {
+        return { ...prev, status: "HISTORY" };
+      }
+
+      if (prev.status === "HISTORY") {
+        return { ...prev, status: "ALL_PENDING" };
+      }
+
+      return prev; // keep user selection
+    });
+  }, [isHistoryTab]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, filters.status, filters.priority, filters.dateRange]);
 
   const handleApproveTrigger = async (decisionStatus) => {
     const payload = {
@@ -67,8 +89,12 @@ const PendingApprovals = () => {
     try {
       await dispatch(approve_reject(payload)).unwrap();
       handleFinalSuccess();
+      notify.success("Approved Successful")
     } catch (error) {
       console.error("Error while processing approval decision", error);
+      notify.error(
+        error?.message || "Error while processing approval decision",
+      );
     }
   };
 
@@ -76,12 +102,15 @@ const PendingApprovals = () => {
     try {
       await dispatch(approve_reject(rejectionData)).unwrap();
       handleFinalSuccess();
+      notify.success("Reject Successful");
     } catch (error) {
       console.error("Rejection failed", error);
+      notify.error(error?.message || " Something Went Wrong");
     }
   };
 
   const handleFinalSuccess = () => {
+    notify.success("Decision processed successfully 🚀");
     setModalStep(null);
     setIsDrawerOpen(false);
   };
@@ -95,7 +124,7 @@ const PendingApprovals = () => {
     {
       label: "All",
       className: filters.status === "All" ? "font-bold text-blue-600" : "",
-      command: () => setFilters((prev) => ({ ...prev, status: "All" })),
+      command: () => setFilters((prev) => ({ ...prev, status: "ALL_PENDING" })),
     },
     {
       label: "Escalated",
@@ -153,34 +182,24 @@ const PendingApprovals = () => {
     });
   };
 
-  const filteredData = approvalData.filter((item) => {
-    // 1. Status Filter
-    const matchesStatus =
-      filters.status === "All" ||
-      item.status?.toLowerCase() === filters.status.toLowerCase();
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      dispatch(
+        getApprovalList({
+          status: filters.status,
+          page: page,
+          limit: rows,
+          search,
+          priority: filters.priority,
+          date: filters.dateRange
+            ? filters.dateRange.toISOString().split("T")[0]
+            : "",
+        }),
+      );
+    }, 500);
 
-    // 2. Priority Filter (Mapping numeric 1-10 to High/Medium/Low)
-    const p = Number(item.priority);
-    let itemPriorityBucket = "Low";
-    if (p >= 8) itemPriorityBucket = "High";
-    else if (p >= 5) itemPriorityBucket = "Medium";
-
-    const matchesPriority =
-      filters.priority === "All" || itemPriorityBucket === filters.priority;
-
-    let matchesDate = true;
-    if (filters.dateRange) {
-      const itemDate = new Date(item.created_at);
-      const selectedDate = new Date(filters.dateRange);
-
-      matchesDate =
-        itemDate.getDate() === selectedDate.getDate() &&
-        itemDate.getMonth() === selectedDate.getMonth() &&
-        itemDate.getFullYear() === selectedDate.getFullYear();
-    }
-
-    return matchesStatus && matchesPriority && matchesDate;
-  });
+    return () => clearTimeout(delay);
+  }, [search, page, filters, dispatch]);
 
   return (
     <div className=" flex w-full h-[calc(100vh-160px)] overflow-hidden overflow-y-scroll bg-[#f6f6f8] dark:bg-[#101622] animate-in fade-in duration-500">
@@ -285,7 +304,7 @@ const PendingApprovals = () => {
               }}
             />
           </div>
-          {(filters.status !== "All" ||
+          {(filters.status !== "ALL_PENDING" ||
             filters.priority !== "All" ||
             filters.dateRange) && (
             <>
@@ -293,7 +312,7 @@ const PendingApprovals = () => {
               <button
                 onClick={() =>
                   setFilters({
-                    status: "All",
+                    status: "ALL_PENDING",
                     priority: "All",
                     dateRange: null,
                   })
@@ -315,8 +334,8 @@ const PendingApprovals = () => {
               </div>
             ) : (
               <DynamicTable
-                tableData={filteredData}
-                first={first}
+                tableData={data}
+                first={(page - 1) * rows}
                 rows={rows}
                 tableHead={TableSchemas.approval}
                 handleRowClick={handleRowClick}
@@ -325,9 +344,9 @@ const PendingApprovals = () => {
             <div className="px-6 py-4 border-t border-slate-100 dark:border-gray-800  dark:bg-gray-900 flex items-center justify-center bg-slate-50/30">
               <div className="p-4 border-t border-gray-200 dark:border-gray-800 dark:bg-gray-900">
                 <Paginator
-                  first={first}
+                  first={(page - 1) * rows}
                   rows={rows}
-                  totalRecords={filteredData.length}
+                  totalRecords={total}
                   onPageChange={onPageChange}
                 />
               </div>

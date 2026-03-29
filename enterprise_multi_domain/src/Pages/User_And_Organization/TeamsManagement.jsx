@@ -3,8 +3,12 @@ import { useDispatch, useSelector } from "react-redux";
 import CreateTeam from "../../Components/CreateTeam";
 import DynamicTable from "../../Components/DynamicTable";
 import Paginator from "../../Components/Paginator";
-import { delete_Teams, get_teams } from "../../RTKThunk/AsyncThunk";
+// import { delete_Teams, get_teams } from "../../RTKThunk/AsyncThunk";
 import { TableSchemas } from "../../Utils/TableSchemas";
+import {
+  delete_Teams,
+  get_teams,
+} from "../../RTKThunk/RoleAndOrganizationThunk";
 
 const TeamsManagement = () => {
   const dispatch = useDispatch();

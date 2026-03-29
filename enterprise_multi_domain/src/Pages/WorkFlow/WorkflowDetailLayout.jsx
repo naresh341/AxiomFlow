@@ -4,7 +4,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
 import RunWorkflowModal from "../../Components/RunWorkflowModal";
 import WorkflowSuccessfullModal from "../../Components/WorkflowSuccessfullModal";
-import { getWorkflowById } from "../../RTKThunk/AsyncThunk";
+import { getWorkflowById } from "../../RTKThunk/WorkflowThunk";
+// import { getWorkflowById } from "../../RTKThunk/AsyncThunk";
 
 const WorkflowDetailLayout = () => {
   const { workflow_id_str } = useParams();

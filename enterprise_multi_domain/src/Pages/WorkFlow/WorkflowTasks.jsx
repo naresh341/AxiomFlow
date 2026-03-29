@@ -1,32 +1,63 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useSearchParams } from "react-router-dom";
-import { get_Workflow_Tasks } from "../../RTKThunk/AsyncThunk";
 import TaskDashboard from "./WorkFlowTaskDashboard";
 import TaskSidebar from "./WorkFlowTaskSidebar";
+import { get_Workflow_Tasks } from "../../RTKThunk/WorkflowThunk";
 
 const WorkflowTasks = () => {
   const { workflowId } = useParams();
   const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [first, setFirst] = useState(0);
+  const [page, setPage] = useState(1);
   const rows = 10;
   const taskId = searchParams.get("task_key");
-  // const tasks = workflowTasks[workflowId] || [];
-  // const activeTask = tasks.find((t) => t.id === taskId);
-  const { currentWorkflowTasks, loading } = useSelector(
+  const { currentWorkflowTasks, loading, total } = useSelector(
     (state) => state.workflows,
   );
-  // const { currentWorkflow } = useOutletContext();
+
+  const [filters, setFilters] = useState({
+    status: "All",
+    priority: "All",
+  });
+
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
     if (workflowId) {
-      dispatch(get_Workflow_Tasks(workflowId));
+      dispatch(
+        get_Workflow_Tasks({
+          workflowId,
+          page,
+          limit: rows,
+          status: filters.status === "All" ? null : filters.status,
+          priority: filters.priority === "All" ? null : filters.priority,
+          search: debouncedSearch,
+        }),
+      );
     }
-    console.log("First Task Data:", currentWorkflowTasks);
-  }, [dispatch, workflowId]);
+  }, [
+    dispatch,
+    workflowId,
+    page,
+    filters.status,
+    filters.priority,
+    debouncedSearch,
+  ]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400); // delay
 
-  const activeTask = currentWorkflowTasks.find(
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, filters.status]);
+
+  const activeTask = currentWorkflowTasks?.find(
     (t) => String(t.id) === taskId || String(t.task_key) === taskId,
   );
   if (loading)
@@ -34,9 +65,10 @@ const WorkflowTasks = () => {
       <div className="p-10 text-center font-bold">Fetching Blueprint...</div>
     );
 
-  const handlePageChange = (page) => {
-    setFirst((page - 1) * rows);
+  const handlePageChange = (newPage) => {
+    setPage(newPage + 1);
   };
+
   return (
     <div className="relative">
       <TaskDashboard
@@ -44,9 +76,16 @@ const WorkflowTasks = () => {
         workflowId={workflowId}
         onRowClick={(item) => setSearchParams({ task_key: item.data.task_key })}
         handlePageChange={handlePageChange}
-        first={first}
+        first={(page - 1) * rows}
         rows={rows}
+        totalRecords={total}
         loading={loading}
+        search={search}
+        setSearch={setSearch}
+        status={filters.status}
+        priority={filters.priority}
+        filters={filters}
+        setFilters={setFilters}
       />
 
       {activeTask && (

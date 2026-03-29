@@ -14,8 +14,9 @@ import { useDispatch, useSelector } from "react-redux";
 import DynamicTable from "../../Components/DynamicTable";
 import FilterButton from "../../Components/MiniComponent/FilterButton";
 import Paginator from "../../Components/Paginator";
-import { get_auditLogs } from "../../RTKThunk/AsyncThunk";
+// import { get_auditLogs } from "../../RTKThunk/AsyncThunk";
 import { TableSchemas } from "../../Utils/TableSchemas";
+import { get_auditLogs } from "../../RTKThunk/GovernanceThunk";
 const UserAction = () => {
   const dispatch = useDispatch();
   const [first, setfirst] = useState(0);

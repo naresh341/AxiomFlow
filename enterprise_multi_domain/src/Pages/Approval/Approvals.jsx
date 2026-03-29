@@ -1,13 +1,9 @@
 import { Download } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useState } from "react";
+import { useSelector } from "react-redux";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { getApprovalList } from "../../RTKThunk/AsyncThunk";
 const Approvals = () => {
   const location = useLocation();
-  const dispatch = useDispatch();
-  const [first, setfirst] = useState(0);
-  const rows = 10;
 
   const { loading, error, data } = useSelector((state) => state.approval);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -19,18 +15,6 @@ const Approvals = () => {
   };
 
   const isPendingPage = isActive("/approvals");
-
-  const onPageChange = (pageindex) => {
-    setfirst(pageindex * rows);
-  };
-
-  useEffect(() => {
-    if (location.pathname.includes("history")) {
-      dispatch(getApprovalList("HISTORY"));
-    } else {
-      dispatch(getApprovalList("PENDING"));
-    }
-  }, [dispatch, location.pathname]);
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[#f6f6f8] dark:bg-[#101622] overflow-hidden">
@@ -81,9 +65,6 @@ const Approvals = () => {
             approvalData: data.data || [],
             loading,
             error,
-            first,
-            rows,
-            onPageChange,
           }}
         />
       </div>

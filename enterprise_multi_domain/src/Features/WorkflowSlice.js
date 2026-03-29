@@ -11,7 +11,7 @@ import {
   getWorkflow,
   getWorkflowById,
   update_Version,
-} from "../RTKThunk/AsyncThunk";
+} from "../RTKThunk/WorkflowThunk";
 
 const WorkflowSlice = createSlice({
   name: "workflow",
@@ -24,6 +24,9 @@ const WorkflowSlice = createSlice({
     currentWorkflowApprovals: [],
     currentWorkflowVersions: [],
     currentWorkflowExecutions: [],
+    total: 0,
+    page: 1,
+    totalPages: 0,
   },
   reducers: {
     clearCurrentWorkflow: (state) => {
@@ -40,6 +43,9 @@ const WorkflowSlice = createSlice({
       .addCase(getWorkflow.fulfilled, (state, action) => {
         state.loading = false;
         state.data = action.payload;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.total_pages;
       })
       .addCase(getWorkflow.rejected, (state, action) => {
         state.loading = false;
@@ -84,7 +90,10 @@ const WorkflowSlice = createSlice({
       })
       .addCase(get_Workflow_Tasks.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentWorkflowTasks = action.payload;
+        state.currentWorkflowTasks = action.payload.data;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.total_pages;
       })
       .addCase(get_Workflow_Approvals.pending, (state) => {
         state.loading = true;
@@ -95,7 +104,10 @@ const WorkflowSlice = createSlice({
       })
       .addCase(get_Workflow_Approvals.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentWorkflowApprovals = action.payload;
+        state.currentWorkflowApprovals = action.payload.data;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.total_pages;
       })
       .addCase(get_Workflow_Versions.pending, (state) => {
         state.loading = true;
@@ -106,7 +118,10 @@ const WorkflowSlice = createSlice({
       })
       .addCase(get_Workflow_Versions.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentWorkflowVersions = action.payload;
+        state.currentWorkflowVersions = action.payload.data;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.total_pages;
       })
       .addCase(get_Workflow_Executions.pending, (state) => {
         state.loading = true;
@@ -117,14 +132,17 @@ const WorkflowSlice = createSlice({
       })
       .addCase(get_Workflow_Executions.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentWorkflowExecutions = action.payload;
+        state.currentWorkflowExecutions = action.payload.data;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.total_pages;
       })
       .addCase(add_Version.pending, (state) => {
         state.loading = true;
       })
       .addCase(add_Version.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentWorkflowVersions.data.unshift(action.payload);
+        state.currentWorkflowVersions.unshift(action.payload);
       })
       .addCase(add_Version.rejected, (state, action) => {
         state.loading = false;

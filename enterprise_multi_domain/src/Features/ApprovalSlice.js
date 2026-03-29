@@ -1,11 +1,14 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { approve_reject, getApprovalList } from "../RTKThunk/AsyncThunk";
+import { approve_reject, getApprovalList } from "../RTKThunk/WorkflowThunk";
+// import { approve_reject, getApprovalList } from "../RTKThunk/AsyncThunk";
 
 const initialState = {
   data: [],
-  error: null,
+  total: 0,
+  page: 1,
+  totalPages: 0,
   loading: false,
-  
+  error: null,
 };
 
 const ApprovalSlice = createSlice({
@@ -19,7 +22,11 @@ const ApprovalSlice = createSlice({
       })
       .addCase(getApprovalList.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload;
+
+        state.data = action.payload.data;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.total_pages;
       })
       .addCase(getApprovalList.rejected, (state, action) => {
         state.loading = false;
@@ -34,11 +41,14 @@ const ApprovalSlice = createSlice({
       })
       .addCase(approve_reject.fulfilled, (state, action) => {
         state.loading = false;
+
         const processedId = action.meta.arg.approval_id;
-        state.data.data = state.data.data.filter(
+
+        state.data = state.data.filter(
           (approval) => approval.id !== processedId,
         );
-        state.data.total = state.data.total - 1;
+
+        state.total = state.total - 1;
         state.error = null;
       });
   },

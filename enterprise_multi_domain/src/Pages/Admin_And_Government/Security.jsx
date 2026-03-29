@@ -9,12 +9,13 @@ import {
 import { useEffect, useState } from "react";
 import PasswordPolicyEditor from "../../Components/PasswordPolicyEditor";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  get_Security,
-  update_Security,
-  create_Security,
-  delete_Security,
-} from "../../RTKThunk/AsyncThunk";
+import { create_Security, delete_Security, get_Security, update_Security } from "../../RTKThunk/GovernanceThunk";
+// import {
+//   get_Security,
+//   update_Security,
+//   create_Security,
+//   delete_Security,
+// } from "../../RTKThunk/AsyncThunk";
 const Security = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const user = useSelector((state) => state.islogin.user);

@@ -9,7 +9,7 @@ const DynamicTable = ({
   tableHead = [],
   handleRowClick,
   first,
-  onDelete, 
+  onDelete,
   onEdit,
 }) => {
   const statuStyle = (status) => {
@@ -44,6 +44,16 @@ const DynamicTable = ({
         >
           {value || "Unknown"}
         </span>
+      );
+    }
+    if (col.field == "file") {
+      return (
+        <button
+          onClick={() => window.open(rowData.file, "_blank")}
+          className="text-[#135bec] font-bold text-xs hover:underline"
+        >
+          Download
+        </button>
       );
     }
     if (col.field == "priority" || col.field == "risk_score") {

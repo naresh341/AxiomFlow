@@ -6,8 +6,9 @@ import DynamicTable from "../../Components/DynamicTable";
 import FilterButton from "../../Components/MiniComponent/FilterButton";
 import Paginator from "../../Components/Paginator";
 import RiskModal from "../../Components/RiskModal";
-import { delete_Risk, getRisks, update_Risk } from "../../RTKThunk/AsyncThunk";
+// import { delete_Risk, getRisks, update_Risk } from "../../RTKThunk/AsyncThunk";
 import { TableSchemas } from "../../Utils/TableSchemas";
+import { delete_Risk, getRisks, update_Risk } from "../../RTKThunk/GovernanceThunk";
 
 const RiskMatrix = () => {
   const dispatch = useDispatch();

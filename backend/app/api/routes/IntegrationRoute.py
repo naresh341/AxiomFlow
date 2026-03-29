@@ -5,37 +5,82 @@ from app.core.dependencies import get_db
 from app.services.IntegrationService import IntegrationService
 from app.schemas.IntegrationSchema import (
     IntegrationResponse,
-    UserIntegrationCreate,
     UserIntegrationResponse,
+    CustomIntegrationCreate,
+    CustomIntegrationResponse,
+    ConnectIntegrationRequest,
+    MappingPayload
 )
 from typing import List
+from app.model.UserModel import User
+from app.core.security import get_current_user
 
 router = APIRouter(prefix="/integrations", tags=["Integrations"])
 
 
 @router.get("/fetchIntegration", response_model=List[IntegrationResponse])
-def get_integrations(db: Session = Depends(get_db)):
-    service = IntegrationService(db)
-    return service.get_integrations()
-
-
-@router.post("/connect", response_model=UserIntegrationResponse)
-def connect_integration(payload: UserIntegrationCreate, db: Session = Depends(get_db)):
-    service = IntegrationService(db)
-    return service.connect_integration(payload.integration_id, payload.user_id)
-
-
-@router.post("/disconnect/{integration_id}/{user_id}")
-def disconnect_integration(
-    integration_id: int, user_id: int, db: Session = Depends(get_db)
+def get_integrations(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     service = IntegrationService(db)
-    return service.disconnect_integration(integration_id, user_id)
+    return service.get_integrations(user.id)
 
 
-@router.get("/user/{user_id}", response_model=List[UserIntegrationResponse])
-def get_user_integrations(user_id: int, db: Session = Depends(get_db)):
+@router.post("/connect")
+def connect_integration(
+    payload: ConnectIntegrationRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     service = IntegrationService(db)
-    return service.get_user_integrations(user_id)
+
+    return service.connect_integration(
+        user_id=user.id,
+        integration_id=payload.integration_id,
+        source=payload.source, 
+    )
 
 
+@router.post("/disconnect")
+def disconnect_integration(
+    payload: ConnectIntegrationRequest,  # reuse schema
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    service = IntegrationService(db)
+
+    return service.disconnect(
+        user_id=user.id,
+        integration_id=payload.integration_id,
+        source=payload.source,  # ✅ CRITICAL
+    )
+
+
+@router.get("/user", response_model=list[UserIntegrationResponse])
+def get_user_integrations(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    service = IntegrationService(db)
+    return service.get_user_integrations(user.id)
+
+
+@router.post("/createIntegration", response_model=CustomIntegrationResponse)
+def create_custom_integration(
+    payload: CustomIntegrationCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    service = IntegrationService(db)
+    return service.create_integration(user.id, payload)
+
+@router.post("/configure/{id}")
+def save_configuration(
+    id: int,
+    payload: MappingPayload,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    service = IntegrationService(db)
+    return service.save_configuration(user.id, id, payload)

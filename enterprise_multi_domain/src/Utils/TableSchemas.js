@@ -80,6 +80,7 @@ export const TableSchemas = {
     { header: "Sr.No", field: "srno" },
     { header: "Version", field: "version" },
     { header: "Version ID", field: "version_key" },
+    { header: "Workflow ID", field: "workflow_id_str" },
     { header: "Status", field: "status" },
     { header: "Created By", field: "created_by" },
     { header: "Created At", field: "created_at", type: "date" },
@@ -174,5 +175,14 @@ export const TableSchemas = {
     { header: "Status", field: "status" },
     { header: "Approval Action", field: "approval" },
     { header: "Action", field: "action" },
+  ],
+
+  invoices: [
+    { header: "Sr.No", field: "srno" },
+    { header: "invoice_number", field: "invoice_number" },
+    { header: "Amount", field: "amount" },
+    { header: "Date", field: "created_at" },
+    { header: "Status", field: "status" },
+    { header: "Action", field: "file" },
   ],
 };

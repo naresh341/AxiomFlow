@@ -1,7 +1,8 @@
 import { ChevronDown, Plus, User, Users, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { addTeams, update_Teams } from "../RTKThunk/AsyncThunk"; // Verify this path
+import { addTeams, update_Teams } from "../RTKThunk/RoleAndOrganizationThunk";
+// import { addTeams, update_Teams } from "../RTKThunk/AsyncThunk"; // Verify this path
 
 const CreateTeam = ({ isOpen, onClose, editData = false }) => {
   const isEditMode = !!editData;
@@ -21,27 +22,11 @@ const CreateTeam = ({ isOpen, onClose, editData = false }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   const payload = {
-  //     ...formData,
-  //     // lead_id: formData.lead_id ? parseInt(formData.lead_id) : null,
-  //   };
-
-  //   try {
-  //     await dispatch(addTeams(payload)).unwrap();
-  //     onClose();
-  //     setFormData({ name: "", description: "", is_active: true });
-  //   } catch (error) {
-  //     console.error("Failed to create team:", error);
-  //   }
-  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const payload = {
       ...formData,
-      // is_active: String(formData.is_active) === "true",
     };
 
     try {

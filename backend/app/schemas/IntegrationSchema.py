@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -8,6 +8,7 @@ class IntegrationBase(BaseModel):
     key: str
     category: str
     description: Optional[str]
+    source: str
 
 
 class IntegrationCreate(IntegrationBase):
@@ -21,20 +22,21 @@ class IntegrationResponse(IntegrationBase):
         from_attributes = True
 
 
-class UserIntegrationCreate(BaseModel):
+class ConnectIntegrationRequest(BaseModel):
     integration_id: int
-    user_id: int
     access_token: Optional[str] = None
     refresh_token: Optional[str] = None
-    status: str
+    source: str
 
 
 class UserIntegrationResponse(BaseModel):
     id: int
-    integration_id: int
+    integration_id: Optional[int] = None
+    custom_integration_id: Optional[int] = None
     user_id: int
     status: str
     created_at: datetime
+    source: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -51,6 +53,32 @@ class IntegrationActionResponse(BaseModel):
     integration_id: int
     action_key: str
     description: str
+
+    class Config:
+        from_attributes = True
+
+
+class MappingSchema(BaseModel):
+    source: str
+    target: str
+    direction: str
+    # type: str
+    # required: bool
+
+
+class MappingPayload(BaseModel):
+    mappings: List[MappingSchema]
+
+
+class CustomIntegrationCreate(BaseModel):
+    name: str
+    type: str
+    description: str
+    mappings: Optional[List[MappingSchema]] = None
+
+
+class CustomIntegrationResponse(CustomIntegrationCreate):
+    id: int
 
     class Config:
         from_attributes = True

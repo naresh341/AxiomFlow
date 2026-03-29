@@ -4,7 +4,6 @@ import {
   Calendar,
   CreditCard,
   ExternalLink,
-  FileText,
   Info,
   PlusCircle,
   Receipt,
@@ -12,39 +11,80 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+// import {
+//   fetch_Invoices,
+//   fetch_Org,
+//   update_Billing,
+//   update_Subscription,
+// } from "../RTKThunk/AsyncThunk";
+import { TableSchemas } from "../Utils/TableSchemas";
+import DynamicTable from "./DynamicTable";
+import Paginator from "./Paginator";
 import PaymentModal from "./PaymentModal";
+import { fetch_Invoices, fetch_Org, update_Billing, update_Subscription } from "../RTKThunk/GovernanceThunk";
 
 const UpdgradePlan = () => {
-  // State for interactive elements
-  const [selectedPlan, setSelectedPlan] = useState("Professional");
-  const [billingCycle, setBillingCycle] = useState("Annual");
+  const [paymentPayload, setPaymentPayload] = useState(null);
+  const dispatch = useDispatch();
+  const { organization, loading, invoices } = useSelector(
+    (state) => state.organization,
+  );
 
+  const [selectedPlan, setSelectedPlan] = useState(
+    organization?.subscription?.plan_name || "BASIC",
+  );
+
+  const [billingCycle, setBillingCycle] = useState(
+    organization?.subscription?.billing_cycle || "MONTHLY",
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [addOns, setAddOns] = useState({
     ai: false,
     support: true,
     encryption: false,
   });
 
-  // Data for the plan comparison
+  const [billingData, setBillingData] = useState({
+    billing_email: "",
+    billing_contact_name: "",
+  });
+
+  useEffect(() => {
+    if (organization?.billing) {
+      setBillingData({
+        billing_email: organization.billing.billing_email || "",
+        billing_contact_name: organization.billing.billing_contact_name || "",
+      });
+    }
+  }, [organization]);
+
+  useEffect(() => {
+    if (organization?.subscription) {
+      setSelectedPlan(organization.subscription.plan_name);
+      setBillingCycle(organization.subscription.billing_cycle);
+    }
+  }, [organization]);
+
   const plans = [
     {
-      name: "Basic",
+      name: "BASIC",
       price: 0,
       users: "Up to 50",
       workflows: "10 Active",
       analytics: "Basic Reports",
     },
     {
-      name: "Professional",
+      name: "PROFESSIONAL",
       price: 99,
       users: "Up to 200",
       workflows: "50 Active",
       analytics: "Advanced Insights",
     },
     {
-      name: "Enterprise",
+      name: "ENTERPRISE",
       price: 499,
       users: "Unlimited",
       workflows: "Unlimited",
@@ -55,16 +95,152 @@ const UpdgradePlan = () => {
   // Calculate dynamic total for the footer
   const totalMonthly = useMemo(() => {
     const planBase = plans.find((p) => p.name === selectedPlan)?.price || 0;
+
+    const multiplier = billingCycle === "ANNUAL" ? 12 : 1;
+
     const aiCost = addOns.ai ? 49 : 0;
     const supportCost = addOns.support ? 120 : 0;
     const encryptionCost = addOns.encryption ? 25 : 0;
-    return planBase + aiCost + supportCost + encryptionCost;
-  }, [selectedPlan, addOns]);
+
+    return (planBase + aiCost + supportCost + encryptionCost) * multiplier;
+  }, [selectedPlan, addOns, billingCycle]);
+
+  // const handleUpgrade = async () => {
+  //   try {
+  //     const basePrice = plans.find((p) => p.name === selectedPlan)?.price || 0;
+  //     const multiplier = billingCycle === "ANNUAL" ? 12 : 1;
+  //     const monthlyTotal =
+  //       basePrice +
+  //       (addOns.ai ? 49 : 0) +
+  //       (addOns.support ? 120 : 0) +
+  //       (addOns.encryption ? 25 : 0);
+
+  //     const total = monthlyTotal * multiplier;
+
+  //     const payload = {
+  //       plan_name: selectedPlan,
+  //       billing_cycle: billingCycle,
+  //       price: total,
+  //       addons: formattedAddons,
+  //     };
+
+  //     // await dispatch(update_Subscription(payload));
+  //     // await dispatch(update_Billing(billingData));
+  //     // dispatch(fetch_Org());
+
+  //     setPaymentPayload(payload);
+  //     setIsModalOpen(true);
+  //   } catch (error) {
+  //     console.error("Upgrade failed", error);
+  //   }
+  // };
+
+  const handleUpgrade = async () => {
+    try {
+      const basePrice = plans.find((p) => p.name === selectedPlan)?.price || 0;
+
+      const multiplier = billingCycle === "ANNUAL" ? 12 : 1;
+
+      const addons = [
+        { name: "AI_ANALYTICS", price: 49, enabled: addOns.ai },
+        { name: "SUPPORT", price: 120, enabled: addOns.support },
+        { name: "ENCRYPTION", price: 25, enabled: addOns.encryption },
+      ];
+
+      const addonTotal = addons.reduce(
+        (sum, a) => sum + (a.enabled ? a.price : 0),
+        0,
+      );
+
+      const total = (basePrice + addonTotal) * multiplier;
+
+      // 🔥 SINGLE SOURCE OF TRUTH OBJECT
+      const payload = {
+        subscription: {
+          plan_name: selectedPlan,
+          billing_cycle: billingCycle,
+          price: total,
+          addons,
+        },
+        billing: {
+          billing_email: billingData.billing_email,
+          billing_contact_name: billingData.billing_contact_name,
+        },
+      };
+
+      setPaymentPayload(payload);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Upgrade failed", error);
+    }
+  };
 
   const toggleAddOn = (key) => {
     setAddOns((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  useEffect(() => {
+    dispatch(fetch_Org());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (organization?.subscription?.addons) {
+      const backendAddons = organization.subscription.addons;
+
+      const mapped = {
+        ai:
+          backendAddons.find((a) => a.name === "AI_ANALYTICS")?.enabled ||
+          false,
+        support:
+          backendAddons.find((a) => a.name === "SUPPORT")?.enabled || false,
+        encryption:
+          backendAddons.find((a) => a.name === "ENCRYPTION")?.enabled || false,
+      };
+
+      setAddOns(mapped);
+    }
+  }, [organization]);
+
+  useEffect(() => {
+    dispatch(fetch_Invoices());
+  }, [dispatch]);
+
+  const formattedInvoices = useMemo(() => {
+    if (!invoices || invoices.length === 0) return [];
+
+    return invoices.map((inv, index) => ({
+      srno: index + 1,
+      invoice_number: inv.invoice_number || inv.id,
+      amount: `$${inv.amount}`,
+      created_at: new Date(inv.created_at).toLocaleDateString(),
+      status: inv.status,
+      file: inv.file_url, // backend must send this
+    }));
+  }, [invoices]);
+
+  const handlePaymentSuccess = async (paymentResult) => {
+    try {
+      const payload = {
+        ...paymentPayload,
+        payment_id: paymentResult?.id,
+        status: "PAID",
+      };
+
+      await dispatch(update_Subscription(payload.subscription)).unwrap();
+      await dispatch(update_Billing(payload.billing)).unwrap();
+      await dispatch(fetch_Org()).unwrap();
+
+      setIsModalOpen(false);
+      setPaymentPayload(null);
+    } catch (err) {
+      console.error("Transaction commit failed", err);
+    }
+  };
+
+  const handlePaymentFailure = (err) => {
+    console.error("Payment failed", err);
+    setIsModalOpen(false);
+  };
   return (
     <div className="bg-[#f6f6f8] dark:bg-[#101622] font-sans text-[#111318] dark:text-white min-h-screen pb-32">
       <main className=" mx-auto px-6 py-8">
@@ -78,8 +254,21 @@ const UpdgradePlan = () => {
               Manage subscription, tiers, and invoicing.
             </p>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-[#135bec]/10 text-[#135bec] rounded-full font-bold text-sm border border-[#135bec]/20">
-            <Award size={16} /> Premium Status
+          <div className="flex gap-5">
+            <select
+              value={billingCycle}
+              onChange={(e) => setBillingCycle(e.target.value)}
+              className="h-10 px-4 rounded-xl border-[#dbe0e6]  border dark:border-gray-700 dark:bg-gray-800 text-lg outline-none focus:ring-2 focus:ring-blue-600 transition-all"
+            >
+              <option value="" disabled>
+                Select Billing Cycle
+              </option>
+              <option value="MONTHLY">Monthly</option>
+              <option value="ANNUAL">Annual</option>
+            </select>
+            <div className="flex items-center gap-2 px-4 py-2 bg-[#135bec]/10 text-[#135bec] rounded-full font-bold text-sm border border-[#135bec]/20">
+              <Award size={16} /> Premium Status
+            </div>
           </div>
         </div>
 
@@ -98,13 +287,13 @@ const UpdgradePlan = () => {
             },
             {
               label: "Users",
-              val: "145 / 200",
+              val: organization?.subscription?.users_limit || "N/A",
               progress: 72,
               icon: <Users className="text-purple-500" />,
             },
             {
               label: "Renewal",
-              val: "Dec 12, 2026",
+              val: organization?.subscription?.renewal_date || "N/A",
               icon: <RefreshCw className="text-orange-500" />,
             },
           ].map((stat, i) => (
@@ -267,7 +456,13 @@ const UpdgradePlan = () => {
                   </label>
                   <input
                     className="w-full bg-[#f6f6f8] dark:bg-gray-800 border-none rounded-lg p-2 text-sm"
-                    defaultValue="John Doe"
+                    value={billingData.billing_contact_name}
+                    onChange={(e) =>
+                      setBillingData({
+                        ...billingData,
+                        billing_contact_name: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div>
@@ -276,7 +471,13 @@ const UpdgradePlan = () => {
                   </label>
                   <input
                     className="w-full bg-[#f6f6f8] dark:bg-gray-800 border-none rounded-lg p-2 text-sm"
-                    defaultValue="billing@acme.com"
+                    value={billingData.billing_email}
+                    onChange={(e) =>
+                      setBillingData({
+                        ...billingData,
+                        billing_email: e.target.value,
+                      })
+                    }
                   />
                 </div>
               </div>
@@ -307,7 +508,7 @@ const UpdgradePlan = () => {
             </button>
           </div>
           <div className="bg-white dark:bg-gray-900 rounded-2xl border border-[#dbdfe6] dark:border-gray-800 overflow-hidden shadow-sm">
-            <table className="w-full text-left">
+            {/* <table className="w-full text-left">
               <thead className="bg-gray-50 dark:bg-gray-800/50">
                 <tr>
                   <th className="px-6 py-4 text-xs font-bold uppercase text-[#616f89]">
@@ -351,7 +552,20 @@ const UpdgradePlan = () => {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table> */}
+            {loading ? (
+              <p className="p-6 text-center">Loading invoices...</p>
+            ) : formattedInvoices.length === 0 ? (
+              <p className="p-6 text-center text-gray-400">No invoices found</p>
+            ) : (
+              <>
+                <DynamicTable
+                  tableHead={TableSchemas.invoices}
+                  tableData={formattedInvoices}
+                />
+                <Paginator />
+              </>
+            )}
           </div>
         </section>
       </main>
@@ -364,10 +578,13 @@ const UpdgradePlan = () => {
               <Info size={24} />
             </div>
             <div>
-              <p className="font-bold text-sm">New Total: ${totalMonthly}/mo</p>
+              <p className="font-bold text-sm">
+                New Total: ${totalMonthly}/
+                {billingCycle === "ANNUAL" ? "yr" : "mo"}
+              </p>
               <p className="text-xs text-[#616f89]">
                 Switching to {selectedPlan} Plan with{" "}
-                {Object.values(addOns).filter(Boolean).length} add-ons.
+                {Object.values(addOns).filter(Boolean).length} add-ons selected
               </p>
             </div>
           </div>
@@ -376,10 +593,11 @@ const UpdgradePlan = () => {
               Cancel
             </button>
             <button
-              onClick={() => setIsModalOpen(true)}
+              disabled={loading}
+              onClick={handleUpgrade}
               className="flex-1 sm:flex-none px-12 py-3 bg-[#135bec] text-white rounded-xl font-black text-sm shadow-xl shadow-[#135bec]/30 hover:scale-105 active:scale-95 transition-all"
             >
-              Confirm & Pay
+              {loading ? "Processing..." : "Confirm & Pay"}
             </button>
           </div>
         </div>
@@ -388,6 +606,9 @@ const UpdgradePlan = () => {
       <PaymentModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onSuccess={handlePaymentSuccess}
+        onFailure={handlePaymentFailure}
+        payload={paymentPayload}
       />
     </div>
   );
