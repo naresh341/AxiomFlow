@@ -1,12 +1,12 @@
-import { useDispatch, useSelector } from "react-redux";
-import Barchart from "../Components/Barchart ";
-import DynamicTable from "../Components/DynamicTable";
-import { TableSchemas } from "../Utils/TableSchemas";
 import { useEffect, useState } from "react";
-import Paginator from "../Components/Paginator";
-import Linechart from "../Components/LineChart";
-import { getApprovalList } from "../RTKThunk/WorkflowThunk";
+import { useDispatch, useSelector } from "react-redux";
+import Barchart from "../Components/Barchart";
+import DynamicTable from "../Components/DynamicTable";
+import LineChart from "../Components/LineChart";
 import { ProtectedComponent } from "../Components/MiniComponent/ProtectedComponent";
+import Paginator from "../Components/Paginator";
+import { getApprovalList } from "../RTKThunk/WorkflowThunk";
+import { TableSchemas } from "../Utils/TableSchemas";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -48,7 +48,7 @@ const Dashboard = () => {
 
   const chartComponentMap = {
     bar: Barchart,
-    line: Linechart,
+    line: LineChart,
   };
   const chartDataMap = {
     "Task Completion": [
