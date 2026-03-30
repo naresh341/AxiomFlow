@@ -7,9 +7,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { resetAuth } from "../../Features/LoginSlice";
 
 const Login = () => {
-  const { user, status, error, isAuthenticated } = useSelector(
-    (state) => state.islogin,
-  );
+  const { status, isAuthenticated } = useSelector((state) => state.islogin);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const notify = useNotify();
@@ -65,7 +63,7 @@ const Login = () => {
             </svg>
           </div>
           <h2 className="text-lg font-bold leading-tight tracking-tight">
-            Enterprise SaaS
+            Axiom Flow
           </h2>
         </div>
         <div className="text-md text-slate-500 dark:text-slate-400">
@@ -96,7 +94,7 @@ const Login = () => {
                 </svg>
               </div>
               <span className="text-[#111418] dark:text-white text-sm font-semibold uppercase tracking-widest">
-                Enterprise SaaS
+                Axiom Flow
               </span>
             </div>
 
@@ -208,7 +206,7 @@ const Login = () => {
 
       <footer className="w-full py-8 text-center">
         <p className="text-slate-400 text-[10px] uppercase tracking-widest">
-          © 2026 Axion Flow, Inc. All rights reserved.
+          © 2026 Axiom Flow, Inc. All rights reserved.
         </p>
       </footer>
     </div>

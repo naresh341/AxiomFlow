@@ -1,3 +1,5 @@
+import os
+
 import cloudinary
 from app.api.routes.approvalroute import router as approvalRouter
 from app.api.routes.auditLogsroute import router as auditLogs
@@ -77,9 +79,8 @@ async def lifespan(app: FastAPI):
     print("🛑 Shutting down application")
 
 
-print("Cloud URL:", settings.CLOUDINARY_URL)
 app = FastAPI(title="Workflow Engine API", lifespan=lifespan)
-
+print("Cloudinary Initialized")
 #  Router
 app.include_router(auth_router)
 app.include_router(workflow_router)
@@ -106,9 +107,19 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(IntegrityError, integrity_exception_handler)
 app.add_exception_handler(Exception, global_exception_handler)
 
+
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+frontend_url = os.getenv("FRONTEND_URL")
+if frontend_url:
+    origins.append(frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["Authorization", "Content-Type", "Accept"],

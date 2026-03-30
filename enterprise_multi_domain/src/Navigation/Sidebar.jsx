@@ -168,7 +168,7 @@ const Sidebar = () => {
           {!isCollapsed && (
             <div className="flex flex-col overflow-hidden whitespace-nowrap">
               <h1 className="text-md font-bold leading-none text-[#111418] dark:text-white">
-                AxionFlow
+                AxiomFlow
               </h1>
               <p className="text-[12px] text-[#617589] dark:text-slate-400 uppercase tracking-wider mt-1 font-bold">
                 Workflow SaaS

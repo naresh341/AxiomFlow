@@ -1,35 +1,150 @@
-# React + Vite
+# 🚀 AxionFlow Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, scalable **Workflow Management SaaS UI** built with React, Redux Toolkit, and Tailwind CSS.
+This application provides an intuitive interface for managing workflows, tasks, approvals, and enterprise operations.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🧠 Overview
 
-## React Compiler
+AxionFlow is designed to:
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+* Manage workflows and approvals
+* Provide real-time dashboards and analytics
+* Enable role-based access and modular navigation
+* Deliver a smooth and responsive UI experience
 
-Note: This will impact Vite dev & build performances.
+---
 
-## Expanding the ESLint configuration
+## 🏗️ Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+* ⚛️ React (Vite)
+* 🧠 Redux Toolkit (State Management)
+* 🎨 Tailwind CSS
+* 🔗 React Router DOM
+* 📡 Axios (API Communication)
+* 🔔 React Hot Toast (Notifications)
+* 🎯 Lucide Icons
 
+---
 
-For backedn i have use the Python in that python i have use Fast api ,Pydantic,JWt ,sqLite sqAlchemy
+## 📁 Project Structure
 
+```
+src/
+│── Components/
+│── Pages/
+│── RTKThunk/
+│── Features/
+│── Utils/
+│── Context/
+│── MainLayout/
+│── App.jsx
+```
 
-backend/
- ├─ app/
- │   ├─ main.py          --fast Api logic with the cors to connect with the Frontend
- │   ├─ auth/
- │   │   ├─ routes.py
- │   │   ├─ schemas.py
- │   │   ├─ service.py
- │   │   └─ utils.py
- │   ├─ database.py
- │   └─ config.py
- ├─ requirements.txt
- └─ venv/
+---
+
+## 🔐 Authentication Flow
+
+* Cookie-based authentication
+* Token validation via `/auth/me`
+* Conditional UI rendering using:
+
+  * `selectIsAuthenticated`
+* Feature-level protection (not full page blocking)
+
+---
+
+## 🚦 Routing Strategy
+
+* Public Routes:
+
+  * `/login`
+  * `/signup`
+  * `/forgot-password`
+
+* App Layout:
+
+  * Sidebar + Topbar always visible
+  * Feature-level access control inside components
+
+---
+
+## 🔒 Access Control
+
+* UI-based protection using `ProtectedComponent`
+* Sidebar shows all modules
+* Restricted features:
+
+  * Disabled buttons
+  * Toast-based access alerts
+  * Conditional rendering
+
+---
+
+## 📊 Key Features
+
+* 📌 Dashboard with analytics
+* 🔄 Workflow builder & execution
+* ✅ Task & Approval management
+* 🧑‍💼 User & Organization module
+* 🔗 Integrations system
+* ⚙️ Admin & Governance panel
+
+---
+
+## ⚡ Setup Instructions
+
+```bash
+# Clone the repo
+git clone <repo-url>
+
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+```
+
+---
+
+## 🌍 Environment Variables
+
+Create `.env` file:
+
+```
+VITE_API_URL=http://localhost:8000
+```
+
+---
+
+## 📡 API Handling
+
+* Centralized API file
+* Axios with credentials enabled
+* No global interceptor dependency
+* Explicit error handling per API
+
+---
+
+## 🎯 Design Philosophy
+
+* Component-driven architecture
+* Clean separation of concerns
+* Scalable folder structure
+* Enterprise-grade UI patterns
+
+---
+
+## 🚀 Future Enhancements
+
+* 🔐 Role-Based Access Control (RBAC)
+* 🌐 Multi-tenant support
+* 📈 Advanced analytics
+* ⚡ Performance optimization
+
+---
+
+## 👨‍💻 Author
+
+Built with precision and scalability in mind.

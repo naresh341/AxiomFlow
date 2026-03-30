@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../RTKThunk/AuthThunk";
 import { useNavigate } from "react-router-dom";
 import { selectIsAuthenticated, selectUser } from "../RTKThunk/authSelectors";
+import { ProtectedComponent } from "../Components/MiniComponent/ProtectedComponent";
 
 const Topbar = () => {
   const { theme, toggleTheme } = useTheme();
@@ -62,17 +63,19 @@ const Topbar = () => {
       </div>
 
       <div className="hidden lg:flex items-center gap-6">
-        <h3 className="font-bold text-xl">Axion Flow</h3>
+        <h3 className="font-bold text-xl">Axiom Flow</h3>
       </div>
 
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => setIsNotifOpen(true)}
-          className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-        >
-          <Bell size={20} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-950"></span>
-        </button>
+        <ProtectedComponent>
+          <button
+            onClick={() => setIsNotifOpen(true)}
+            className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+          >
+            <Bell size={20} />
+            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-950"></span>
+          </button>
+        </ProtectedComponent>
         <div className="cursor-pointer w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition">
           <Settings size={20} />
         </div>
