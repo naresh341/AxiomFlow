@@ -1,7 +1,7 @@
 import {
   CartesianGrid,
   Line,
-  LineChart,
+  LineChart as RechartsLineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -11,7 +11,7 @@ import {
 const Linechart = ({ data }) => {
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <LineChart
+      <RechartsLineChart
         data={data}
         margin={{ top: 20, right: 20, left: 0, bottom: 0 }}
       >
@@ -52,7 +52,7 @@ const Linechart = ({ data }) => {
           dot={{ r: 4, fill: "#3b82f6", strokeWidth: 2, stroke: "#fff" }}
           activeDot={{ r: 6, strokeWidth: 0 }}
         />
-      </LineChart>
+      </RechartsLineChart>
     </ResponsiveContainer>
   );
 };
