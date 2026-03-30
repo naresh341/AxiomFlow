@@ -10,6 +10,7 @@ import {
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { get_UserOrg } from "../RTKThunk/RoleAndOrganizationThunk";
+import { useNotify } from "./MiniComponent/useNotify";
 // import { get_UserOrg } from "../RTKThunk/AsyncThunk";
 
 const CreateTaskModal = ({
@@ -28,7 +29,6 @@ const CreateTaskModal = ({
     dispatch(get_UserOrg());
   }, [dispatch]);
 
-  console.log(data, "data");
   const [taskData, setTaskData] = useState({
     name: "",
     type: "webhook",
@@ -55,7 +55,7 @@ const CreateTaskModal = ({
     const { name, value } = e.target;
     setTaskData((prev) => ({ ...prev, [name]: value }));
   };
-
+  const notify = useNotify();
   // Handle Webhook Nested Changes
   const handleWebhookChange = (field, value) => {
     setTaskData((prev) => ({
@@ -146,9 +146,14 @@ const CreateTaskModal = ({
         await onCreate(workflowId, payload);
       }
 
+      notify.success(
+        editData ? "Task updated successfully!" : "Task created successfully!",
+      );
+
       onClose();
     } catch (error) {
       console.error("Task creation failed:", error);
+      notify.error(error.message || "Failed to create task.");
     }
   };
 

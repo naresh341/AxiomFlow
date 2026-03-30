@@ -14,33 +14,41 @@ import { useDispatch, useSelector } from "react-redux";
 import DynamicTable from "../../Components/DynamicTable";
 import FilterButton from "../../Components/MiniComponent/FilterButton";
 import Paginator from "../../Components/Paginator";
-// import { get_auditLogs } from "../../RTKThunk/AsyncThunk";
 import { TableSchemas } from "../../Utils/TableSchemas";
 import { get_auditLogs } from "../../RTKThunk/GovernanceThunk";
 const UserAction = () => {
   const dispatch = useDispatch();
-  const [first, setfirst] = useState(0);
-  const rows = 10;
   const menuStatus = useRef(null);
-  const menuactorType = useRef(null);
-  const { loading, auditdata } = useSelector((state) => state.governance);
+  const { loading, auditdata, total } = useSelector(
+    (state) => state.governance,
+  );
   const [filters, setFilters] = useState({
     status: "All",
-    actorType: "All",
   });
-  const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const rows = 10;
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedLog, setSelectedLog] = useState(null);
 
   useEffect(() => {
-    dispatch(get_auditLogs("USER"));
-  }, [dispatch]);
+    dispatch(
+      get_auditLogs({
+        page,
+        limit: rows,
+        actor_type: "USER",
+        status: filters.status === "All" ? null : filters.status,
+        search: debouncedSearch,
+      }),
+    );
+  }, [dispatch, page, filters.status, debouncedSearch]);
 
   const handleRowClick = (rowData) => {
     setSelectedLog(rowData.data);
   };
 
-  const onPageChange = (page) => {
-    setfirst(page + 1) * rows;
+  const onPageChange = (selectedPage) => {
+    setPage(selectedPage + 1);
   };
   const statusItems = [
     {
@@ -57,91 +65,43 @@ const UserAction = () => {
       command: () => setFilters((prev) => ({ ...prev, status: "FAILED" })),
     },
   ];
-  const actorType = [
-    {
-      label: "All",
-      className: filters.actorType === "All" ? "font-bold text-blue-600" : "",
-      command: () => setFilters((prev) => ({ ...prev, actorType: "All" })),
-    },
-    {
-      label: "User",
-      command: () => setFilters((prev) => ({ ...prev, actorType: "USER" })),
-    },
-    {
-      label: "Admin",
-      command: () => setFilters((prev) => ({ ...prev, actorType: "ADMIN" })),
-    },
-    {
-      label: "System",
-      command: () => setFilters((prev) => ({ ...prev, actorType: "SYSTEM" })),
-    },
-  ];
 
-  const filteredData = auditdata?.filter((item) => {
-    const matchesStatus =
-      filters.status === "All" || item.status?.toUpperCase() === filters.status;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400); // delay
 
-    const matchesActor =
-      filters.actorType === "All" ||
-      item.actorType?.toUpperCase() === filters.actorType;
+    return () => clearTimeout(timer);
+  }, [search]);
 
-    const matchesSearch =
-      !searchQuery ||
-      Object.values(item).some((val) =>
-        String(val).toLowerCase().includes(searchQuery.toLowerCase()),
-      );
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, filters.status]);
 
-    return matchesStatus && matchesActor && matchesSearch;
-  });
   return (
     <div className="flex flex-col gap-8">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <div className="relative group">
+      <div className="flex justify-between items-center gap-4">
+        <div className="relative  w-full group">
           <Search
             className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#137fec] transition-colors"
             size={20}
           />
           <input
-            className="w-full h-12 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-12 pr-4 text-base focus:border-[#137fec] focus:ring-2 focus:ring-[#137fec]/20 outline-none transition-all"
+            className="shadow-md w-full h-12 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-12 pr-4 text-base focus:border-[#137fec] focus:ring-2 focus:ring-[#137fec]/20 outline-none transition-all"
             placeholder="Search logs..."
             type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
-          {searchQuery && (
+          {search && (
             <button
-              onClick={() => setSearchQuery("")}
+              onClick={() => setSearch("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               <X size={14} />
             </button>
           )}
         </div>
-        <Menu
-          model={actorType}
-          popup
-          ref={menuactorType}
-          id="actorType_menu"
-          className="cursor-pointer p-2 border-none shadow-2xl rounded-2xl bg-white dark:bg-gray-900 w-52"
-          pt={{
-            list: { className: "flex flex-col gap-1" },
-            action: {
-              className:
-                "hover:bg-blue-100 dark:hover:bg-gray-800 rounded-lg transition-colors p-3",
-            },
-            label: {
-              className: "text-sm font-bold text-gray-700 dark:text-gray-200",
-            },
-          }}
-        />
-
-        <FilterButton
-          label="Action Type"
-          value={filters.actorType}
-          isActive={filters.actorType !== "All"}
-          icon={<ChevronDown size={14} />}
-          onClick={(e) => menuactorType.current.toggle(e)}
-        />
 
         <Menu
           model={statusItems}
@@ -169,14 +129,13 @@ const UserAction = () => {
           onClick={(e) => menuStatus.current.toggle(e)}
         />
 
-        {(filters.status !== "All" || filters.actorType !== "All") && (
+        {filters.status !== "All" && (
           <>
             <div className="flex items-center mb-3 ml-4">
               <button
                 onClick={() =>
                   setFilters({
                     status: "All",
-                    actorType: "All",
                   })
                 }
                 className="text-[#135bec] text-sm font-black uppercase tracking-tight hover:text-blue-700 cursor-pointer transition-colors"
@@ -200,8 +159,8 @@ const UserAction = () => {
             ) : (
               <DynamicTable
                 tableHead={TableSchemas?.auditLogsUser}
-                first={first}
-                tableData={filteredData}
+                first={(page - 1) * rows}
+                tableData={auditdata}
                 handleRowClick={handleRowClick}
               />
             )}
@@ -209,10 +168,10 @@ const UserAction = () => {
 
           <div className="p-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <Paginator
-              first={first}
+              first={(page - 1) * rows}
               rows={rows}
               onPageChange={onPageChange}
-              totalRecords={filteredData?.length}
+              totalRecords={total}
             />
           </div>
         </div>

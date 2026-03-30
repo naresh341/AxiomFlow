@@ -14,6 +14,7 @@ import { useState } from "react";
 // import { create_Flag, get_Flag } from "../RTKThunk/AsyncThunk";
 import { useDispatch } from "react-redux";
 import { create_Flag, get_Flag } from "../RTKThunk/GovernanceThunk";
+import { useNotify } from "./MiniComponent/useNotify";
 
 const CreateFeatureFlagModal = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
@@ -25,7 +26,7 @@ const CreateFeatureFlagModal = ({ isOpen, onClose }) => {
     scope: "global",
     is_enabled: false,
   });
-
+  const notify = useNotify();
   const generateKey = (name) => name.toLowerCase().replace(/\s+/g, "-");
 
   const handleCreate = () => {
@@ -36,13 +37,14 @@ const CreateFeatureFlagModal = ({ isOpen, onClose }) => {
         key: generateKey(formData.name),
       };
 
-      console.log("🚀 Creating Flag:", payload);
+      notify.success("Feature flag created successfully!");
 
       dispatch(create_Flag(payload));
       dispatch(get_Flag());
       onClose();
     } catch (error) {
       console.error(`Error while creating Flag`, error);
+      notify.error("Failed to create feature flag.");
     }
   };
 

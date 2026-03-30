@@ -46,9 +46,9 @@ import {
 
 export const get_auditLogs = createAsyncThunk(
   "governance/audit-Logs",
-  async (actorType, rejectWithValue) => {
+  async (params, { rejectWithValue }) => {
     try {
-      return await fetchauditLogs(actorType);
+      return await fetchauditLogs(params);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -82,9 +82,9 @@ export const delete_AuditLogs = createAsyncThunk(
 
 export const getPolicies = createAsyncThunk(
   "compliance/fetchPolicies",
-  async (status, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
-      return await fetchPolicies(status);
+      return await fetchPolicies(params);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -130,15 +130,14 @@ export const delete_Policies = createAsyncThunk(
 // ===========================RISK===================================
 export const getRisks = createAsyncThunk(
   "compliance/fetchRisks",
-  async (_, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
-      return await fetchRisks();
+      return await fetchRisks(params);
     } catch (error) {
       return rejectWithValue(error.message);
     }
   },
 );
-
 export const addRisk = createAsyncThunk(
   "compliance/identifyRisk",
   async (riskData, { rejectWithValue }) => {
@@ -186,9 +185,9 @@ export const getComplianceStats = createAsyncThunk(
 //  =======================================EVIDENCE=============================================
 export const getControlEvidence = createAsyncThunk(
   "compliance/fetchControlEvidence",
-  async (_, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
-      return await fetchControlEvidence();
+      return await fetchControlEvidence(params);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -230,7 +229,6 @@ export const get_Security = createAsyncThunk(
   "Security/getSecurity",
   async (id, { rejectWithValue }) => {
     try {
-      console.log("ORG ID CHECK:", id);
       return await getSecurity(id);
     } catch (error) {
       return rejectWithValue(error.message);

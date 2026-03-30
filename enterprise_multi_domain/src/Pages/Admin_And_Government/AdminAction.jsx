@@ -12,7 +12,6 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-// import { get_auditLogs } from "../../RTKThunk/AsyncThunk";
 import DynamicTable from "../../Components/DynamicTable";
 import { TableSchemas } from "../../Utils/TableSchemas";
 import Paginator from "../../Components/Paginator";
@@ -23,27 +22,37 @@ import { get_auditLogs } from "../../RTKThunk/GovernanceThunk";
 const AdminActions = () => {
   const dispatch = useDispatch();
   const menuStatus = useRef(null);
-  const [first, setfirst] = useState(0);
-  const rows = 10;
   const [filters, setFilters] = useState({
     status: "All",
   });
-  const [searchQuery, setSearchQuery] = useState("");
-  const { loading, auditdata } = useSelector((state) => state.governance);
+  const [page, setPage] = useState(1);
+  const rows = 10;
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const { loading, auditdata, total } = useSelector(
+    (state) => state.governance,
+  );
   const [selectedLog, setSelectedLog] = useState(null);
 
   useEffect(() => {
-    dispatch(get_auditLogs("ADMIN"));
-  }, [dispatch]);
+    dispatch(
+      get_auditLogs({
+        page,
+        limit: rows,
+        actor_type: "ADMIN",
+        status: filters.status === "All" ? null : filters.status,
+        search: debouncedSearch,
+      }),
+    );
+  }, [dispatch, page, filters.status, debouncedSearch]);
 
-  console.log(auditdata);
 
   const handleRowClick = (rowData) => {
     setSelectedLog(rowData.data);
   };
 
-  const onPageChange = (page) => {
-    setfirst(page.first); // Adjusted for standard Paginator event objects
+  const onPageChange = (selectedPage) => {
+    setPage(selectedPage + 1);
   };
   const statusItems = [
     {
@@ -60,37 +69,25 @@ const AdminActions = () => {
       command: () => setFilters((prev) => ({ ...prev, status: "FAILED" })),
     },
   ];
-  const filteredData = auditdata?.filter((item) => {
-    const matchesStatus =
-      filters.status === "All" || item.status?.toUpperCase() === filters.status;
-
-    const matchesSearch =
-      !searchQuery ||
-      Object.values(item).some((val) =>
-        String(val).toLowerCase().includes(searchQuery.toLowerCase()),
-      );
-
-    return matchesStatus && matchesSearch;
-  });
   return (
     <div className="flex flex-col gap-8">
       {/* Search & Filter Bar */}
       <div className="flex flex-wrap gap-6 items-center">
-        <div className="relative flex-1 max-w-md group">
+        <div className="relative flex-1 w-full group">
           <Search
             className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-[#137fec] transition-colors"
             size={20}
           />
           <input
-            className="w-full h-14 bg-white dark:bg-[#111820] border border-slate-300 dark:border-[#1f2937] rounded-xl pl-12 pr-4 text-lg focus:border-[#137fec] outline-none text-slate-900 dark:text-slate-100 transition-all placeholder:text-slate-400"
-            placeholder="Search logs..."
+            className="w-full h-12 bg-white dark:bg-[#111820] border border-slate-300 dark:border-[#1f2937] rounded-xl pl-12 pr-4 text-lg focus:border-[#137fec] outline-none text-slate-900 dark:text-slate-100 transition-all placeholder:text-slate-400"
+            placeholder="Search Name..."
             type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
-          {searchQuery && (
+          {search && (
             <button
-              onClick={() => setSearchQuery("")}
+              onClick={() => setSearch("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               <X size={14} />
@@ -153,9 +150,9 @@ const AdminActions = () => {
               </>
             ) : (
               <DynamicTable
-                tableData={filteredData}
+                tableData={auditdata}
                 tableHead={TableSchemas.auditLogsUser}
-                first={first}
+                first={(page - 1) * rows}
                 rows={rows}
                 handleRowClick={handleRowClick}
               />
@@ -163,10 +160,10 @@ const AdminActions = () => {
           </div>
           <div className="p-8 border-t border-slate-200 dark:border-[#1f2937] bg-slate-50/50 dark:bg-slate-900/10">
             <Paginator
-              first={first}
+              first={(page - 1) * rows}
               onPageChange={onPageChange}
               rows={rows}
-              totalRecords={filteredData?.length || 0}
+              totalRecords={total}
             />
           </div>
         </div>

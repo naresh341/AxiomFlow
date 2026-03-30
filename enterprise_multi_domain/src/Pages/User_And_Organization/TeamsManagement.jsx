@@ -9,13 +9,13 @@ import {
   delete_Teams,
   get_teams,
 } from "../../RTKThunk/RoleAndOrganizationThunk";
+import { useNotify } from "../../Components/MiniComponent/useNotify";
 
 const TeamsManagement = () => {
   const dispatch = useDispatch();
-  const { loading, data } = useSelector((state) => state.teams);
-  const [first, setFirst] = useState(0);
+  const { loading, data, total } = useSelector((state) => state.teams);
+  const [page, setPage] = useState(1);
   const rows = 10;
-
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
@@ -29,11 +29,11 @@ const TeamsManagement = () => {
   };
 
   useEffect(() => {
-    dispatch(get_teams());
-  }, [dispatch]);
+    dispatch(get_teams({ page, limit: rows }));
+  }, [dispatch, page, rows]);
 
   const handleCustomPageChange = (page) => {
-    setFirst(page * rows);
+    setPage(page);
   };
   return (
     <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950">
@@ -48,7 +48,7 @@ const TeamsManagement = () => {
             <DynamicTable
               tableHead={TableSchemas.team}
               tableData={data}
-              first={first}
+              first={(page - 1) * rows}
               rows={rows}
               onDelete={handleDelete}
               onEdit={handleEditClick}
@@ -58,9 +58,9 @@ const TeamsManagement = () => {
         <div className="px-6 py-4 border-t border-slate-100 dark:border-gray-800  dark:bg-gray-900 flex items-center justify-center bg-slate-50/30">
           <div className="p-4 border-t border-gray-200 dark:border-gray-800 dark:bg-gray-900">
             <Paginator
-              first={first}
+              first={(page - 1) * rows}
               rows={rows}
-              totalRecords={data.length}
+              totalRecords={total}
               onPageChange={handleCustomPageChange}
             />
           </div>

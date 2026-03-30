@@ -13,19 +13,45 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { selectIsAuthenticated } from "../RTKThunk/authSelectors";
+import { useSelector } from "react-redux";
+import toast from "react-hot-toast";
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const navigate = useNavigate();
 
   const sections = [
     {
       title: "Main Menu",
       items: [
-        { icon: LayoutDashboard, label: "Dashboard", route: "Dashboard" },
-        { icon: GitBranch, label: "WorkFlow", route: "workflows" },
-        { icon: ClipboardCheck, label: "Tasks", route: "tasks" },
-        { icon: CheckSquare, label: "Approvals", route: "approvals" },
+        {
+          icon: LayoutDashboard,
+          label: "Dashboard",
+          route: "Dashboard",
+          public: true,
+        },
+        {
+          icon: GitBranch,
+          label: "WorkFlow",
+          route: "workflows",
+          public: true,
+          protected: true,
+        },
+        {
+          icon: ClipboardCheck,
+          label: "Tasks",
+          route: "tasks",
+          protected: true,
+        },
+        {
+          icon: CheckSquare,
+          label: "Approvals",
+          route: "approvals",
+          protected: true,
+        },
       ],
     },
     {
@@ -35,20 +61,94 @@ const Sidebar = () => {
           icon: Users,
           label: "Users & Org",
           route: "UsersAndOraganization/Users",
+          protected: true,
         },
-        { icon: BarChart3, label: "Analytics", route: "Analytics" },
-        { icon: Share2, label: "Integrations", route: "Integrations" },
+        {
+          icon: BarChart3,
+          label: "Analytics",
+          route: "Analytics",
+          protected: true,
+        },
+        {
+          icon: Share2,
+          label: "Integrations",
+          route: "Integrations",
+          protected: true,
+        },
       ],
     },
     {
       title: "System",
       items: [
-        { icon: ShieldCheck, label: "Governance", route: "Admin" },
-        { icon: HelpCircle, label: "Support", route: "Support" },
+        {
+          icon: ShieldCheck,
+          label: "Governance",
+          route: "Admin",
+          protected: true,
+        },
+        {
+          icon: HelpCircle,
+          label: "Support",
+          route: "Support",
+          protected: true,
+        },
       ],
     },
   ];
+  const handleNavClick = (e, item) => {
+    if (item.protected && !isAuthenticated) {
+      // 1. Prevent the navigation
+      e.preventDefault();
 
+      // 2. Trigger the Toast
+      toast.custom(
+        (t) => (
+          <div
+            className={`${
+              t.visible
+                ? "animate-in fade-in slide-in-from-top-2"
+                : "animate-out fade-out slide-out-to-top-2"
+            } max-w-md w-full bg-white dark:bg-[#1a242f] shadow-2xl rounded-xl pointer-events-auto flex border border-gray-200 dark:border-[#2d3945] transition-all duration-300`}
+          >
+            <div className="flex-1 w-0 p-4">
+              <div className="flex items-start gap-3">
+                <div className="size-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center shrink-0">
+                  <ShieldCheck
+                    className="text-red-600 dark:text-red-400"
+                    size={20}
+                  />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-[#111418] dark:text-white">
+                    Access Restricted
+                  </p>
+                  <p className="mt-1 text-xs text-[#617589] dark:text-slate-400 leading-relaxed">
+                    The{" "}
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                      {item.label}
+                    </span>{" "}
+                    module requires an active session.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex border-l border-gray-100 dark:border-[#2d3945]">
+              <button
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  navigate("/login");
+                }}
+                className="w-full px-6 flex items-center justify-center text-sm font-bold text-[#137fec] hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors rounded-r-xl"
+              >
+                Login
+              </button>
+            </div>
+          </div>
+        ),
+        { duration: 4000 },
+      );
+    }
+  };
   return (
     <aside
       className={`${
@@ -115,6 +215,7 @@ const Sidebar = () => {
                 <NavLink
                   key={item.route}
                   to={item.route}
+                  onClick={(e) => handleNavClick(e, item)}
                   title={isCollapsed ? item.label : ""}
                   className={({ isActive }) =>
                     `group flex items-center rounded-lg transition-all relative 

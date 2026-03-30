@@ -45,7 +45,11 @@ const WorkflowVersions = () => {
     (state) => state.workflows,
   );
   const versionData = currentWorkflowVersions || [];
-  console.log(versionData);
+  
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, filters.status]);
+
   useEffect(() => {
     try {
       dispatch(
@@ -74,10 +78,6 @@ const WorkflowVersions = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, filters.status]);
-
   const handleRowClick = (event) => {
     const rowData = event.data;
 
@@ -95,7 +95,6 @@ const WorkflowVersions = () => {
   const handleCreateVersion = async (workflowId, payload) => {
     try {
       await dispatch(add_Version({ workflowId, payload })).unwrap();
-      console.log("workflowId in dashboard:", workflowId);
       await dispatch(
         get_Workflow_Versions({ workflowId, page, limit: rows }),
       ).unwrap();

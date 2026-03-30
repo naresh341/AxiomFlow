@@ -1,15 +1,83 @@
 import axios from "axios";
 axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 axios.defaults.withCredentials = true;
+// ========================================== Interceptor ===========================================
+let isRefreshing = false;
+let failedQueue = [];
 
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (!error.response) return Promise.reject(error);
+
+    // If 401 and we haven't retried yet
+    if (error.response.status === 401 && !originalRequest._retry) {
+      // If we are already refreshing, queue this request
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => axios(originalRequest))
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        // Attempt to get a new access token
+        await axios.post("/auth/refresh");
+
+        isRefreshing = false;
+        processQueue(null); // Resolve all queued requests
+
+        return axios(originalRequest);
+      } catch (refreshError) {
+        isRefreshing = false;
+        processQueue(refreshError);
+
+        // 🚨 CRITICAL: Refresh failed. The user MUST log in again.
+        console.error("Refresh token expired. Logging out...");
+
+        // Clear Redux/Storage here if possible, or just redirect
+        window.location.href = "/login";
+
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
 // ========================================== LOGIN ===========================================
 export const loginApi = async ({ username, password }) => {
   try {
     const response = await axios.post("/auth/login", { username, password });
-    console.log(response.data.user);
     return response.data.user;
   } catch (error) {
     console.error("API Login Error", error);
+    throw error;
+  }
+};
+export const Logout = async () => {
+  try {
+    const response = await axios.post("/auth/logout");
+    return response.data;
+  } catch (error) {
+    console.error("API Logout Error", error);
     throw error;
   }
 };
@@ -47,13 +115,9 @@ export const ResetPassword = async ({ token, password }) => {
   }
 };
 
-export const LoginCredentials = async (token) => {
+export const LoginCredentials = async () => {
   try {
-    const response = await axios.get("/auth/me", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axios.get("/auth/me");
     return response.data;
   } catch (error) {
     if (error.response?.status === 401) {
@@ -226,18 +290,27 @@ export const getWorkflowExecutions = async ({
   }
 };
 
-export const fetchUserOrg = async () => {
+export const fetchUserOrg = async ({
+  page = 1,
+  limit = 10,
+  search,
+  status,
+}) => {
   try {
-    const response = await axios.get("/user-org/fetchAll");
+    const response = await axios.get("/user-org/fetchAll", {
+      params: { page, limit, search, status },
+    });
     return response.data;
   } catch (error) {
     console.error("Error while fetching User-Org data", error);
     throw error;
   }
 };
-export const fetchTeam = async () => {
+export const fetchTeam = async ({ page = 1, limit = 10 }) => {
   try {
-    const response = await axios.get("/teams/fetchAll");
+    const response = await axios.get("/teams/fetchAll", {
+      params: { page, limit },
+    });
     return response.data;
   } catch (error) {
     console.error("Error while fetching Team data", error);
@@ -246,14 +319,27 @@ export const fetchTeam = async () => {
 };
 
 // ========================== AUDIT LOGS==================================================
-export const fetchauditLogs = async (actorType = null) => {
+export const fetchauditLogs = async ({
+  page = 1,
+  limit = 10,
+  actor_type,
+  status,
+  search,
+}) => {
   try {
-    const response = await axios.get(
-      `/governance/audit-logs?actor_type=${actorType}`,
-    );
+    const response = await axios.get("/governance/audit-logs", {
+      params: {
+        page,
+        limit,
+        actor_type,
+        status,
+        search,
+      },
+    });
+
     return response.data;
   } catch (error) {
-    console.error("Error while fetching Audit Logs data", error);
+    console.error("Error while fetching Audit Logs", error);
     throw error;
   }
 };
@@ -278,12 +364,20 @@ export const deleteAuditlogs = async (id) => {
 };
 
 // ================================POLICIES============================================
-export const fetchPolicies = async (status = null) => {
+export const fetchPolicies = async ({
+  page = 1,
+  limit = 10,
+  status = null,
+}) => {
   try {
-    const url = status
-      ? `/compliance/policies?status=${status}`
-      : "/compliance/policies";
-    const response = await axios.get(url);
+    const response = await axios.get("/compliance/policies", {
+      params: {
+        page,
+        limit,
+        status,
+      },
+    });
+
     return response.data;
   } catch (error) {
     console.error("Error while fetching Policies", error);
@@ -324,16 +418,21 @@ export const deletePolicies = async (id) => {
 };
 
 //=========================================== RISK MANAGEMENT====================================
-export const fetchRisks = async () => {
+export const fetchRisks = async ({ page = 1, limit = 10 }) => {
   try {
-    const response = await axios.get("/compliance/risks");
+    const response = await axios.get("/compliance/risks", {
+      params: {
+        page,
+        limit,
+      },
+    });
+
     return response.data;
   } catch (error) {
     console.error("Error while fetching Risks", error);
     throw error;
   }
 };
-
 export const CreateRisk = async (riskData) => {
   try {
     const response = await axios.post("/compliance/risks", riskData);
@@ -364,12 +463,18 @@ export const deleteRisk = async (id) => {
 };
 
 // ========================= EVIDENCE & CONTROLS ========================
-export const fetchControlEvidence = async () => {
+export const fetchControlEvidence = async ({ page = 1, limit = 10 }) => {
   try {
-    const response = await axios.get(`/compliance/controls/evidence`);
+    const response = await axios.get("/compliance/controls/evidence", {
+      params: {
+        page,
+        limit,
+      },
+    });
+
     return response.data;
   } catch (error) {
-    console.error(`Error while fetching evidence for control `, error);
+    console.error("Error while fetching evidence", error);
     throw error;
   }
 };
@@ -580,7 +685,6 @@ export const addExecution = async (id, payload) => {
 // ============================================== Roles and Organization=================================================
 export const getOrganization = async (id) => {
   try {
-    console.log("ORG ID CHECK:", id);
     const response = await axios.get(`/rolesAndOrg/organization/${id}`);
     return response.data;
   } catch (error) {
@@ -657,10 +761,6 @@ export const uploadFileToServer = async (payload) => {
     formData.append("file", payload.file);
     formData.append("org_id", payload.orgId);
     formData.append("asset_type", "logos");
-
-    // 🔍 Debug
-    console.log("FILE:", formData.get("file"));
-    console.log("ORG:", formData.get("org_id"));
 
     const res = await axios.post("/upload/logo", formData);
 
@@ -843,7 +943,6 @@ export const uploadlogo = async (payload) => {
   try {
     const formData = new FormData();
     formData.append("file", payload.file);
-    console.log("FILE:", formData.get("file"));
     const res = await axios.post("/organization/logo", formData);
     return res.data;
   } catch (error) {
@@ -935,9 +1034,11 @@ export const fetchInvoices = async () => {
   }
 };
 // ====================================== Integration ================================
-export const fetchIntegration = async () => {
+export const fetchIntegration = async ({ search }) => {
   try {
-    const response = await axios.get(`/integrations/fetchIntegration`);
+    const response = await axios.get(`/integrations/fetchIntegration`, {
+      params: { search },
+    });
     return response.data;
   } catch (error) {
     console.error("Error While Fectching Integration", error);

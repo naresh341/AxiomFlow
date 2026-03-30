@@ -2,26 +2,33 @@ import { FileText, Plus, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { connectIntegrationThunk, disconnectIntegrationThunk, fetchIntegrationsThunk, fetchUserIntegrationsThunk } from "../RTKThunk/IntegrationThunk";
-// import {
-//   connectIntegrationThunk,
-//   disconnectIntegrationThunk,
-//   fetchIntegrationsThunk,
-//   fetchUserIntegrationsThunk,
-// } from "../RTKThunk/AsyncThunk";
+import {
+  connectIntegrationThunk,
+  disconnectIntegrationThunk,
+  fetchIntegrationsThunk,
+  fetchUserIntegrationsThunk,
+} from "../RTKThunk/IntegrationThunk";
 const Integrations = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  const { integrations, userIntegrations, loading } = useSelector(
+  const { integrations, userIntegrations, loading, total } = useSelector(
     (state) => state.integration,
   );
-  console.log(integrations, "integration");
   useEffect(() => {
-    dispatch(fetchIntegrationsThunk());
+    dispatch(fetchIntegrationsThunk({ search: debouncedSearch }));
     dispatch(fetchUserIntegrationsThunk());
-  }, [dispatch]);
+  }, [dispatch, debouncedSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400); // delay
+
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const isConnected = (integration) =>
     userIntegrations?.some((item) => {
@@ -39,7 +46,6 @@ const Integrations = () => {
 
   const handleToggle = async (integration) => {
     if (isConnected(integration)) {
-      console.log("checking:", integration);
       await dispatch(
         disconnectIntegrationThunk({
           integration_id: integration.id,
@@ -58,44 +64,10 @@ const Integrations = () => {
     dispatch(fetchUserIntegrationsThunk());
   };
 
-  const filteredIntegrations = useMemo(() => {
-    if (!integrations) return [];
-
-    return integrations.filter((integration) => {
-      const query = searchTerm.toLowerCase();
-
-      return (
-        integration.name?.toLowerCase().includes(query) ||
-        integration.description?.toLowerCase().includes(query)
-      );
-    });
-  }, [integrations, searchTerm]);
-
   if (loading) {
     return (
       <div className="p-10 text-gray-500 font-semibold">
         Loading integrations...
-      </div>
-    );
-  }
-
-  if (!integrations || integrations.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-300">
-          No Integrations Available
-        </h2>
-
-        <p className="mt-2 text-gray-500 max-w-md">
-          Your system currently has no integrations configured.
-        </p>
-
-        <button
-          onClick={() => navigate("createIntegration")}
-          className="mt-6 px-5 py-2 rounded-lg bg-blue-600 text-white font-semibold"
-        >
-          Create Integration
-        </button>
       </div>
     );
   }
@@ -156,8 +128,8 @@ const Integrations = () => {
           />
           <input
             type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a242f] py-3 pl-12 pr-4 text-[#111418] dark:text-white focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 outline-none transition-all"
             placeholder="Search by name or keyword..."
           />
@@ -198,7 +170,7 @@ const Integrations = () => {
         </div> */}
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredIntegrations.map((integration) => {
+          {integrations.map((integration) => {
             const connected = isConnected(integration);
             return (
               <IntegrationCard

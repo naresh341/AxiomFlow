@@ -1,20 +1,19 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { addNewPolicy, addRisk, delete_Evidence, delete_Policies, delete_Risk, getComplianceStats, getControlEvidence, getPolicies, getRisks, update_Evidence, update_Policies, update_Risk, uploadControlEvidence } from "../RTKThunk/GovernanceThunk";
-// import {
-//   addNewPolicy,
-//   addRisk,
-//   delete_Evidence,
-//   delete_Policies,
-//   delete_Risk,
-//   getComplianceStats,
-//   getControlEvidence,
-//   getPolicies,
-//   getRisks,
-//   update_Evidence,
-//   update_Policies,
-//   update_Risk,
-//   uploadControlEvidence,
-// } from "../RTKThunk/AsyncThunk";
+import {
+  addNewPolicy,
+  addRisk,
+  delete_Evidence,
+  delete_Policies,
+  delete_Risk,
+  getComplianceStats,
+  getControlEvidence,
+  getPolicies,
+  getRisks,
+  update_Evidence,
+  update_Policies,
+  update_Risk,
+  uploadControlEvidence,
+} from "../RTKThunk/GovernanceThunk";
 
 const complianceSlice = createSlice({
   name: "compliance",
@@ -23,6 +22,10 @@ const complianceSlice = createSlice({
     risks: [],
     evidence: [],
     uploading: null,
+    total: 0,
+    page: 1,
+    totalPages: 0,
+
     stats: {
       active_policies: 0,
       open_risks: 0,
@@ -45,7 +48,10 @@ const complianceSlice = createSlice({
       })
       .addCase(getPolicies.fulfilled, (state, action) => {
         state.loading = false;
-        state.policies = action.payload;
+        state.policies = action.payload.data;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.total_pages;
       })
       .addCase(getPolicies.rejected, (state, action) => {
         state.loading = false;
@@ -81,14 +87,25 @@ const complianceSlice = createSlice({
         state.error = action.payload;
       })
       .addCase(getRisks.fulfilled, (state, action) => {
-        state.risks = action.payload;
+        state.loading = false;
+        state.risks = action.payload.data;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.total_pages;
       })
       .addCase(getComplianceStats.fulfilled, (state, action) => {
-        state.stats = action.payload;
+        state.loading = false;
+        state.stats = action.payload.data;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.total_pages;
       })
       .addCase(getControlEvidence.fulfilled, (state, action) => {
         state.loading = false;
-        state.evidence = action.payload;
+        state.evidence = action.payload.data;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.total_pages;
       })
       .addCase(uploadControlEvidence.pending, (state) => {
         state.uploading = true;

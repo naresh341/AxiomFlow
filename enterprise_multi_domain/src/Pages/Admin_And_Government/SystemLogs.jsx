@@ -16,29 +16,37 @@ import { useDispatch, useSelector } from "react-redux";
 import DynamicTable from "../../Components/DynamicTable";
 import FilterButton from "../../Components/MiniComponent/FilterButton";
 import Paginator from "../../Components/Paginator";
-// import { get_auditLogs } from "../../RTKThunk/AsyncThunk";
 import { TableSchemas } from "../../Utils/TableSchemas";
 import { get_auditLogs } from "../../RTKThunk/GovernanceThunk";
 
 const SystemLogs = () => {
   const dispatch = useDispatch();
-  const [first, setFirst] = useState(0);
-  const rows = 15;
   const menuStatus = useRef(null);
-  // 1. Redux Integration
-  const { loading, auditdata } = useSelector((state) => state.governance);
+  const { loading, auditdata, total } = useSelector(
+    (state) => state.governance,
+  );
   const [selectedLog, setSelectedLog] = useState(null);
   const [filters, setFilters] = useState({
     status: "All",
   });
-  const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const rows = 10;
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
-    dispatch(get_auditLogs("SYSTEM")); // Assuming your thunk handles system type
-  }, [dispatch]);
+    dispatch(
+      get_auditLogs({
+        page,
+        limit: rows,
+        actor_type: "SYSTEM",
+        status: filters.status === "All" ? null : filters.status,
+        search: debouncedSearch,
+      }),
+    ); // Assuming your thunk handles system type
+  }, [dispatch, page, filters.status, debouncedSearch]);
 
   const handleRowClick = (rowData) => {
-    console.log("Row Clicked:", rowData.data);
     setSelectedLog(rowData.data);
   };
 
@@ -69,32 +77,32 @@ const SystemLogs = () => {
       command: () => setFilters((prev) => ({ ...prev, status: "CRITICAL" })),
     },
   ];
-  const filteredData = auditdata?.filter((item) => {
-    const matchesStatus =
-      filters.status === "All" || item.status?.toUpperCase() === filters.status;
 
-    const matchesSearch =
-      !searchQuery ||
-      Object.values(item).some((val) =>
-        String(val).toLowerCase().includes(searchQuery.toLowerCase()),
-      );
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400); // delay
 
-    return matchesStatus && matchesSearch;
-  });
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, filters.status]);
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#f6f7f8] dark:bg-[#101922] text-slate-900 dark:text-slate-100">
       {/* Header */}
-      <div className="px-6 py-4 flex flex-wrap items-center  gap-4 border-b border-slate-200 dark:border-[#2d3a4b] bg-white dark:bg-[#0a1017] shrink-0">
-        <div className="relative w-full max-w-lg group">
+      <div className="px-6 py-4 flex  items-center  gap-4 border-b border-slate-200 dark:border-[#2d3a4b] bg-white dark:bg-[#0a1017] shrink-0">
+        <div className="relative  w-full  group">
           <Search
             className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#137fec]"
             size={18}
           />
           <input
             className="w-full h-11 bg-slate-50 dark:bg-[#1c2632] border border-slate-300 dark:border-[#2d3a4b] rounded-xl pl-12 pr-4 text-sm focus:border-[#137fec] outline-none transition-all"
-            placeholder="Search trace IDs, services, or errors..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search Name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <div className="flex items-center gap-4 flex-wrap">
@@ -154,9 +162,9 @@ const SystemLogs = () => {
               </>
             ) : (
               <DynamicTable
-                tableData={filteredData}
+                tableData={auditdata}
                 tableHead={TableSchemas.auditLogsSystem}
-                first={first}
+                first={(page - 1) * rows}
                 rows={rows}
                 loading={loading}
                 handleRowClick={handleRowClick}
@@ -164,10 +172,10 @@ const SystemLogs = () => {
             )}
             <div className="px-6 py-3 border-t border-slate-200 dark:border-[#2d3a4b] bg-slate-50 dark:bg-[#101922] shrink-0">
               <Paginator
-                first={first}
+                first={(page - 1) * rows}
                 rows={rows}
-                totalRecords={filteredData?.length || 0}
-                onPageChange={(e) => setFirst(e.first)}
+                totalRecords={total}
+                onPageChange={(e) => setPage(Math.floor(e.first / rows) + 1)}
               />
             </div>
           </div>

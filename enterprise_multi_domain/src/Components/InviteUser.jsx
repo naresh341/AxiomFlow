@@ -18,13 +18,14 @@ import {
   get_teams,
   update_User,
 } from "../RTKThunk/RoleAndOrganizationThunk";
-// import { addUser, get_teams, update_User } from "../RTKThunk/AsyncThunk";
+import { useNotify } from "./MiniComponent/useNotify";
 
 const InviteUser = ({ isOpen, onClose, editData = null }) => {
   const isEditMode = !!editData;
   const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const { data: teams = [] } = useSelector((state) => state.teams);
+  const notify = useNotify();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -42,14 +43,18 @@ const InviteUser = ({ isOpen, onClose, editData = null }) => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (editData) {
-      setFormData({
-        ...editData,
-        teams: editData.teams?.map((t) => t.id) || [],
-        password: "",
-      });
+    try {
+      if (editData) {
+        setFormData({
+          ...editData,
+          teams: editData.teams?.map((t) => t.id) || [],
+          password: "",
+        });
+      }
+    } catch (error) {
+      notify(error.message || "Error fetching teams", "error");
     }
-  }, [editData]);
+  }, [editData, notify]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -77,9 +82,16 @@ const InviteUser = ({ isOpen, onClose, editData = null }) => {
           sendEmail: true,
         });
       }
+      notify(
+        isEditMode
+          ? "User updated successfully"
+          : "Invitation sent successfully",
+        "success",
+      );
       onClose();
     } catch (error) {
       console.error("User creation failed", error);
+      notify(error.message || "Error creating user", "error");
     }
   };
 
@@ -91,7 +103,6 @@ const InviteUser = ({ isOpen, onClose, editData = null }) => {
       [name]: type === "checkbox" ? checked : value,
     }));
   };
-
 
   const teamOptions = teams.map((team) => ({
     label: team.name,

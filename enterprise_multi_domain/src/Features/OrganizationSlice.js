@@ -1,19 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { fetch_All, fetch_Billing, fetch_Compliance, fetch_Invoices, fetch_Org, fetch_Security, fetch_Subscription, update_Billing, update_logo, update_Org, update_OrgSecurity, update_Subscription } from "../RTKThunk/GovernanceThunk";
-// import {
-//   fetch_All,
-//   fetch_Billing,
-//   fetch_Compliance,
-//   fetch_Invoices,
-//   fetch_Org,
-//   fetch_Security,
-//   fetch_Subscription,
-//   update_Billing,
-//   update_Org,
-//   update_OrgSecurity,
-//   update_Subscription,
-//   update_logo,
-// } from "../RTKThunk/AsyncThunk"; // adjust path
+
 
 const initialState = {
   organization: null,
@@ -24,6 +11,7 @@ const initialState = {
   invoices: [],
   loading: false,
   error: null,
+  
 };
 
 const OrganizationSlice = createSlice({

@@ -12,12 +12,14 @@ import { useDispatch } from "react-redux";
 // import { create_Organization } from "../../RTKThunk/AsyncThunk";
 import { useNavigate } from "react-router-dom";
 import { create_Organization } from "../../RTKThunk/RoleAndOrganizationThunk";
+import { useNotify } from "../../Components/MiniComponent/useNotify";
 const OrganizationSettings = () => {
   const [ssoEnabled, setSsoEnabled] = useState(true);
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const notify = useNotify();
   const [formData, setFormData] = useState({
     name: "",
     domain: "",
@@ -31,25 +33,24 @@ const OrganizationSettings = () => {
   });
 
   const handleCreateOrg = (e) => {
-    e.preventDefault();
-    if (!formData.name || !formData.domain) {
-      alert("Name and Domain are required");
-      return;
+    try {
+      e.preventDefault();
+      if (!formData.name || !formData.domain) {
+        alert("Name and Domain are required");
+        return;
+      }
+
+      dispatch(create_Organization(formData)).unwrap();
+
+      // alert("Organization Created ✅");
+
+      navigate("/UsersAndOraganization/roles-permissions");
+      notify.success("Organization created successfully!");
+    } catch (error) {
+      notify.error(
+        error.message || "Failed to create organization. Please try again.",
+      );
     }
-
-    dispatch(create_Organization(formData))
-      .unwrap()
-      .then((res) => {
-        console.log("Org Created:", res);
-
-        alert("Organization Created ✅");
-
-        navigate("/UsersAndOraganization/roles-permissions");
-      })
-      .catch((err) => {
-        console.error(err);
-        alert("Error creating organization");
-      });
   };
 
   const handleChange = (e) => {

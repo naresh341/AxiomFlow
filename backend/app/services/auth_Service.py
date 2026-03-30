@@ -1,78 +1,90 @@
+from datetime import datetime, timedelta, timezone
+
 import bcrypt
-from datetime import datetime, timezone, timedelta
-from fastapi import HTTPException, status, BackgroundTasks
+from app.auth.reset_token_utils import generate_reset_token, hash_token
+from app.core.security import create_access_token, create_refresh_token
+from app.model.PasswordResetTokenModel import PasswordResetToken
+from app.model.UserModel import User, UserRole, UserStatus
+from app.services.email_service import send_reset_email
+from fastapi import BackgroundTasks, HTTPException
 from sqlalchemy.orm import Session
 
-from app.model.UserModel import User, UserStatus
-from app.core.security import create_access_token, create_refresh_token
-from app.model.UserModel import User, UserRole, UserStatus
-from app.model.PasswordResetTokenModel import PasswordResetToken
-from app.auth.reset_token_utils import generate_reset_token, hash_token
-from app.services.email_service import send_reset_email
+from app.GlobalException.GlobalExceptionError import AppException
 
-RESET_TOKEN_EXPIRY_MINUTES = 10
+RESET_TOKEN_EXPIRY_MINUTES = 60
 
 
 class AuthService:
     @staticmethod
     def login_user(data, db: Session):
-        user = (
-            db.query(User)
-            .filter((User.username == data.username) | (User.email == data.username))
-            .first()
-        )
-
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid Credentials",
+        try:
+            user = (
+                db.query(User)
+                .filter(
+                    (User.username == data.username) | (User.email == data.username)
+                )
+                .first()
             )
 
-        if not user.password_hash:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Use social login",
+            if not user:
+                raise AppException(
+                    401,
+                    "AUTH_INVALID_CREDENTIALS",
+                    "Invalid credentials",
+                )
+
+            if not user.password_hash:
+                raise AppException(
+                    400,
+                    "AUTH_PASSWORD_NOT_SET",
+                    "Password not set",
+                )
+
+            if not bcrypt.checkpw(
+                data.password.encode("utf-8"), user.password_hash.encode("utf-8")
+            ):
+                raise AppException(
+                    401,
+                    "AUTH_INVALID_CREDENTIALS",
+                    "Invalid credentials",
+                )
+            if user.status != UserStatus.ACTIVE:
+                raise AppException(
+                    403,
+                    "AUTH_ACCOUNT_INACTIVE",
+                    "Account is not active",
+                )
+
+            access_token = create_access_token(
+                {
+                    "sub": str(user.id),
+                    "role": user.role,
+                    "organization_id": user.organization_id,
+                }
             )
 
-        if not bcrypt.checkpw(
-            data.password.encode("utf-8"), user.password_hash.encode("utf-8")
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid Credentials",
-            )
-        if user.status != UserStatus.ACTIVE:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Account is not active",
+            refresh_token = create_refresh_token(
+                {
+                    "sub": str(user.id),
+                    "organization_id": user.organization_id,
+                }
             )
 
-        access_token = create_access_token(
-            {
-                "sub": str(user.id),
-                "role": user.role,
-                "organization_id": user.organization_id,
+            return {
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "user": {
+                    "id": user.id,
+                    "name": f"{user.first_name} {user.last_name}",
+                    "email": user.email,
+                    "role": user.role,
+                    "organization_id": user.organization_id,
+                },
             }
-        )
-
-        refresh_token = create_refresh_token(
-            {
-                "sub": str(user.id),
-                "organization_id": user.organization_id,
-            }
-        )
-
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "user": {
-                "id": user.id,
-                "name": f"{user.first_name} {user.last_name}",
-                "email": user.email,
-                "role": user.role,
-                "organization_id": user.organization_id,
-            },
-        }
+        except AppException:
+            raise
+        except Exception as e:
+            raise AppException(500, "LOGIN_FAILED", "Login failed", str(e))
 
     # --------------------------------------------
 
@@ -87,9 +99,10 @@ class AuthService:
         )
 
         if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User already exists",
+            raise AppException(
+                400,
+                "USER_EXISTS",
+                "User already exists",
             )
 
         # 2️⃣ Hash password
@@ -126,18 +139,20 @@ class AuthService:
         from app.core.security import decode_token
 
         if not refresh_token:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="No refresh token",
+            raise AppException(
+                401,
+                "AUTH_NO_REFRESH_TOKEN",
+                "No refresh token",
             )
 
         payload = decode_token(refresh_token)
         user_id = payload.get("sub")
 
         if not user_id:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid refresh token",
+            raise AppException(
+                401,
+                "AUTH_INVALID_REFRESH_TOKEN",
+                "Invalid refresh token",
             )
 
         new_access_token = create_access_token({"sub": str(user_id)})
@@ -222,7 +237,6 @@ def reset_password(token: str, password: str, db: Session):
 
     user.password_hash = hashed_password
 
-    # ✅ mark token used
     reset_entry.is_used = True
 
     db.commit()

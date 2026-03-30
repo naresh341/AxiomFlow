@@ -30,7 +30,6 @@ const RejectConfirmationModal = ({ isOpen, onClose, onConfirm, data }) => {
               </span>
               <span className="text-white font-bold">
                 {data?.approval_key || "N/A"}
-                {console.log(data)}
               </span>
             </div>
             <div className="p-4">

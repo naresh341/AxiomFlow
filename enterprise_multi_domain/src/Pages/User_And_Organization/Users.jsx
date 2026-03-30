@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import DynamicTable from "../../Components/DynamicTable";
 import Paginator from "../../Components/Paginator";
-// import { delete_User, get_UserOrg } from "../../RTKThunk/AsyncThunk";
 import { TableSchemas } from "../../Utils/TableSchemas";
 import FilterButton from "../../Components/MiniComponent/FilterButton";
 import { Menu } from "primereact/menu";
@@ -12,17 +11,19 @@ import {
   delete_User,
   get_UserOrg,
 } from "../../RTKThunk/RoleAndOrganizationThunk";
+import { useNotify } from "../../Components/MiniComponent/useNotify";
 
 const Users = () => {
   const rows = 10;
   const dispatch = useDispatch();
   const menuStatus = useRef(null);
-
-  const [first, setFirst] = useState(0);
-  const { loading, data = [] } = useSelector((state) => state.UserOrg);
+  const notify = useNotify();
+  const { loading, data = [], total } = useSelector((state) => state.UserOrg);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   // HANDLE DELETE
   const handleDelete = (id) => {
     dispatch(delete_User(id));
@@ -36,16 +37,21 @@ const Users = () => {
 
   const [filters, setFilters] = useState({
     status: "All",
+    priority: "All",
   });
 
-  const [searchQuery, setSearchQuery] = useState("");
-
   useEffect(() => {
-    dispatch(get_UserOrg());
-  }, [dispatch]);
+    try {
+      dispatch(
+        get_UserOrg({ page, search: debouncedSearch, status: filters.status }),
+      );
+    } catch (error) {
+      notify(error.message || "Error fetching users", "error");
+    }
+  }, [dispatch, debouncedSearch, page, filters.status, notify]);
 
-  const handleCustomPageChange = (page) => {
-    setFirst(page * rows);
+  const onPageChange = (selectedPage) => {
+    setPage(selectedPage + 1);
   };
 
   const statusItems = [
@@ -66,21 +72,17 @@ const Users = () => {
     },
   ];
 
-  const filteredData = data.filter((user) => {
-    const search = searchQuery.toLowerCase();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400); // delay
 
-    const matchesSearch =
-      !searchQuery ||
-      user.first_name?.toLowerCase().includes(search) ||
-      user.last_name?.toLowerCase().includes(search) ||
-      user.email?.toLowerCase().includes(search);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-    const matchesStatus =
-      filters.status === "All" ||
-      user.status?.toLowerCase() === filters.status.toLowerCase();
-
-    return matchesSearch && matchesStatus;
-  });
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, filters.status]);
 
   return (
     <>
@@ -96,14 +98,14 @@ const Users = () => {
           <input
             type="text"
             className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a242f] py-3 pl-12 pr-4 text-[#111418] dark:text-white focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 outline-none transition-all"
-            placeholder="Search by name or email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by User, Last Name and  Email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
 
-          {searchQuery && (
+          {search && (
             <button
-              onClick={() => setSearchQuery("")}
+              onClick={() => setSearch("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               <X size={14} />
@@ -147,9 +149,9 @@ const Users = () => {
           </div>
         ) : (
           <DynamicTable
-            tableData={filteredData}
+            tableData={data}
             tableHead={TableSchemas.users}
-            first={first}
+            first={(page - 1) * rows}
             rows={rows}
             onDelete={handleDelete}
             onEdit={handleEditClick}
@@ -159,10 +161,10 @@ const Users = () => {
         {/* Pagination */}
         <div className="mt-6 flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-6 py-4">
           <Paginator
-            totalRecords={filteredData.length}
+            totalRecords={total}
             rows={rows}
-            first={first}
-            onPageChange={handleCustomPageChange}
+            first={(page - 1) * rows}
+            onPageChange={onPageChange}
           />
         </div>
 

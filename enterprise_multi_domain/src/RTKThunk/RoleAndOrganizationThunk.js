@@ -137,9 +137,9 @@ export const delete_Teams = createAsyncThunk(
 
 export const get_teams = createAsyncThunk(
   "teams/teams",
-  async (_, rejectWithValue) => {
+  async ({ page = 1, limit = 10 }, { rejectWithValue }) => {
     try {
-      return await fetchTeam();
+      return await fetchTeam({ page, limit });
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -179,9 +179,9 @@ export const delete_User = createAsyncThunk(
 
 export const get_UserOrg = createAsyncThunk(
   "user-org/Users",
-  async (_, rejectWithValue) => {
+  async ({ page, limit, search, status }, { rejectWithValue }) => {
     try {
-      return await fetchUserOrg();
+      return await fetchUserOrg({ page, limit, search, status });
     } catch (error) {
       return rejectWithValue(error.message);
     }

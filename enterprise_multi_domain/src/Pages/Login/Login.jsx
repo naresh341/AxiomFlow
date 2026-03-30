@@ -2,28 +2,42 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../../RTKThunk/AuthThunk";
+import { useNotify } from "../../Components/MiniComponent/useNotify";
+import { Eye, EyeOff } from "lucide-react";
+import { resetAuth } from "../../Features/LoginSlice";
 
 const Login = () => {
-  const { user, status, error } = useSelector((state) => state.islogin);
+  const { user, status, error, isAuthenticated } = useSelector(
+    (state) => state.islogin,
+  );
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
+  const notify = useNotify();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [localLoading, setLocalLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLocalLoading(true);
 
     try {
-      await dispatch(loginUser({ username, password })).unwrap();
+      const result = await dispatch(loginUser({ username, password })).unwrap();
       navigate("/Dashboard");
+      notify.success(`Login successful. Welcome ${result?.name}!`);
     } catch (err) {
-      console.log(err);
+      notify.error(err.message || "Login failed. Please try again.");
+    } finally {
+      setLocalLoading(false); // Stop local loading regardless of success/fail
     }
   };
 
   useEffect(() => {
-    if (status === "Success") {
+    dispatch(resetAuth());
+  }, [dispatch]);
+  useEffect(() => {
+    if (status === "Success" && isAuthenticated) {
       navigate("/Dashboard");
     }
   }, [status, dispatch, navigate]);
@@ -94,11 +108,11 @@ const Login = () => {
               {/* UserName Field */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[#111418] dark:text-slate-300 text-sm font-semibold leading-normal">
-                  UserName
+                  UserName or Email
                 </label>
                 <input
                   type="text"
-                  placeholder="Enter Username"
+                  placeholder="Enter Username or Email"
                   className="form-input flex w-full rounded text-[#111418] dark:text-white focus:outline-0 focus:ring-1 focus:ring-primary border border-[#dbe0e6] dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary h-12 placeholder:text-[#617589] p-3 text-base font-normal leading-normal transition-all"
                   onChange={(e) => setUsername(e.target.value)}
                 />
@@ -117,15 +131,28 @@ const Login = () => {
                     Forgot password?
                   </Link>
                 </div>
-                <input
-                  type="password"
-                  placeholder="Password"
-                  className="form-input flex w-full rounded text-[#111418] dark:text-white focus:outline-0 focus:ring-1 focus:ring-primary border border-[#dbe0e6] dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary h-12 placeholder:text-[#617589] p-3 text-base font-normal leading-normal transition-all"
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+                <div className="relative flex items-center">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password"
+                    className="form-input flex w-full rounded text-[#111418] dark:text-white focus:outline-0 focus:ring-1 focus:ring-primary border border-[#dbe0e6] dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary h-12 placeholder:text-[#617589] p-3 text-base font-normal leading-normal transition-all"
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 p-1 rounded-md text-[#617589] hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff size={20} strokeWidth={1.5} />
+                    ) : (
+                      <Eye size={20} strokeWidth={1.5} />
+                    )}
+                  </button>
+                </div>
               </div>
 
-              <div className="min-h-5">
+              {/* <div className="min-h-5">
                 {status === "Success" && (
                   <span className="text-green-500 text-sm font-medium">
                     Login Successful Welcome {user?.name}
@@ -136,26 +163,26 @@ const Login = () => {
                     {error}
                   </span>
                 )}
-              </div>
+              </div> */}
 
               <div className="space-y-3 pt-2">
                 <button
                   type="submit"
-                  disabled={status === "loading"}
+                  disabled={localLoading}
                   className="w-full flex bg-blue-600 items-center justify-center bg-primary hover:bg-primary/90 text-white h-12 rounded font-bold text-base  duration-200 cursor-pointer disabled:opacity-50"
                 >
-                  {status === "loading" ? "Logging in ..." : "Submit"}
+                  {localLoading ? "Logging in ..." : "Submit"}
                 </button>
 
-                <div className="relative flex items-center py-4">
+                {/* <div className="relative flex items-center py-4">
                   <div className="grow border-t border-slate-200 dark:border-slate-800"></div>
                   <span className="shrink mx-4 text-slate-400 dark:text-slate-500 text-xs font-medium uppercase tracking-wider">
                     or continue with
                   </span>
                   <div className="grow border-t border-slate-200 dark:border-slate-800"></div>
-                </div>
+                </div> */}
 
-                <button
+                {/* <button
                   className="w-full flex items-center justify-center bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-[#dbe0e6] dark:border-slate-700 h-12 rounded font-bold text-base transition-all duration-200 gap-2"
                   type="button"
                 >
@@ -163,7 +190,7 @@ const Login = () => {
                     domain
                   </span>
                   Sign in with SSO
-                </button>
+                </button> */}
               </div>
             </form>
           </div>
@@ -181,7 +208,7 @@ const Login = () => {
 
       <footer className="w-full py-8 text-center">
         <p className="text-slate-400 text-[10px] uppercase tracking-widest">
-          © 2026 Enterprise SaaS, Inc. All rights reserved.
+          © 2026 Axion Flow, Inc. All rights reserved.
         </p>
       </footer>
     </div>

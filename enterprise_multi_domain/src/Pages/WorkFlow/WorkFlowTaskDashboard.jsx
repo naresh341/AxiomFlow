@@ -21,6 +21,7 @@ import {
   get_Workflow_Tasks,
   update_Tasks,
 } from "../../RTKThunk/WorkflowThunk";
+import { useNotify } from "../../Components/MiniComponent/useNotify";
 
 const WorkFlowTaskDashboard = ({
   data,
@@ -33,8 +34,6 @@ const WorkFlowTaskDashboard = ({
   totalRecords,
   search,
   setSearch,
-  status,
-  priority,
   filters,
   setFilters,
 }) => {
@@ -43,14 +42,15 @@ const WorkFlowTaskDashboard = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const menuPriority = useRef(null);
+  const notify = useNotify();
 
   const handleCreateTask = async (workflowId, payload) => {
     try {
       await dispatch(addTasks({ workflowId, payload })).unwrap();
-      console.log("workflowId in dashboard:", workflowId);
       dispatch(get_Workflow_Tasks(workflowId));
+      notify("Task created successfully", "success");
     } catch (error) {
-      console.error("Error creating task:", error);
+      notify(error.message || "Error creating task", "error");
     }
   };
 
@@ -62,8 +62,9 @@ const WorkFlowTaskDashboard = ({
     try {
       await dispatch(delete_Tasks(id)).unwrap();
       dispatch(get_Workflow_Tasks(workflowId));
+      notify("Task deleted successfully", "success");
     } catch (error) {
-      console.error("Delete failed:", error);
+      notify(error.message || "Error deleting task", "error");
     }
   };
 
@@ -71,8 +72,9 @@ const WorkFlowTaskDashboard = ({
     try {
       await dispatch(update_Tasks({ id, payload })).unwrap();
       dispatch(get_Workflow_Tasks(workflowId));
+      notify("Task updated successfully", "success");
     } catch (error) {
-      console.error("Update failed:", error);
+      notify(error.message || "Error updating task", "error");
     }
   };
 

@@ -4,14 +4,15 @@ import { Link, useNavigate } from "react-router-dom";
 import EmailSent from "./EmailSent";
 import { useDispatch, useSelector } from "react-redux";
 import { Forget_Password } from "../../RTKThunk/AuthThunk";
+import { useNotify } from "../../Components/MiniComponent/useNotify";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [isSent, setIsSent] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
-  const { data, loading } = useSelector((state) => state.islogin);
+  const notify = useNotify();
+  const { loading } = useSelector((state) => state.islogin);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,8 +21,12 @@ const ForgotPassword = () => {
 
       // 🚀 Navigate to EmailSent page
       navigate("/email-sent");
+      notify.success("Password reset link sent! Please check your email.");
     } catch (err) {
       console.error(err);
+      notify.error(
+        err.message || "Failed to send reset link. Please try again.",
+      );
     }
   };
   return (

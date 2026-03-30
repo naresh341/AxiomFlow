@@ -82,8 +82,6 @@ const WorkflowTasks = () => {
         loading={loading}
         search={search}
         setSearch={setSearch}
-        status={filters.status}
-        priority={filters.priority}
         filters={filters}
         setFilters={setFilters}
       />

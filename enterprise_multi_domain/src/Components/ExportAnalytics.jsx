@@ -208,7 +208,7 @@ const ExportAnalytics = ({ isOpen, onClose }) => {
                     checked={format === f.id}
                     onChange={() => setFormat(f.id)}
                   />
-                  <div className="flex flex-col items-center gap-3 p-4 rounded-2xl border-2 border-transparent bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 peer-checked:border-[#135bec] peer-checked:bg-[#135bec]/5 peer-checked:text-[#135bec] transition-all group-hover:bg-slate-100 dark:group-hover:bg-slate-700">
+                  <div className="flex flex-col items-center gap-3 p-4 rounded-2xl border border-slate-400 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 peer-checked:border-[#135bec] peer-checked:bg-[#135bec]/5 peer-checked:text-[#135bec] transition-all group-hover:bg-slate-100 dark:group-hover:bg-slate-700">
                     {f.icon}
                     <span className="text-sm font-black">{f.label}</span>
                   </div>

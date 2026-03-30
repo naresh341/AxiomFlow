@@ -7,10 +7,18 @@ from app.services.user_organization_service import UserOrganizationService
 router = APIRouter(prefix="/user-org", tags=["USER_ORGANIZATION"])
 
 
-@router.get("/fetchAll", response_model=list[UserReadWithTeams])
-def fetch_user_organization(db: Session = Depends(get_db)):
+@router.get(
+    "/fetchAll",
+)
+def fetch_user_organization(
+    db: Session = Depends(get_db),
+    page: int = 1,
+    limit: int = 10,
+    search: str = None,
+    status: str = None,
+):
     service = UserOrganizationService(db)
-    return service.get_all_users()
+    return service.get_all_users(page, limit, search, status)
 
 
 @router.post("/addUsers", response_model=UserReadWithTeams)

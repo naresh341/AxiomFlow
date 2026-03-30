@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from typing import Optional
 from app.model.AuditLogsModel import (
     AuditActorType,
-    AuditStatus,
     SeverityLevel,
     AuditActionType,
 )
@@ -21,6 +20,7 @@ from app.services.auditLogsService import AuditService  # Assuming this path
 from fastapi import UploadFile, HTTPException, File
 from sqlalchemy.orm import Session
 import uuid
+from app.GlobalException.GlobalExceptionError import AppException
 
 # Weights for automated Risk Scoring
 RISK_WEIGHTS = {"LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
@@ -29,12 +29,42 @@ LIKE_WEIGHTS = {"LOW": 1, "MEDIUM": 2, "HIGH": 3}
 
 class ComplianceService:
     @staticmethod
-    def get_all_policies(db: Session, user_obj):
-        return (
-            db.query(CompliancePolicy)
-            .filter(CompliancePolicy.organization_id == user_obj.organization_id)
-            .all()
-        )
+    # def get_all_policies(db: Session, user_obj, page: int, limit: int):
+    #     return (
+    #         db.query(CompliancePolicy)
+    #         .filter(CompliancePolicy.organization_id == user_obj.organization_id)
+    #         .all()
+    #     )
+
+    @staticmethod
+    def get_all_policies(db: Session, user_obj, page: int, limit: int):
+        try:
+            query = db.query(CompliancePolicy).filter(
+                CompliancePolicy.organization_id == user_obj.organization_id
+            )
+
+            total = query.count()
+            offset = (page - 1) * limit
+
+            data = (
+                query.order_by(CompliancePolicy.created_at.desc())
+                .offset(offset)
+                .limit(limit)
+                .all()
+            )
+
+            return {
+                "total": total,
+                "page": page,
+                "limit": limit,
+                "total_pages": (total + limit - 1) // limit,
+                "data": data,
+            }
+
+        except Exception as e:
+            raise AppException(
+                500, "POLICY_FETCH_FAILED", "Failed to fetch policies", str(e)
+            )
 
     @staticmethod
     def get_policy(db: Session, policy_id: int, user_obj):
@@ -47,14 +77,78 @@ class ComplianceService:
             .first()
         )
 
+    # @staticmethod
+    # def get_all_risks(db: Session, user_obj):
+    #     return (
+    #         db.query(ComplianceRisk)
+    #         .join(CompliancePolicy)
+    #         .filter(CompliancePolicy.organization_id == user_obj.organization_id)
+    #         .all()
+    #     )
     @staticmethod
-    def get_all_risks(db: Session, user_obj):
-        return (
-            db.query(ComplianceRisk)
-            .join(CompliancePolicy)
-            .filter(CompliancePolicy.organization_id == user_obj.organization_id)
-            .all()
-        )
+    def get_all_risks(db: Session, user_obj, page: int, limit: int):
+        try:
+            query = (
+                db.query(ComplianceRisk)
+                .join(CompliancePolicy)
+                .filter(CompliancePolicy.organization_id == user_obj.organization_id)
+            )
+
+            total = query.count()
+            offset = (page - 1) * limit
+
+            data = (
+                query.order_by(ComplianceRisk.created_at.desc())
+                .offset(offset)
+                .limit(limit)
+                .all()
+            )
+
+            return {
+                "total": total,
+                "page": page,
+                "limit": limit,
+                "total_pages": (total + limit - 1) // limit,
+                "data": data,
+            }
+
+        except Exception as e:
+            raise AppException(
+                500, "RISK_FETCH_FAILED", "Failed to fetch risks", str(e)
+            )
+
+    @staticmethod
+    def get_all_evidence(db: Session, user_obj, page: int, limit: int):
+        try:
+            query = (
+                db.query(ComplianceEvidence)
+                .join(ComplianceControl)
+                .join(CompliancePolicy)
+                .filter(CompliancePolicy.organization_id == user_obj.organization_id)
+            )
+
+            total = query.count()
+            offset = (page - 1) * limit
+
+            data = (
+                query.order_by(ComplianceEvidence.created_at.desc())
+                .offset(offset)
+                .limit(limit)
+                .all()
+            )
+
+            return {
+                "total": total,
+                "page": page,
+                "limit": limit,
+                "total_pages": (total + limit - 1) // limit,
+                "data": data,
+            }
+
+        except Exception as e:
+            raise AppException(
+                500, "EVIDENCE_FETCH_FAILED", "Failed to fetch evidence", str(e)
+            )
 
     @staticmethod
     def get_risk(db: Session, risk_id: int):

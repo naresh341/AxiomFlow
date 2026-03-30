@@ -61,7 +61,7 @@ const GovernanceActionSlice = createSlice({
       })
       .addCase(fetchStatus.fulfilled, (state, action) => {
         state.loading = false;
-        state.status = action.payload; // Store the object globally
+        state.status = action.payload; 
       })
       .addCase(fetchStatus.rejected, (state, action) => {
         state.loading = false;

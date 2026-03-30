@@ -1,11 +1,18 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { connectIntegration, createIntegration, disconnectIntegration, fetchIntegration, fetchUserIntegration, saveIntegration } from "../Services/ApiService";
+import {
+  connectIntegration,
+  createIntegration,
+  disconnectIntegration,
+  fetchIntegration,
+  fetchUserIntegration,
+  saveIntegration,
+} from "../Services/ApiService";
 
 export const fetchIntegrationsThunk = createAsyncThunk(
   "integration/fetchAll",
-  async (_, { rejectWithValue }) => {
+  async ({ search }, { rejectWithValue }) => {
     try {
-      return await fetchIntegration();
+      return await fetchIntegration({ search });
     } catch (err) {
       return rejectWithValue(err.message);
     }

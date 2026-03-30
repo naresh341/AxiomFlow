@@ -1,5 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { create_Flag, get_Flag, toggle_Flag, update_Flag } from "../RTKThunk/GovernanceThunk";
+import {
+  create_Flag,
+  get_Flag,
+  toggle_Flag,
+  update_Flag,
+} from "../RTKThunk/GovernanceThunk";
 // import {
 //   create_Flag,
 //   get_Flag,
@@ -11,6 +16,9 @@ const initialState = {
   flags: [],
   loading: false,
   error: null,
+  total: 0,
+  page: 1,
+  totalPages: 0,
 };
 
 const FeatureFlagSlice = createSlice({
@@ -25,6 +33,9 @@ const FeatureFlagSlice = createSlice({
       .addCase(get_Flag.fulfilled, (state, action) => {
         state.flags = action.payload;
         state.loading = false;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.total_pages;
       })
       .addCase(create_Flag.fulfilled, (state, action) => {
         state.flags.push(action.payload);

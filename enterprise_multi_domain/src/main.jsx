@@ -10,6 +10,7 @@ import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import { PrimeReactProvider } from "primereact/api";
 import GlobalNotificationModal from "./Components/MiniComponent/GlobalNotificationModal.jsx";
+import "react-loading-skeleton/dist/skeleton.css";
 const primeReactConfig = {
   ripple: true,
   hideOverlaysOnDocumentScrolling: true,

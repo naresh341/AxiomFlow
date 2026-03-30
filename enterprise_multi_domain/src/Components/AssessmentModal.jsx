@@ -28,6 +28,7 @@ const AssessmentModal = ({
     likelihood: 3,
     impact: 3,
     evidenceUrl: "",
+    risk_level: "",
   });
 
   useEffect(() => {
@@ -132,7 +133,7 @@ const AssessmentModal = ({
 
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto p-8 space-y-12 custom-scrollbar">
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex flex-col gap-3">
               <label className="text-slate-700 dark:text-white text-base font-bold">
                 Assessment Name
@@ -141,12 +142,11 @@ const AssessmentModal = ({
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full h-14 px-5 rounded-xl bg-slate-50 dark:bg-[#283039] border-2 border-transparent focus:border-[#137fec] outline-none text-lg dark:text-white"
+                className="w-full h-14 px-5 rounded-xl bg-slate-50 dark:bg-[#283039] border border-slate-400 focus:border-[#137fec] outline-none text-lg dark:text-white"
                 placeholder="e.g., Q1 NIST Security Review"
               />
             </div>
 
-            {/* DYNAMIC DROP_DOWN: Derived from the policies prop */}
             {regulationTypes.length > 0 && (
               <div className="flex flex-col gap-3">
                 <label className="text-slate-700 dark:text-white text-base font-bold">
@@ -158,7 +158,7 @@ const AssessmentModal = ({
                     name="regulation_type"
                     value={formData.regulation_type}
                     onChange={handleChange}
-                    className="w-full h-14 px-5 rounded-xl bg-slate-50 dark:bg-[#283039] appearance-none outline-none cursor-pointer text-lg dark:text-white"
+                    className="w-full h-14 px-5 border-slate-400 border rounded-xl bg-slate-50 dark:bg-[#283039] appearance-none outline-none cursor-pointer text-lg dark:text-white"
                   >
                     <option value="">Select a policy...</option>
 
@@ -176,6 +176,26 @@ const AssessmentModal = ({
                 </div>
               </div>
             )}
+            <div className="flex flex-col gap-3">
+              <label className="text-slate-700 dark:text-white text-base font-bold">
+                Risk Level
+              </label>
+              <select
+                name="risk_level"
+                value={formData.risk_level}
+                onChange={handleChange}
+                className="w-full  border h-14 px-5 rounded-xl bg-slate-50 dark:bg-[#283039] border-slate-400  focus:border-[#137fec] outline-none text-lg dark:text-white"
+                placeholder="e.g., Q1 NIST Security Review"
+              >
+                <option value="" disabled>
+                  Select Risk Level
+                </option>
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+                <option value="CRITICAL">CRITICAL</option>
+              </select>
+            </div>
           </section>
 
           <section className="space-y-6">
@@ -192,7 +212,7 @@ const AssessmentModal = ({
                   name="effective_from"
                   value={formData.effective_from}
                   onChange={handleChange}
-                  className="w-full h-14 px-4 rounded-xl bg-slate-50 dark:bg-[#283039] border-2 border-transparent focus:border-[#137fec] outline-none text-lg dark:text-white"
+                  className="w-full h-14 px-4 rounded-xl border-slate-400  bg-slate-50 dark:bg-[#283039]  border focus:border-[#137fec] outline-none text-lg dark:text-white"
                 />
               </div>
 
@@ -205,7 +225,7 @@ const AssessmentModal = ({
                     name="review_frequency"
                     value={formData.review_frequency}
                     onChange={handleChange}
-                    className="w-full h-14 px-4 rounded-xl bg-slate-50 dark:bg-[#283039] appearance-none outline-none cursor-pointer text-lg dark:text-white"
+                    className="w-full h-14 px-4 border-slate-400 border rounded-xl bg-slate-50 dark:bg-[#283039] appearance-none outline-none cursor-pointer text-lg dark:text-white"
                   >
                     <option value="quarterly">Quarterly</option>
                     <option value="semi-annual">Semi-Annual</option>
@@ -256,7 +276,7 @@ const AssessmentModal = ({
                   name="likelihood"
                   value={formData.likelihood}
                   onChange={handleChange}
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#137fec]"
+                  className="w-full h-2  bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#137fec]"
                 />
               </div>
               <div className="space-y-4">
@@ -286,7 +306,7 @@ const AssessmentModal = ({
                   name="evidenceUrl"
                   value={formData.evidenceUrl}
                   onChange={handleChange}
-                  className="w-full h-14 pl-12 pr-5 rounded-xl bg-slate-50 dark:bg-[#283039] border-2 border-transparent focus:border-[#137fec] outline-none text-lg dark:text-white"
+                  className="w-full h-14 border border-slate-400 pl-12 pr-5 rounded-xl bg-slate-50 dark:bg-[#283039]  focus:border-[#137fec] outline-none text-lg dark:text-white"
                   placeholder="https://jira.company.com/SEC-101"
                 />
                 <LinkIcon
@@ -305,7 +325,7 @@ const AssessmentModal = ({
               name="description"
               value={formData.description}
               onChange={handleChange}
-              className="w-full min-h-24 p-5 rounded-xl bg-slate-50 dark:bg-[#283039] border-2 border-transparent focus:border-[#137fec] text-lg dark:text-white resize-none"
+              className="w-full min-h-24 p-5 rounded-xl bg-slate-50 dark:bg-[#283039] border border-slate-400 focus:border-[#137fec] text-lg dark:text-white resize-none"
               placeholder="Provide context for the backend audit log..."
             />
           </section>

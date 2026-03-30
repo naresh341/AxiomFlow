@@ -1,16 +1,18 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { addTeams, delete_Teams, get_teams, update_Teams } from "../RTKThunk/RoleAndOrganizationThunk";
-// import {
-//   addTeams,
-//   delete_Teams,
-//   get_teams,
-//   update_Teams,
-// } from "../RTKThunk/AsyncThunk";
+import {
+  addTeams,
+  delete_Teams,
+  get_teams,
+  update_Teams,
+} from "../RTKThunk/RoleAndOrganizationThunk";
 
 const initialState = {
   data: [],
   error: null,
   loading: false,
+  total: 0,
+  page: 1,
+  totalPages: 0,
 };
 
 const teamsSlice = createSlice({
@@ -24,7 +26,10 @@ const teamsSlice = createSlice({
       })
       .addCase(get_teams.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload;
+        state.data = action.payload.data;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.total_pages;
       })
       .addCase(get_teams.rejected, (state, action) => {
         state.loading = false;

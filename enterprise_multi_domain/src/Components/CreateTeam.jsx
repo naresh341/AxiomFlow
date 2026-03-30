@@ -2,12 +2,13 @@ import { ChevronDown, Plus, User, Users, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { addTeams, update_Teams } from "../RTKThunk/RoleAndOrganizationThunk";
+import { useNotify } from "./MiniComponent/useNotify";
 // import { addTeams, update_Teams } from "../RTKThunk/AsyncThunk"; // Verify this path
 
 const CreateTeam = ({ isOpen, onClose, editData = false }) => {
   const isEditMode = !!editData;
   const dispatch = useDispatch();
-
+  const notify = useNotify();
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -21,7 +22,6 @@ const CreateTeam = ({ isOpen, onClose, editData = false }) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,8 +37,13 @@ const CreateTeam = ({ isOpen, onClose, editData = false }) => {
         setFormData({});
       }
       onClose();
+      notify(
+        `Team ${isEditMode ? "updated" : "created"} successfully!`,
+        "success",
+      );
     } catch (error) {
       console.error("Operation failed:", error);
+      notify(error.message || "An error occurred. Please try again.", "error");
     }
   };
   useEffect(() => {

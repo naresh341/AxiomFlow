@@ -13,16 +13,17 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { createIntegrationThunk } from "../../RTKThunk/IntegrationThunk";
+import { useNotify } from "../../Components/MiniComponent/useNotify";
 // import { createIntegrationThunk } from "../../RTKThunk/AsyncThunk";
 
 const CustomIntegrationBuilder = () => {
   const dispatch = useDispatch();
-  const [showSecret, setShowSecret] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     type: "API",
     description: "",
   });
+  const notify = useNotify();
   const navigate = useNavigate();
   const [mappings, setMappings] = useState([
     {
@@ -63,23 +64,19 @@ const CustomIntegrationBuilder = () => {
   };
 
   const handleCreate = () => {
-    const payload = {
-      ...formData,
-      mappings,
-    };
-
-    console.log("🚀 Sending Payload:", payload);
-
-    dispatch(createIntegrationThunk(payload))
-      .unwrap()
-      .then(() => {
-        alert("Integration Created Successfully ✅");
-        navigate("/Integrations");
-      })
-      .catch((err) => {
-        console.error(err);
-        alert("Failed to create integration ❌");
-      });
+    try {
+      const payload = {
+        ...formData,
+        mappings,
+      };
+      dispatch(createIntegrationThunk(payload)).unwrap();
+      navigate("/Integrations");
+      notify.success("Integration Created Successfully!");
+    } catch (error) {
+      notify.error(
+        error.message || "Failed to create integration. Please try again.",
+      );
+    }
   };
   return (
     <div className="bg-[#f6f6f8] dark:bg-[#101622] font-sans text-[#111318] dark:text-white min-h-screen">

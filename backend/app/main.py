@@ -63,6 +63,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import IntegrityError
 
+try:
+    from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+except ImportError:
+    ProxyHeadersMiddleware = None
+
 
 async def lifespan(app: FastAPI):
     print("🔥 Starting application... creating tables")
@@ -91,7 +96,8 @@ app.include_router(flag)
 app.include_router(otp)
 app.include_router(GovAction)
 app.include_router(integration)
-
+if ProxyHeadersMiddleware:
+    app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 #  Exception Handler
 

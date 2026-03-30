@@ -21,15 +21,12 @@ const WorkflowBuilder = () => {
   const { nodes, edges } = useSelector((state) => state.workflows);
 
   const handlePublishClick = () => {
-    // 2. Construct the data object to match your Python Schema
     const flowData = {
       name: "New Procurement Flow",
       trigger: "manual",
-      owner_id: 1, // Replace with actual user ID later
+      owner_id: 1, 
       definition: { nodes, edges },
     };
-    console.log("Payload to be sent:", flowData);
-    // 3. Dispatch the action
     dispatch(createWorkflow(flowData));
   };
 

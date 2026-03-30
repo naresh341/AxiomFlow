@@ -17,6 +17,7 @@ import FilterButton from "../../Components/MiniComponent/FilterButton";
 import Paginator from "../../Components/Paginator";
 import { TableSchemas } from "../../Utils/TableSchemas";
 import { get_Workflow_Approvals } from "../../RTKThunk/WorkflowThunk";
+import { useNotify } from "../../Components/MiniComponent/useNotify";
 const WorkflowApprovals = () => {
   const navigate = useNavigate();
   const { workflowId } = useParams();
@@ -27,6 +28,7 @@ const WorkflowApprovals = () => {
     status: "All",
     priority: "All",
   });
+  const notify = useNotify();
   const [page, setPage] = useState(1);
   const rows = 10;
   const [search, setSearch] = useState("");
@@ -35,16 +37,20 @@ const WorkflowApprovals = () => {
     (state) => state.workflows,
   );
   useEffect(() => {
-    dispatch(
-      get_Workflow_Approvals({
-        workflowId,
-        page,
-        limit: rows,
-        status: filters.status === "All" ? null : filters.status,
-        priority: filters.priority === "All" ? null : filters.priority,
-        search: debouncedSearch,
-      }),
-    );
+    try {
+      dispatch(
+        get_Workflow_Approvals({
+          workflowId,
+          page,
+          limit: rows,
+          status: filters.status === "All" ? null : filters.status,
+          priority: filters.priority === "All" ? null : filters.priority,
+          search: debouncedSearch,
+        }),
+      );
+    } catch (error) {
+      notify(error.message || "Error fetching workflow approvals", "error");
+    }
   }, [
     dispatch,
     workflowId,
@@ -52,6 +58,7 @@ const WorkflowApprovals = () => {
     filters.status,
     filters.priority,
     debouncedSearch,
+    notify,
   ]);
 
   const approvalData = currentWorkflowApprovals || [];

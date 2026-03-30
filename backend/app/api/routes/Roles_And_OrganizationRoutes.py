@@ -19,7 +19,7 @@ from app.services.Roles_And_OrganizationService import (
     update_organization,
     update_role,
 )
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/rolesAndOrg", tags=["Organization"])

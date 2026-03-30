@@ -2,7 +2,6 @@ import { useSelector } from "react-redux";
 
 export default function OtpModal({ isOpen, onClose }) {
   const { otp, loading } = useSelector((state) => state.otp);
-  console.log(otp, "otp");
 
   if (!isOpen) return null;
 

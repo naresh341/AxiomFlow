@@ -3,16 +3,10 @@ import {
   Forget_Password,
   Login_Credentials,
   loginUser,
+  logoutUser,
   RegisterUser,
   Reset_Password,
 } from "../RTKThunk/AuthThunk";
-// import {
-//   Forget_Password,
-//   Login_Credentials,
-//   // loginUser,
-//   RegisterUser,
-//   Reset_Password,
-// } from "../RTKThunk/AsyncThunk";
 
 const initialState = {
   user: null,
@@ -21,12 +15,19 @@ const initialState = {
   status: "idle",
   data: [],
   loading: false,
+  isAuthenticated: false,
 };
 
 const LoginSlice = createSlice({
   name: "islogin",
   initialState,
-  reducers: {},
+  reducers: {
+    resetAuth: (state) => {
+      state.user = null;
+      state.token = null;
+      state.status = "idle";
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(loginUser.pending, (state) => {
@@ -34,11 +35,11 @@ const LoginSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.status = "Success";
+        state.isAuthenticated = true;
         const payload = action.payload;
-        console.log("LOGIN RESPONSE:", action.payload);
         const token = payload.access_token || payload.token;
         state.token = token;
-        state.user = payload.user;
+        state.user = payload;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.status = "failed";
@@ -46,13 +47,37 @@ const LoginSlice = createSlice({
         state.user = null;
         state.token = null;
       })
+      .addCase(logoutUser.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.status = "idle";
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
+        state.error = null;
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload || "Logout failed";
+      })
+
       .addCase(Login_Credentials.fulfilled, (state, action) => {
-        state.user = action.payload;
         state.status = "Success";
+        state.isAuthenticated = true;
+        state.user = action.payload;
+        state.token =
+          action.payload.access_token || action.payload.token || state.token;
+      })
+      .addCase(Login_Credentials.pending, (state) => {
+        state.status = "loading";
       })
       .addCase(Login_Credentials.rejected, (state, action) => {
         state.error = action.payload;
         state.user = null;
+        state.token = null;
+        state.status = "failed";
+        state.isAuthenticated = false;
       })
       .addCase(RegisterUser.pending, (state) => {
         state.loading = true;
@@ -92,4 +117,5 @@ const LoginSlice = createSlice({
   },
 });
 
+export const { resetAuth } = LoginSlice.actions;
 export default LoginSlice.reducer;

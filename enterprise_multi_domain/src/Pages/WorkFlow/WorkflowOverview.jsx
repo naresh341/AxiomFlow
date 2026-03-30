@@ -12,10 +12,20 @@ import DynamicTable from "../../Components/DynamicTable";
 import Paginator from "../../Components/Paginator";
 import WorkflowNode from "../../Components/WorkflowNode";
 import { TableSchemas } from "../../Utils/TableSchemas";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  get_Workflow_Executions,
+  getWorkflowById,
+} from "../../RTKThunk/WorkflowThunk";
 
 const WorkflowOverview = () => {
   const { currentWorkflow } = useOutletContext();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { currentWorkflowExecutions, loading } = useSelector(
+    (state) => state.workflows,
+  );
   const formatDateTime = (dateString) => {
     if (!dateString) return "Date not set";
     const date = new Date(dateString);
@@ -64,6 +74,7 @@ const WorkflowOverview = () => {
       icon: null,
     },
   ];
+
 
   return (
     <div className="grid grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -115,7 +126,7 @@ const WorkflowOverview = () => {
           </div>
 
           <div className="p-12 bg-slate-50 dark:bg-slate-900/50 flex flex-col items-center">
-            {currentWorkflow?.version?.[0]?.definition?.nodes?.length > 0 ? (
+            {currentWorkflow?.versions?.[0]?.definition?.nodes?.length > 0 ? (
               currentWorkflow?.versions[0].definition?.nodes
                 ?.slice(0, 4)
                 .map((node, index, array) => (
@@ -174,7 +185,7 @@ const WorkflowOverview = () => {
           <div className="overflow-x-auto">
             <DynamicTable
               tableHead={TableSchemas.execution}
-              tableData={currentWorkflow}
+              tableData={currentWorkflowExecutions}
             />
             <div className="flex justify-end">
               <Paginator />

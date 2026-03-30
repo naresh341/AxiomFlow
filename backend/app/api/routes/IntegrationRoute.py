@@ -9,7 +9,7 @@ from app.schemas.IntegrationSchema import (
     CustomIntegrationCreate,
     CustomIntegrationResponse,
     ConnectIntegrationRequest,
-    MappingPayload
+    MappingPayload,
 )
 from typing import List
 from app.model.UserModel import User
@@ -22,9 +22,15 @@ router = APIRouter(prefix="/integrations", tags=["Integrations"])
 def get_integrations(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
+    search: str = None,
+    category: str = None,
 ):
     service = IntegrationService(db)
-    return service.get_integrations(user.id)
+    return service.get_integrations(
+        user.id,
+        search=search,
+        category=category,
+    )
 
 
 @router.post("/connect")
@@ -38,7 +44,7 @@ def connect_integration(
     return service.connect_integration(
         user_id=user.id,
         integration_id=payload.integration_id,
-        source=payload.source, 
+        source=payload.source,
     )
 
 
@@ -74,6 +80,7 @@ def create_custom_integration(
 ):
     service = IntegrationService(db)
     return service.create_integration(user.id, payload)
+
 
 @router.post("/configure/{id}")
 def save_configuration(

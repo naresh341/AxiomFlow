@@ -1,16 +1,18 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { addUser, delete_User, get_UserOrg, update_User } from "../RTKThunk/RoleAndOrganizationThunk";
-// import {
-//   addUser,
-//   delete_User,
-//   get_UserOrg,
-//   update_User,
-// } from "../RTKThunk/AsyncThunk";
+import {
+  addUser,
+  delete_User,
+  get_UserOrg,
+  update_User,
+} from "../RTKThunk/RoleAndOrganizationThunk";
 
 const initialState = {
   data: [],
   error: null,
   loading: false,
+  total: 0,
+  page: 1,
+  totalPages: 0,
 };
 
 const User_OrgSlice = createSlice({
@@ -24,7 +26,10 @@ const User_OrgSlice = createSlice({
       })
       .addCase(get_UserOrg.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload;
+        state.data = action.payload.data;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.total_pages;
       })
       .addCase(get_UserOrg.rejected, (state, action) => {
         state.loading = false;

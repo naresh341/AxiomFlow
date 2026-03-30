@@ -1,14 +1,13 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { create_Organization, create_Roles, delete_Roles, get_Organization, get_Roles, update_Organization, update_Roles } from "../RTKThunk/RoleAndOrganizationThunk";
-// import {
-//   create_Organization,
-//   create_Roles,
-//   delete_Roles,
-//   get_Organization,
-//   get_Roles,
-//   update_Organization,
-//   update_Roles,
-// } from "../RTKThunk/AsyncThunk";
+import {
+  create_Organization,
+  create_Roles,
+  delete_Roles,
+  get_Organization,
+  get_Roles,
+  update_Organization,
+  update_Roles,
+} from "../RTKThunk/RoleAndOrganizationThunk";
 
 const initialState = {
   roles: [],
@@ -16,6 +15,9 @@ const initialState = {
   loading: false,
   error: null,
   selectedOrg: null,
+  total: 0,
+  page: 1,
+  totalPages: 0,
 };
 
 const RolesAndOraganization = createSlice({
@@ -34,6 +36,9 @@ const RolesAndOraganization = createSlice({
       .addCase(get_Organization.fulfilled, (state, action) => {
         state.loading = false;
         state.org = action.payload;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.total_pages;
       })
       .addCase(get_Organization.rejected, (state, action) => {
         state.loading = false;
@@ -54,13 +59,7 @@ const RolesAndOraganization = createSlice({
         state.loading = true;
       })
       .addCase(update_Organization.fulfilled, (state, action) => {
-        state.loading = true;
-        // const index = state.org.findIndex(
-        //   (org) => org.id === action.payload.id,
-        // );
-        // if (index !== -1) {
-        //   state.org[index] = action.payload;
-        // }
+        state.loading = false;
         state.org = action.payload;
       })
       .addCase(update_Organization.rejected, (state, action) => {

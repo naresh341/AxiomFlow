@@ -1,10 +1,15 @@
+import os
+
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import List
 import json
 from dotenv import load_dotenv
 
-load_dotenv()
+env_type = os.getenv("ENV", "dev")
+env_file_to_load = ".env.production" if env_type == "prod" else ".env"
+
+load_dotenv(env_file_to_load, override=True)
 
 
 class Settings(BaseSettings):
@@ -12,8 +17,9 @@ class Settings(BaseSettings):
     # App
     # ================================
     APP_NAME: str = "Enterprise Workflow Engine"
-    ENV: str = "dev"
-    DEBUG: bool = True
+    # ENV: str = "dev"
+    ENV: str = env_type
+    DEBUG: bool = False if env_type == "prod" else True
 
     # ================================
     # Email
@@ -45,7 +51,8 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: List[str] = []
 
     class Config:
-        env_file = ".env"
+        # env_file = ".env"
+        env_file = env_file_to_load
         case_sensitive = True
         extra = "allow"
 

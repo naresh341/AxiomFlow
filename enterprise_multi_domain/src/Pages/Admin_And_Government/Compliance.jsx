@@ -11,19 +11,18 @@ import { useDispatch, useSelector } from "react-redux";
 import AssessmentModal from "../../Components/AssessmentModal";
 import EvidenceModal from "../../Components/EvidenceModal";
 import RiskModal from "../../Components/RiskModal";
-// import {
-//   addNewPolicy,
-//   addRisk,
-//   get_UserOrg,
-//   getPolicies,
-//   update_Policies,
-//   uploadControlEvidence,
-// } from "../../RTKThunk/AsyncThunk";
 import EvidenceList from "./EvidenceList";
 import PolicyList from "./PolicyList";
 import RiskMatrix from "./RiskMatrix";
-import { addNewPolicy, addRisk, getPolicies, update_Policies, uploadControlEvidence } from "../../RTKThunk/GovernanceThunk";
+import {
+  addNewPolicy,
+  addRisk,
+  getPolicies,
+  update_Policies,
+  uploadControlEvidence,
+} from "../../RTKThunk/GovernanceThunk";
 import { get_UserOrg } from "../../RTKThunk/RoleAndOrganizationThunk";
+import { useNotify } from "../../Components/MiniComponent/useNotify";
 
 const Compliance = () => {
   const rows = 10;
@@ -37,7 +36,7 @@ const Compliance = () => {
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [selectedEvidence, setSelectedEvidence] = useState(null);
-
+  const notify = useNotify();
   const toggleAssessmentModal = (policy = null) => {
     setSelectedPolicy(policy);
     setIsAssessmentModalOpen(!isAssessmentModalOpen);
@@ -51,7 +50,13 @@ const Compliance = () => {
   };
 
   useEffect(() => {
-    dispatch(getPolicies("active"));
+    dispatch(
+      getPolicies({
+        page: 1,
+        limit: 10,
+        status: "ACTIVE",
+      }),
+    );
   }, [dispatch]);
 
   const handleEditEvidence = (evidence) => {
@@ -71,8 +76,14 @@ const Compliance = () => {
       setSelectedPolicy(null);
 
       dispatch(getPolicies("active"));
+      notify.success(
+        `Policy ${formdata.id ? "updated" : "created"} successfully!`,
+      );
     } catch (error) {
       console.error("Submission failed:", error);
+      notify.error(
+        error.message || "Failed to submit policy. Please try again.",
+      );
     }
   };
 
@@ -80,8 +91,11 @@ const Compliance = () => {
     try {
       await dispatch(addRisk(data)).unwrap();
       setIsModalOpen(false);
+      notify.success("Risk added successfully!");
     } catch (error) {
+
       console.error(error);
+        notify.error(error.message || "Failed to add risk. Please try again.");
     }
   };
 
@@ -93,10 +107,11 @@ const Compliance = () => {
           formData: formData,
         }),
       ).unwrap();
-
+        notify.success("Evidence uploaded successfully!");
       setIsEvidenceModalOpen(false);
     } catch (error) {
       console.error(error);
+        notify.error(error.message || "Failed to upload evidence. Please try again.");
     }
   };
   const stats = [

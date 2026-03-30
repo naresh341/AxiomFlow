@@ -1,5 +1,12 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { connectIntegrationThunk, createIntegrationThunk, disconnectIntegrationThunk, fetchIntegrationsThunk, fetchUserIntegrationsThunk, saveMappingThunk } from "../RTKThunk/IntegrationThunk";
+import {
+  connectIntegrationThunk,
+  createIntegrationThunk,
+  disconnectIntegrationThunk,
+  fetchIntegrationsThunk,
+  fetchUserIntegrationsThunk,
+  saveMappingThunk,
+} from "../RTKThunk/IntegrationThunk";
 // import {
 //   fetchIntegrationsThunk,
 //   connectIntegrationThunk,
@@ -14,6 +21,9 @@ const initialState = {
   userIntegrations: [],
   loading: false,
   error: null,
+  total: 0,
+  page: 1,
+  totalPages: 0,
 };
 
 const integrationSlice = createSlice({
@@ -31,6 +41,9 @@ const integrationSlice = createSlice({
       .addCase(fetchIntegrationsThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.integrations = action.payload;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.total_pages;
       })
       .addCase(fetchIntegrationsThunk.rejected, (state, action) => {
         state.loading = false;

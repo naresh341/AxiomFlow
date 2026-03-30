@@ -1,11 +1,29 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { ForgetPassword, loginApi, LoginCredentials, Register, ResetPassword } from "../Services/ApiService";
+import {
+  ForgetPassword,
+  loginApi,
+  LoginCredentials,
+  Logout,
+  Register,
+  ResetPassword,
+} from "../Services/ApiService";
 
 export const loginUser = createAsyncThunk(
   "auth/login",
   async (credentials, { rejectWithValue }) => {
     try {
       const response = await loginApi(credentials);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+);
+export const logoutUser = createAsyncThunk(
+  "auth/logout",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await Logout();
       return response;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -58,4 +76,3 @@ export const Forget_Password = createAsyncThunk(
     }
   },
 );
-  

@@ -11,12 +11,14 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import OtpModal from "./MiniComponent/OtpModal";
 import { OverRideAction, Send_OTP } from "../RTKThunk/GovernanceThunk";
+import { useNotify } from "./MiniComponent/useNotify";
 
 const OverrideModal = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otpmodel, setOtpmodel] = useState(false);
+  const notify = useNotify();
 
   const [formData, setFormData] = useState({
     justification: "",
@@ -94,13 +96,14 @@ const OverrideModal = ({ isOpen, onClose }) => {
         },
       };
 
-      const res = await dispatch(OverRideAction(payload)).unwrap();
+     await dispatch(OverRideAction(payload)).unwrap();
 
-      console.log("SUCCESS:", res);
+      notify.success("Organization-wide overrides enabled successfully!");
 
       onClose();
     } catch (err) {
       console.error("Governance action failed", err);
+      notify.error(err.message || "Failed to enable overrides.");
     } finally {
       setLoading(false);
     }

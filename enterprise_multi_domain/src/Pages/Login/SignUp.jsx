@@ -4,11 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { CheckCircle, Chrome, Database, Lock, ShieldCheck } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { RegisterUser } from "../../RTKThunk/AuthThunk";
+import { useNotify } from "../../Components/MiniComponent/useNotify";
 
 const SignUp = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
+  const notigy = useNotify();
   const [formData, setFormData] = useState({
     email: "",
     fullName: "",
@@ -42,15 +43,15 @@ const SignUp = () => {
         password: formData.password,
       };
 
-      const res = await dispatch(RegisterUser(payload)).unwrap();
-
-      console.log("User Registered:", res);
+      await dispatch(RegisterUser(payload)).unwrap();
 
       // 🚀 Redirect after success
       navigate("/login");
+      notigy.success(`Account created successfully! Please log in.`);
     } catch (err) {
       console.error(err);
       setError(err || "Registration failed");
+      notigy.error(err.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }

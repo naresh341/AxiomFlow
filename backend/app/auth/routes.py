@@ -30,8 +30,10 @@ def login(
         key="access_token",
         value=result["access_token"],
         httponly=True,
-        secure=False,
-        samesite="lax",
+        # secure=False,   // False only for local Development. Set to True in production with HTTPS
+        secure=True,
+        # samesite="lax",
+        samesite="none",
         max_age=15 * 60,
     )
 

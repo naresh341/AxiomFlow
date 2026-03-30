@@ -3,6 +3,8 @@ from app.model.UserModel import User  # Import at top or keep inside if circular
 from app.schemas.TeamSchemas import TeamCreate
 from sqlalchemy.orm import Session, joinedload
 
+from app.GlobalException.GlobalExceptionError import AppException
+
 from .auditLogsService import AuditService
 
 
@@ -11,13 +13,31 @@ class TeamService:
         self.db = db
         self.audit = AuditService(db)
 
-    def get_all_teams(self):
-        return (
-            self.db.query(Team)
-            .options(joinedload(Team.users))
-            .order_by(Team.created_at.desc())
-            .all()
-        )
+    def get_all_teams(self, page: int = 1, limit: int = 10):
+        try:
+            query = (
+                self.db.query(Team)
+                .options(joinedload(Team.users))
+                .order_by(Team.created_at.desc())
+            )
+
+            total = query.count()
+            offset = (page - 1) * limit
+
+            teams = query.offset(offset).limit(limit).all()
+
+            return {
+                "total": total,
+                "page": page,
+                "limit": limit,
+                "total_pages": (total + limit - 1) // limit,
+                "data": teams,
+            }
+
+        except Exception as e:
+            raise AppException(
+                500, "TEAM_FETCH_FAILED", "Failed to fetch teams", str(e)
+            )
 
     def create_team(
         self, team_in: TeamCreate, admin_id: int, user_obj, user_ids: list[int] = None
@@ -73,13 +93,15 @@ class TeamService:
 
         except Exception as e:
             self.db.rollback()
-            raise e
+            raise AppException(
+                500, "TEAM_CREATE_FAILED", "Failed to create team", str(e)
+            )
 
     def update_team(self, team_id: int, payload: dict, admin_id: int, user_obj):
         try:
             db_team = self.db.query(Team).filter(Team.id == team_id).first()
             if not db_team:
-                raise Exception("Team not found")
+                raise AppException(404, "TEAM_NOT_FOUND", "Team not found")
 
             # Capture old values for Audit Log
             old_values = {
@@ -128,12 +150,12 @@ class TeamService:
 
         except Exception as e:
             self.db.rollback()
-            raise e
+            raise AppException(404, "TEAM_NOT_FOUND", "Team not found", str(e))
 
     def delete_team(self, team_id: int):
         team = self.db.query(Team).filter(Team.id == team_id).first()
         if not team:
-            raise Exception("Team not found")
+            raise AppException(404, "TEAM_NOT_FOUND", "Team not found")
 
         deleted_id = team.id
 
@@ -143,4 +165,6 @@ class TeamService:
             return deleted_id
         except Exception as e:
             self.db.rollback()
-            raise e
+            raise AppException(
+                500, "TEAM_DELETE_FAILED", "Failed to delete team", str(e)
+            )

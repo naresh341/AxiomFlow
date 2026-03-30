@@ -59,7 +59,7 @@ class Organization(Base):
     )
 
     invoices = relationship("Invoice", back_populates="organization")
-    payments = relationship("Payments", back_populates="organization")
+    payments = relationship("Payment", back_populates="organization")
 
 
 class OrganizationSubscription(Base):

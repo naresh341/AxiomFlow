@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Reset_Password } from "../../RTKThunk/AuthThunk";
+import { useNotify } from "../../Components/MiniComponent/useNotify";
 
 const PasswordReset = () => {
   const [searchParams] = useSearchParams();
@@ -15,7 +16,7 @@ const PasswordReset = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
+  const notify = useNotify();
   const { loading } = useSelector((state) => state.islogin);
 
   // ✅ Validate token on load
@@ -49,9 +50,13 @@ const PasswordReset = () => {
 
       // 🎯 Success redirect
       navigate("/login");
+      notify(
+        "Password reset successful! Please log in with your new password.",
+      );
     } catch (err) {
       console.error(err);
       setError(err || "Reset failed. Try again.");
+      notify.error(err.message || "Password reset failed. Please try again.");
     }
   };
 

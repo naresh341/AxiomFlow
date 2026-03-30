@@ -71,7 +71,6 @@ const WorkflowSlice = createSlice({
         state.loading = true;
       })
       .addCase(getWorkflowById.fulfilled, (state, action) => {
-        console.log("SUCCESS! Data received:", action.payload);
         state.loading = false;
         state.currentWorkflow = action.payload;
       })

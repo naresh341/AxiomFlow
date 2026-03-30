@@ -1,34 +1,33 @@
 import { useDispatch, useSelector } from "react-redux";
 import Barchart from "../Components/Barchart ";
 import DynamicTable from "../Components/DynamicTable";
-import { setTableData } from "../Features/TableSlice";
 import { TableSchemas } from "../Utils/TableSchemas";
 import { useEffect, useState } from "react";
 import Paginator from "../Components/Paginator";
 import Linechart from "../Components/LineChart";
 import { getApprovalList } from "../RTKThunk/WorkflowThunk";
-// import { getApprovalList } from "../RTKThunk/AsyncThunk";
+import { ProtectedComponent } from "../Components/MiniComponent/ProtectedComponent";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  const [first, setFirst] = useState(0); // starting index
-  const rows = 5; // rows per page
+  const [page, setPage] = useState(1);
+  const rows = 5;
 
-  const { loading, data } = useSelector((state) => state.approval);
-
-  const tabledata = data.data || [];
+  const { loading, data, total } = useSelector((state) => state.approval);
 
   useEffect(() => {
-    dispatch(getApprovalList());
-  }, [dispatch]);
+    dispatch(
+      getApprovalList({
+        page: page,
+        limit: rows,
+        status: "All",
+      }),
+    );
+  }, [dispatch, page, rows]);
 
   const handlePageChange = (event) => {
-    setFirst(event + 1) * rows;
+    setPage(event + 1);
   };
-
-  useEffect(() => {
-    dispatch(setTableData({ schemakey: "dashboard", data: tabledata }));
-  }, [dispatch, tabledata]);
 
   const DashboardData = [
     { label: "Total Users", value: 1500, icon: "up", data: "+5% this month" },
@@ -104,16 +103,18 @@ const Dashboard = () => {
               Real-time performance metrics across enterprise workflows.
             </p>
           </div>
-          <label className="flex items-center gap-2 text-md font-semibold">
-            Industry:
-            <select className="border rounded-md px-2 py-1 bg-white dark:bg-slate-900 border-gray-300 dark:border-slate-700 outline-none">
-              <option>All Industries</option>
-              <option>Finance</option>
-              <option>Healthcare</option>
-              <option>Retail</option>
-              <option>Technology</option>
-            </select>
-          </label>
+          <ProtectedComponent>
+            <label className="flex items-center gap-2 text-md font-semibold">
+              Industry:
+              <select className="border rounded-md px-2 py-1 bg-white dark:bg-slate-900 border-gray-300 dark:border-slate-700 outline-none">
+                <option>All Industries</option>
+                <option>Finance</option>
+                <option>Healthcare</option>
+                <option>Retail</option>
+                <option>Technology</option>
+              </select>
+            </label>
+          </ProtectedComponent>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {DashboardData.map((item, index) => (
@@ -157,11 +158,13 @@ const Dashboard = () => {
               >
                 <div className="flex justify-between items-center mb-6">
                   <h4 className="font-bold text-lg uppercase">{chart.title}</h4>
-                  <select className="text-md border border-gray-400 outline-0 bg-slate-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 rounded py-1 px-2">
-                    {chart.options.map((opt) => (
-                      <option key={opt}>{opt}</option>
-                    ))}
-                  </select>
+                  <ProtectedComponent>
+                    <select className="text-md border border-gray-400 outline-0 bg-slate-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 rounded py-1 px-2">
+                      {chart.options.map((opt) => (
+                        <option key={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </ProtectedComponent>
                 </div>
 
                 <div className="h-52 w-full relative flex items-center justify-center text-slate-400 dark:text-slate-500 text-md">
@@ -190,21 +193,24 @@ const Dashboard = () => {
                   <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
                 </div>
               ) : (
-                <DynamicTable
-                  tableData={tabledata}
-                  tableHead={TableSchemas.approval}
-                  first={first}
-                  rows={rows}
-                />
+                <ProtectedComponent>
+                  <DynamicTable
+                    tableData={data}
+                    tableHead={TableSchemas.approval}
+                    first={(page - 1) * rows}
+                    rows={rows}
+                  />
+                </ProtectedComponent>
               )}
             </div>
-
-            <Paginator
-              totalRecords={tabledata.length}
-              rows={rows}
-              first={first}
-              onPageChange={handlePageChange}
-            />
+            <ProtectedComponent>
+              <Paginator
+                totalRecords={total}
+                rows={rows}
+                first={(page - 1) * rows}
+                onPageChange={handlePageChange}
+              />
+            </ProtectedComponent>
           </div>
 
           {/* SYSTEM HEALTH */}

@@ -1,15 +1,17 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { delete_AuditLogs, get_auditLogs, update_AuditLogs } from "../RTKThunk/GovernanceThunk";
-// import {
-//   delete_AuditLogs,
-//   get_auditLogs,
-//   update_AuditLogs,
-// } from "../RTKThunk/AsyncThunk";
+import {
+  delete_AuditLogs,
+  get_auditLogs,
+  update_AuditLogs,
+} from "../RTKThunk/GovernanceThunk";
 
 const initialState = {
   auditdata: [],
   error: null,
   loading: false,
+  total: 0,
+  page: 1,
+  totalPages: 0,
 };
 
 const GovernanceSlice = createSlice({
@@ -23,7 +25,10 @@ const GovernanceSlice = createSlice({
       })
       .addCase(get_auditLogs.fulfilled, (state, action) => {
         state.loading = false;
-        state.auditdata = action.payload;
+        state.auditdata = action.payload.data;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.totalPages = action.payload.total_pages;
       })
       .addCase(get_auditLogs.rejected, (state, action) => {
         state.loading = false;

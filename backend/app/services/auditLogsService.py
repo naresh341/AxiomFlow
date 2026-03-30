@@ -4,6 +4,7 @@ from app.model.AuditLogsModel import (
     SeverityLevel,
 )
 from sqlalchemy.orm import Session
+from app.GlobalException.GlobalExceptionError import AppException
 
 
 class AuditService:
@@ -63,3 +64,55 @@ class AuditService:
         except Exception as e:
             self.db.rollback()
             print("Audit log failed:", str(e))
+
+    def get_audit_logs(
+        self,
+        page: int,
+        limit: int,
+        actor_type=None,
+        status=None,
+        search=None,
+        service=None,
+    ):
+        try:
+            query = self.db.query(AuditLog)
+
+            if actor_type:
+                query = query.filter(AuditLog.actor_type == actor_type)
+
+            if status:
+                query = query.filter(AuditLog.status == status)
+
+            if service:
+                query = query.filter(AuditLog.service.ilike(f"%{service}%"))
+
+            if search:
+                from sqlalchemy import or_
+
+                query = query.filter(
+                    or_(
+                        AuditLog.description.ilike(f"%{search}%"),
+                        AuditLog.user_display_name.ilike(f"%{search}%"),
+                        AuditLog.resource_type.ilike(f"%{search}%"),
+                    )
+                )
+
+            query = query.order_by(AuditLog.created_at.desc())
+
+            total = query.count()
+            offset = (page - 1) * limit
+
+            data = query.offset(offset).limit(limit).all()
+
+            return {
+                "total": total,
+                "page": page,
+                "limit": limit,
+                "total_pages": (total + limit - 1) // limit,
+                "data": data,
+            }
+
+        except Exception as e:
+            raise AppException(
+                500, "AUDIT_FETCH_FAILED", "Failed to fetch logs", str(e)
+            )

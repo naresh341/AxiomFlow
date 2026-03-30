@@ -1,18 +1,11 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from app.core.dependencies import get_db
 from app.core.security import get_current_user
-from app.model.complianceModel import (
-    ComplianceControl,
-    ComplianceEvidence,
-    CompliancePolicy,
-    ComplianceRisk,
-)
 from app.model.UserModel import User
 from app.schemas.complianceSchemas import (
     DocumentRead,
-    EvidenceCreate,
     EvidenceRead,
     PolicyCreate,
     PolicyRead,
@@ -40,10 +33,12 @@ router = APIRouter(prefix="/compliance", tags=["Compliance"])
 
 @router.get("/policies")
 async def get_all_policies(
+    page: int = 1,
+    limit: int = 10,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return ComplianceService.get_all_policies(db, current_user)
+    return ComplianceService.get_all_policies(db, current_user, page, limit)
 
 
 @router.get("/policies/{policy_id}", response_model=PolicyRead)
@@ -108,18 +103,28 @@ async def delete_policy(policy_id: int, db: Session = Depends(get_db)):
 # ==========================
 
 
-@router.get("/controls/evidence", response_model=List[EvidenceRead])
+# @router.get("/controls/evidence", response_model=List[EvidenceRead])
+# async def get_all_compliance_evidence(
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user),
+# ):
+#     return (
+#         db.query(ComplianceEvidence)
+#         .join(ComplianceControl)
+#         .join(CompliancePolicy)
+#         .filter(CompliancePolicy.organization_id == current_user.organization_id)
+#         .all()
+#     )
+
+
+@router.get("/controls/evidence")
 async def get_all_compliance_evidence(
+    page: int = 1,
+    limit: int = 10,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return (
-        db.query(ComplianceEvidence)
-        .join(ComplianceControl)
-        .join(CompliancePolicy)
-        .filter(CompliancePolicy.organization_id == current_user.organization_id)
-        .all()
-    )
+    return ComplianceService.get_all_evidence(db, current_user, page, limit)
 
 
 @router.post("/controls/{control_id}/evidence", response_model=EvidenceRead)
@@ -195,10 +200,12 @@ async def delete_compliance_evidence(
 
 @router.get("/risks")
 async def get_all_risks(
+    page: int = 1,
+    limit: int = 10,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return ComplianceService.get_all_risks(db, current_user)
+    return ComplianceService.get_all_risks(db, current_user, page, limit)
 
 
 @router.get("/risks/{risk_id}", response_model=RiskRead)

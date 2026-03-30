@@ -1,11 +1,32 @@
-import { Bell, Menu, Search, Settings } from "lucide-react";
+import { Bell, LogOut, Menu, Search, Settings, User } from "lucide-react";
 import { useTheme } from "../Context/ThemeContext";
 import { useState } from "react";
 import NotificationPanel from "../Components/NotificationPanel";
+import { useDispatch, useSelector } from "react-redux";
+import { logoutUser } from "../RTKThunk/AuthThunk";
+import { useNavigate } from "react-router-dom";
+import { selectIsAuthenticated, selectUser } from "../RTKThunk/authSelectors";
 
 const Topbar = () => {
   const { theme, toggleTheme } = useTheme();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  // const { user } = useSelector((state) => state.islogin);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const user = useSelector(selectUser);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  // const isAuthenticated = useSelector((state) => !!state.islogin.token);
+
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutUser()).unwrap();
+      navigate("/Dashboard");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   return (
     <div className="fixed w-full p-4 shadow-md h-16 border-b border-gray-300 dark:border-slate-800 flex items-center justify-between px-8 bg-white dark:bg-slate-950 text-gray-900 dark:text-gray-100 z-50">
@@ -41,7 +62,7 @@ const Topbar = () => {
       </div>
 
       <div className="hidden lg:flex items-center gap-6">
-        <h3 className="font-bold text-xl">Enterprise Domain</h3>
+        <h3 className="font-bold text-xl">Axion Flow</h3>
       </div>
 
       <div className="flex items-center gap-4">
@@ -55,6 +76,55 @@ const Topbar = () => {
         <div className="cursor-pointer w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition">
           <Settings size={20} />
         </div>
+        {isAuthenticated && (
+          <div
+            className="relative"
+            onMouseEnter={() => setShowUserMenu(true)}
+            onMouseLeave={() => setShowUserMenu(false)}
+          >
+            <div className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-800 cursor-pointer border border-gray-300 dark:border-slate-700">
+              <User size={20} />
+            </div>
+
+            {/* HOVER MENU */}
+            {showUserMenu && (
+              <div className="absolute right-0 top-full pt-2 w-48 animate-in fade-in slide-in-from-top-1">
+                <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden">
+                  <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800">
+                    <p className="text-xs text-gray-500">Signed in as</p>
+                    <p className="text-sm font-semibold truncate">
+                      {user?.name || "User"}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  >
+                    <LogOut size={16} />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!isAuthenticated && (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/login")}
+              className="px-6 py-1.5 text-sm font-semibold tracking-wide
+                 bg-[#252532] text-white rounded-full
+                 border border-[#32303e] 
+                 shadow-[0px_3px_6px_-2px_#403f4e,inset_0px_2px_4px_0px_rgba(255,255,255,0.1)]
+                 hover:bg-[#2d2d3a] hover:shadow-[0px_4px_10px_rgba(0,0,0,0.3)]
+                 transition-all duration-200 active:shadow-[inset_0px_2px_4px_rgba(0,0,0,0.5)]"
+            >
+              Sign In
+            </button>
+          </div>
+        )}
       </div>
 
       <NotificationPanel

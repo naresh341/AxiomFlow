@@ -135,7 +135,7 @@ const ApprovalHistory = () => {
     }, 500);
 
     return () => clearTimeout(delay);
-  }, [search, page, filters, dispatch, debouncedSearch]);
+  }, [page, filters, dispatch, debouncedSearch]);
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-[#f6f6f8] dark:bg-[#101622] ">
