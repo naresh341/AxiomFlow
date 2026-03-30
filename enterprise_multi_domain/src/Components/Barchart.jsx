@@ -13,7 +13,6 @@ const Barchart = ({ data }) => {
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} barGap={-40}>
         <CartesianGrid vertical={false} horizontal={false} />
-
         <XAxis
           dataKey="name"
           axisLine={false}
