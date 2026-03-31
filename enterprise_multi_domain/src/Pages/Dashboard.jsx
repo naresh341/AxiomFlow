@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import BarChart from "../Components/Barchart";
+import BarChart from "../Components/BarChart";
 import DynamicTable from "../Components/DynamicTable";
 import LineChart from "../Components/LineChart";
 import { ProtectedComponent } from "../Components/MiniComponent/ProtectedComponent";
