@@ -1,6 +1,6 @@
 import {
   Bar,
-  BarChart,
+  BarChart as RechartsBarChart,
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
@@ -8,10 +8,10 @@ import {
   YAxis,
 } from "recharts";
 
-const Barchart = ({ data }) => {
+const BarChart = ({ data }) => {
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} barGap={-40}>
+      <RechartsBarChart data={data} barGap={-40}>
         <CartesianGrid vertical={false} horizontal={false} />
         <XAxis
           dataKey="name"
@@ -48,9 +48,9 @@ const Barchart = ({ data }) => {
           radius={[10, 10, 10, 10]}
           barSize={65}
         />
-      </BarChart>
+      </RechartsBarChart>
     </ResponsiveContainer>
   );
 };
 
-export default Barchart;
+export default BarChart;

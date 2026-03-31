@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import Barchart from "../Components/Barchart";
+import BarChart from "../Components/Barchart";
 import DynamicTable from "../Components/DynamicTable";
 import LineChart from "../Components/LineChart";
 import { ProtectedComponent } from "../Components/MiniComponent/ProtectedComponent";
@@ -47,7 +47,7 @@ const Dashboard = () => {
   ];
 
   const chartComponentMap = {
-    bar: Barchart,
+    bar: BarChart,
     line: LineChart,
   };
   const chartDataMap = {
