@@ -109,6 +109,8 @@ app.add_exception_handler(Exception, global_exception_handler)
 
 
 origins = [
+    "https://axiom-flow-pi.vercel.app",
+    "https://axiom-flow-i8938me09-naresh341s-projects.vercel.app",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
@@ -121,8 +123,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
+    allow_origin_regex=r"https://axiom-flow-.*\.vercel\.app",
     allow_methods=["*"],
-    allow_headers=["Authorization", "Content-Type", "Accept"],
+    # allow_headers=["Authorization", "Content-Type", "Accept"],
+    allow_headers=["*"],
 )
 
 
