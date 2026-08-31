@@ -2,3 +2,6 @@ stitch_users_organization_management*/
 *.zip
 *.csv
 *.png
+!enterprise_multi_domain/public/*.png
+!**/public/*.png
+
