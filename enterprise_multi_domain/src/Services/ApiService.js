@@ -98,7 +98,11 @@ export const ForgetPassword = async (email) => {
     return response.data;
   } catch (error) {
     console.error("API forgot Password Error", error);
-    throw error.response?.data?.detail || "Something went wrong";
+    const msg =
+      error.response?.data?.detail ||
+      error.message ||
+      "Something went wrong";
+    throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
   }
 };
 
@@ -111,7 +115,11 @@ export const ResetPassword = async ({ token, password }) => {
     return response.data;
   } catch (error) {
     console.error("API Reset Password Error", error);
-    throw error.response?.data?.detail || "Something went wrong";
+    const msg =
+      error.response?.data?.detail ||
+      error.message ||
+      "Something went wrong";
+    throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
   }
 };
 

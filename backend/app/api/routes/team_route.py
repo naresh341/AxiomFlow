@@ -27,7 +27,7 @@ def create_new_team(
     current_user=Depends(get_current_user),
 ):
     service = TeamService(db)
-    return service.create_team(payload, current_user.id, current_user)
+    return service.create_team(payload, current_user.id, current_user, payload.user_ids)
 
 
 @router.put("/updateTeam/{team_id}", response_model=TeamRead)

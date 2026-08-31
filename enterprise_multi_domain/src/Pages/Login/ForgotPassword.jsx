@@ -58,9 +58,9 @@ const ForgotPassword = () => {
         </div>
       </header>
 
-      <main className="grow flex items-center justify-center p-4">
-        <div className="w-full max-w-137.5 bg-white dark:bg-[#1a2632] shadow-sm border border-[#dbe0e6] dark:border-slate-800 rounded">
-          <div className="px-8 pt-10 pb-6">
+      <main className="grow flex items-center justify-center p-3 sm:p-6">
+        <div className="w-full max-w-lg bg-white dark:bg-[#1a2632] shadow-sm border border-[#dbe0e6] dark:border-slate-800 rounded-xl">
+          <div className="px-4 sm:px-8 pt-6 sm:pt-10 pb-6">
             <div className="flex flex-col items-center mb-8">
               <div className="size-10 text-blue-600 mb-3">
                 {/* SVG Icon matching your branding */}

@@ -8,17 +8,15 @@ import { useNavigate } from "react-router-dom";
 import { selectIsAuthenticated, selectUser } from "../RTKThunk/authSelectors";
 import { ProtectedComponent } from "../Components/MiniComponent/ProtectedComponent";
 
-const Topbar = () => {
+const Topbar = ({ onToggleMobileSidebar }) => {
   const { theme, toggleTheme } = useTheme();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  // const { user } = useSelector((state) => state.islogin);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const user = useSelector(selectUser);
   const isAuthenticated = useSelector(selectIsAuthenticated);
-  // const isAuthenticated = useSelector((state) => !!state.islogin.token);
 
   const handleLogout = async () => {
     try {
@@ -30,9 +28,19 @@ const Topbar = () => {
   };
 
   return (
-    <div className="fixed w-full p-4 shadow-md h-16 border-b border-gray-300 dark:border-slate-800 flex items-center justify-between px-8 bg-white dark:bg-slate-950 text-gray-900 dark:text-gray-100 z-50">
-      <div className="flex items-center gap-5">
-        <div className="flex items-center justify-center scale-[0.55] origin-left">
+    <div className="fixed w-full p-2 sm:p-4 shadow-md h-16 border-b border-gray-300 dark:border-slate-800 flex items-center justify-between px-3 sm:px-6 lg:px-8 bg-white dark:bg-slate-950 text-gray-900 dark:text-gray-100 z-50">
+      <div className="flex items-center gap-2 sm:gap-4">
+        {/* Mobile Menu Hamburger Button */}
+        <button
+          onClick={onToggleMobileSidebar}
+          className="lg:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+          aria-label="Toggle Navigation Menu"
+        >
+          <Menu size={22} />
+        </button>
+
+        {/* Theme Switcher */}
+        <div className="flex items-center justify-center scale-[0.48] sm:scale-[0.55] origin-left shrink-0">
           <label
             className="relative flex h-13.75 w-28.75 items-center rounded-[165px] border border-[#32303e] bg-[#252532] p-1.5 shadow-[inset_0px_5px_10px_0px_#16151c,0px_3px_6px_-2px_#403f4e] cursor-pointer"
             htmlFor="switch"
@@ -62,8 +70,8 @@ const Topbar = () => {
         </div>
       </div>
 
-      <div className="hidden lg:flex items-center gap-6">
-        <h3 className="font-bold text-xl">Axiom Flow</h3>
+      <div className="flex items-center gap-2 sm:gap-6">
+        <h3 className="font-bold text-base sm:text-xl tracking-tight">Axiom Flow</h3>
       </div>
 
       <div className="flex items-center gap-4">

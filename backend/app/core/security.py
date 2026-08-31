@@ -16,6 +16,11 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)) -> U
         token = request.cookies.get("access_token")
 
         if not token:
+            auth_header = request.headers.get("Authorization")
+            if auth_header and auth_header.startswith("Bearer "):
+                token = auth_header.split(" ")[1]
+
+        if not token:
             raise AppException(
                 401,
                 "AUTH_TOKEN_MISSING",

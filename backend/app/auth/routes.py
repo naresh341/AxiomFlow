@@ -47,7 +47,7 @@ def login(
         max_age=7 * 24 * 60 * 60,
     )
 
-    return {"user": result["user"]}
+    return {"user": result["user"], "access_token": result["access_token"]}
 
 
 # ✅ REGISTER
@@ -64,8 +64,9 @@ def register(
 def refresh_token(
     response: Response,
     refresh_token: str = Cookie(None),
+    db: Session = Depends(get_db),
 ):
-    result = AuthService.refresh_access_token(refresh_token)
+    result = AuthService.refresh_access_token(refresh_token, db)
 
     response.set_cookie(
         key="access_token",
@@ -93,8 +94,8 @@ def logout(response: Response):
 @router.post("/forgot-password")
 def forgot_password_route(
     email: dict,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
     return forgot_password(email["email"], db, background_tasks)
 

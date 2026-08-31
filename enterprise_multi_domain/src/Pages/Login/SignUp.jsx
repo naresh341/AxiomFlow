@@ -59,26 +59,26 @@ const SignUp = () => {
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col font-display">
       {/* Top Navigation */}
-      <header className="flex items-center justify-between border-b border-[#dbdfe6] dark:border-gray-800 bg-white dark:bg-background-dark px-10 py-3">
-        <div className="flex items-center gap-4 text-[#111318] dark:text-white">
-          <Database className="size-6 text-blue-600" /> {/* Lucide Icon */}
-          <h2 className="text-lg font-bold tracking-tight">EnterpriseSaaS</h2>
+      <header className="flex items-center justify-between border-b border-[#dbdfe6] dark:border-gray-800 bg-white dark:bg-background-dark px-4 sm:px-10 py-3">
+        <div className="flex items-center gap-2 sm:gap-4 text-[#111318] dark:text-white">
+          <Database className="size-6 text-blue-600 shrink-0" />
+          <h2 className="text-base sm:text-lg font-bold tracking-tight">EnterpriseSaaS</h2>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:inline">
             Already have an account?
           </span>
           <button
             onClick={() => navigate("/login")}
-            className="rounded-lg h-10 px-4 bg-blue-600 text-white text-sm font-bold"
+            className="rounded-lg h-9 sm:h-10 px-3 sm:px-4 bg-blue-600 text-white text-xs sm:text-sm font-bold"
           >
             Sign In
           </button>
         </div>
       </header>
 
-      <main className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-[480px] bg-white dark:bg-background-dark border border-[#dbdfe6] dark:border-gray-800 rounded-xl shadow-sm p-8">
+      <main className="flex-1 flex items-center justify-center p-3 sm:p-6">
+        <div className="w-full max-w-[480px] bg-white dark:bg-background-dark border border-[#dbdfe6] dark:border-gray-800 rounded-xl shadow-sm p-4 sm:p-8">
           <div className="text-center mb-8">
             <h1 className="text-[#111318] dark:text-white text-[28px] font-bold pb-2">
               Create your enterprise account

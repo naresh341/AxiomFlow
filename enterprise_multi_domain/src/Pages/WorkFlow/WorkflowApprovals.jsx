@@ -37,20 +37,18 @@ const WorkflowApprovals = () => {
     (state) => state.workflows,
   );
   useEffect(() => {
-    try {
-      dispatch(
-        get_Workflow_Approvals({
-          workflowId,
-          page,
-          limit: rows,
-          status: filters.status === "All" ? null : filters.status,
-          priority: filters.priority === "All" ? null : filters.priority,
-          search: debouncedSearch,
-        }),
-      );
-    } catch (error) {
-      notify(error.message || "Error fetching workflow approvals", "error");
-    }
+    dispatch(
+      get_Workflow_Approvals({
+        workflowId,
+        page,
+        limit: rows,
+        status: filters.status === "All" ? null : filters.status,
+        priority: filters.priority === "All" ? null : filters.priority,
+        search: debouncedSearch,
+      }),
+    ).catch((error) => {
+      notify.error(error?.message || "Error fetching workflow approvals");
+    });
   }, [
     dispatch,
     workflowId,
@@ -58,7 +56,6 @@ const WorkflowApprovals = () => {
     filters.status,
     filters.priority,
     debouncedSearch,
-    notify,
   ]);
 
   const approvalData = currentWorkflowApprovals || [];

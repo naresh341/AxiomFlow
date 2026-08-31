@@ -1,5 +1,6 @@
 from app.model.AuditLogsModel import (
     AuditLog,
+    AuditActorType,
     AuditStatus,
     SeverityLevel,
 )
@@ -13,11 +14,12 @@ class AuditService:
 
     def write_log(
         self,
-        actor_id,
-        actor_type,
         action,
         resource_type,
         description,
+        *,
+        actor_id=None,
+        actor_type=None,
         user_obj=None,
         meta_data=None,
         new_values=None,

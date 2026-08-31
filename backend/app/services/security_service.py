@@ -11,7 +11,7 @@ def get_policy(db: Session, org_id: int):
     )
 
 
-def update_policy(db: Session, org_id: int, payload: SecurityPolicy, user_id: int):
+def update_policy(db: Session, org_id: int, payload: dict, user_id: int):
 
     record = get_policy(db, org_id)
 
@@ -37,9 +37,14 @@ def add_allowed_ip(db: Session, org_id: int, ip: str):
 
     data = record.data or {}
 
-    if ip not in data["network_policy"]["allowed_ips"]:
-        data["network_policy"]["allowed_ips"].append(ip)
+    network = data.get("network_policy", {})
+    ips = network.get("allowed_ips", [])
 
+    if ip not in ips:
+        ips.append(ip)
+
+    network["allowed_ips"] = ips
+    data["network_policy"] = network
     record.data = data
 
     db.commit()

@@ -175,7 +175,7 @@ def create_version_for_workflow(
 
 @router.put("/{workflow_id}/updateVersions", response_model=WorkflowVersionSchema)
 def update_workflow_version(
-    workflow_id: int,
+    workflow_id: str,
     payload: UpdateWorkflowVersion,
     db: Session = Depends(get_db),
 ):
@@ -189,7 +189,7 @@ def update_workflow_version(
 
 @router.delete("/{workflow_id}/deleteVersion")
 def delete_workflow_version(
-    workflow_id: int,
+    workflow_id: str,
     db: Session = Depends(get_db),
 ):
     service = WorkflowService(db)

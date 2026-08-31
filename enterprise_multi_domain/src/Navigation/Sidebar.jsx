@@ -18,7 +18,7 @@ import { selectIsAuthenticated } from "../RTKThunk/authSelectors";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
-const Sidebar = () => {
+const Sidebar = ({ isMobileOpen = false, onCloseMobile }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const navigate = useNavigate();
@@ -147,70 +147,86 @@ const Sidebar = () => {
         ),
         { duration: 4000 },
       );
+    } else if (onCloseMobile) {
+      onCloseMobile();
     }
   };
   return (
-    <aside
-      className={`${
-        isCollapsed ? "w-20" : "w-72"
-      } flex flex-col bg-white dark:bg-[#101922] border-r border-[#dbe0e6] dark:border-[#2d3945] h-full shrink-0 font-display transition-all duration-300 ease-in-out`}
-    >
-      {/* Header Section */}
-      <div
-        className={`h-16 flex items-center ${
-          isCollapsed ? "justify-center" : "justify-between px-6"
-        } border-b border-[#f0f2f4] dark:border-[#2d3945]`}
-      >
-        <div className="flex items-center gap-3">
-          <div className="size-9 bg-[#137fec] rounded-lg flex items-center justify-center text-white shadow-md shrink-0">
-            <GitBranch size={20} strokeWidth={2.5} />
-          </div>
-          {!isCollapsed && (
-            <div className="flex flex-col overflow-hidden whitespace-nowrap">
-              <h1 className="text-md font-bold leading-none text-[#111418] dark:text-white">
-                AxiomFlow
-              </h1>
-              <p className="text-[12px] text-[#617589] dark:text-slate-400 uppercase tracking-wider mt-1 font-bold">
-                Workflow SaaS
-              </p>
-            </div>
-          )}
-        </div>
-        {!isCollapsed && (
-          <button
-            onClick={() => setIsCollapsed(true)}
-            className="text-[#617589] hover:text-[#137fec] dark:hover:text-white transition-colors p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-[#1a242f]"
-          >
-            <PanelLeftClose size={25} />
-          </button>
-        )}
-      </div>
-
-      {isCollapsed && (
-        <div className="flex justify-center py-4 border-b border-[#f0f2f4] dark:border-[#2d3945]">
-          <button
-            onClick={() => setIsCollapsed(false)}
-            className="text-[#617589] hover:text-[#137fec] dark:hover:text-white transition-colors p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-[#1a242f]"
-          >
-            <PanelRightClose size={23} />
-          </button>
-        </div>
+    <>
+      {/* Mobile Backdrop Overlay */}
+      {isMobileOpen && (
+        <div
+          onClick={onCloseMobile}
+          className="fixed inset-0 bg-slate-900/50 dark:bg-black/70 backdrop-blur-xs z-40 lg:hidden transition-opacity duration-300"
+        />
       )}
 
-      {/* Navigation Content */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-4 custom-scrollbar">
-        {sections.map((section, idx) => (
-          <div key={section.title}>
-            {!isCollapsed ? (
-              <p className="px-3 mb-2 text-[11px] font-bold text-[#617589] dark:text-slate-500 uppercase tracking-widest">
-                {section.title}
-              </p>
-            ) : (
-              idx !== 0 && (
-                <div className="h-px bg-[#f0f2f4] dark:bg-[#2d3945] mx-2 mb-4" />
-              )
+      <aside
+        className={`
+          fixed lg:static top-16 bottom-0 left-0 z-40
+          flex flex-col bg-white dark:bg-[#101922] border-r border-[#dbe0e6] dark:border-[#2d3945] h-[calc(100vh-4rem)] shrink-0 font-display transition-all duration-300 ease-in-out
+          ${
+            isMobileOpen
+              ? "translate-x-0 w-72 shadow-2xl"
+              : "-translate-x-full lg:translate-x-0"
+          }
+          ${isCollapsed ? "lg:w-20" : "lg:w-72"}
+        `}
+      >
+        {/* Header Section */}
+        <div
+          className={`h-16 flex items-center justify-between px-4 sm:px-6 border-b border-[#f0f2f4] dark:border-[#2d3945]`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="size-9 bg-[#137fec] rounded-lg flex items-center justify-center text-white shadow-md shrink-0">
+              <GitBranch size={20} strokeWidth={2.5} />
+            </div>
+            {(!isCollapsed || isMobileOpen) && (
+              <div className="flex flex-col overflow-hidden whitespace-nowrap">
+                <h1 className="text-md font-bold leading-none text-[#111418] dark:text-white">
+                  AxiomFlow
+                </h1>
+                <p className="text-[12px] text-[#617589] dark:text-slate-400 uppercase tracking-wider mt-1 font-bold">
+                  Workflow SaaS
+                </p>
+              </div>
             )}
-            <div className="space-y-1">
+          </div>
+          {/* Mobile close button / Desktop collapse button */}
+          <div className="flex items-center">
+            {isMobileOpen && (
+              <button
+                onClick={onCloseMobile}
+                className="lg:hidden text-[#617589] hover:text-[#137fec] dark:hover:text-white transition-colors p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-[#1a242f]"
+              >
+                <PanelLeftClose size={22} />
+              </button>
+            )}
+            {!isCollapsed && !isMobileOpen && (
+              <button
+                onClick={() => setIsCollapsed(true)}
+                className="hidden lg:block text-[#617589] hover:text-[#137fec] dark:hover:text-white transition-colors p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-[#1a242f]"
+              >
+                <PanelLeftClose size={25} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Navigation Content */}
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-4 custom-scrollbar">
+          {sections.map((section, idx) => (
+            <div key={section.title}>
+              {(!isCollapsed || isMobileOpen) ? (
+                <p className="px-3 mb-2 text-[11px] font-bold text-[#617589] dark:text-slate-500 uppercase tracking-widest">
+                  {section.title}
+                </p>
+              ) : (
+                idx !== 0 && (
+                  <div className="h-px bg-[#f0f2f4] dark:bg-[#2d3945] mx-2 mb-4" />
+                )
+              )}
+              <div className="space-y-1">
               {section.items.map((item) => (
                 <NavLink
                   key={item.route}
@@ -244,7 +260,7 @@ const Sidebar = () => {
                         strokeWidth={isActive ? 2.5 : 2}
                       />
 
-                      {!isCollapsed && (
+                      {(!isCollapsed || isMobileOpen) && (
                         <p
                           className={`text-md whitespace-nowrap overflow-hidden ${
                             isActive ? "font-bold" : "font-medium"
@@ -267,19 +283,19 @@ const Sidebar = () => {
         {/* Workspace Switcher */}
         <div
           className={`flex items-center bg-white dark:bg-[#1a242f] border border-[#dbe0e6] dark:border-[#2d3945] rounded-lg cursor-pointer shadow-sm hover:border-[#137fec] dark:hover:border-[#137fec] transition-all group
-          ${isCollapsed ? "size-10 justify-center" : "w-full px-3 py-2 justify-between"}`}
+          ${(isCollapsed && !isMobileOpen) ? "size-10 justify-center" : "w-full px-3 py-2 justify-between"}`}
         >
           <div className="flex items-center gap-2 overflow-hidden">
             <div className="size-6 rounded bg-[#137fec]/20 flex items-center justify-center shrink-0">
               <span className="text-[10px] font-bold text-[#137fec]">AC</span>
             </div>
-            {!isCollapsed && (
+            {(!isCollapsed || isMobileOpen) && (
               <p className="text-sm font-semibold truncate text-[#111418] dark:text-slate-200">
                 Acme Corp HQ
               </p>
             )}
           </div>
-          {!isCollapsed && (
+          {(!isCollapsed || isMobileOpen) && (
             <ChevronsUpDown
               size={14}
               className="text-[#617589] dark:text-slate-500 group-hover:text-[#137fec]"
@@ -290,7 +306,7 @@ const Sidebar = () => {
         {/* System Status */}
         <div
           className={`flex items-center ${
-            isCollapsed ? "justify-center" : "justify-between w-full px-2"
+            (isCollapsed && !isMobileOpen) ? "justify-center" : "justify-between w-full px-2"
           }`}
         >
           <div className="flex items-center gap-2">
@@ -298,13 +314,13 @@ const Sidebar = () => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
             </div>
-            {!isCollapsed && (
+            {(!isCollapsed || isMobileOpen) && (
               <p className="text-[11px] font-bold text-[#617589] dark:text-slate-500 uppercase tracking-tighter">
                 Healthy
               </p>
             )}
           </div>
-          {!isCollapsed && (
+          {(!isCollapsed || isMobileOpen) && (
             <p className="text-[10px] text-[#617589] dark:text-slate-600 font-mono opacity-60">
               v2.4
             </p>
@@ -312,6 +328,7 @@ const Sidebar = () => {
         </div>
       </div>
     </aside>
+    </>
   );
 };
 

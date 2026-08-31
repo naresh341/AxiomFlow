@@ -116,7 +116,6 @@ function App() {
                 </PrivateRoute>
               }
             />
-            <Route path="/workflows/:status" element={<WorkFlows />} />
 
             <Route
               path="/workflows/:workflow_id_str"

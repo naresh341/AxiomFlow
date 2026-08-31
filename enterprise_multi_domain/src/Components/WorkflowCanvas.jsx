@@ -9,7 +9,7 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { forwardRef, useCallback, useImperativeHandle, useState } from "react"; // Added useState
+import { forwardRef, useCallback, useImperativeHandle, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import WorkflowNode from "./WorkflowNode";
 
@@ -138,14 +138,17 @@ const WorkflowCanvas = forwardRef((props, ref) => {
     [screenToFlowPosition, setNodes],
   );
 
+  const formattedNodes = useMemo(() => {
+    return nodes.map((n) => ({
+      ...n,
+      data: { ...n.data, isActive: n.id === activeNodeId },
+    }));
+  }, [nodes, activeNodeId]);
+
   return (
     <div className="flex-1 h-full w-full relative bg-[#f8fafc] dark:bg-[#0a1016]">
-      {/* 4. RUN BUTTON: Hidden inside canvas for now, or trigger via Header */}
       <ReactFlow
-        nodes={nodes.map((n) => ({
-          ...n,
-          data: { ...n.data, isActive: n.id === activeNodeId },
-        }))}
+        nodes={formattedNodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}

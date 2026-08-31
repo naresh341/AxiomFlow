@@ -440,10 +440,14 @@ class WorkflowService:
 
         return version
 
-    def delete_version(self, workflow_id: int):
+    def delete_version(self, workflow_id: str):
+        workflow = self.get_workflow_by_id(workflow_id)
+        if not workflow:
+            raise ValueError("Workflow not found")
+
         version = (
             self.db.query(WorkflowVersion)
-            .filter(WorkflowVersion.workflow_id == workflow_id)
+            .filter(WorkflowVersion.workflow_id == workflow.id)
             .order_by(WorkflowVersion.id.desc())
             .first()
         )
@@ -457,11 +461,14 @@ class WorkflowService:
         return {"message": "Version deleted successfully"}
 
     # Update Version
-    def update_version(self, workflow_id: int, payload: dict):
+    def update_version(self, workflow_id: str, payload: dict):
+        workflow = self.get_workflow_by_id(workflow_id)
+        if not workflow:
+            raise ValueError("Workflow not found")
 
         version = (
             self.db.query(WorkflowVersion)
-            .filter(WorkflowVersion.workflow_id == workflow_id)
+            .filter(WorkflowVersion.workflow_id == workflow.id)
             .order_by(WorkflowVersion.id.desc())
             .first()
         )

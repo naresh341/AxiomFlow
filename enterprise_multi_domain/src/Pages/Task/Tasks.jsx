@@ -40,7 +40,7 @@ const Tasks = () => {
     } catch (error) {
       notify.error(error?.message || "Something went wrong");
     }
-  }, [activeTab, dispatch, page, debouncedSearch, filters.priority, notify]);
+  }, [activeTab, dispatch, page, debouncedSearch, filters.priority]);
 
   const onPageChange = (selectedPage) => {
     setPage(selectedPage + 1);
@@ -123,17 +123,17 @@ const Tasks = () => {
     <div className="flex-1 flex flex-col bg-[#f6f6f8] dark:bg-[#101622] min-h-screen">
       {/* Header */}
       <header className="bg-white dark:bg-[#101622] border-b border-[#dbdfe6] dark:border-gray-800">
-        <div className=" mx-auto px-6 py-8 flex flex-wrap justify-between items-center gap-3">
+        <div className="mx-auto px-4 sm:px-6 py-4 sm:py-8 flex flex-wrap justify-between items-center gap-3">
           <div>
-            <h1 className="text-[#111318] dark:text-white text-4xl font-black tracking-tight">
+            <h1 className="text-[#111318] dark:text-white text-2xl sm:text-4xl font-black tracking-tight">
               Tasks Management
             </h1>
-            <p className="text-slate-500 text-sm mt-1">
+            <p className="text-slate-500 text-xs sm:text-sm mt-1">
               Track and manage your enterprise operations
             </p>
           </div>
           <div className="flex gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-[#f0f2f4] dark:bg-gray-800 text-[#111318] dark:text-white rounded-xl font-bold text-sm hover:bg-gray-200 transition-all">
+            <button className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-[#f0f2f4] dark:bg-gray-800 text-[#111318] dark:text-white rounded-xl font-bold text-xs sm:text-sm hover:bg-gray-200 transition-all">
               <Download size={18} /> Export
             </button>
           </div>
@@ -141,10 +141,10 @@ const Tasks = () => {
       </header>
 
       {/* Content Section */}
-      <section className=" w-full mx-auto px-6 mt-6">
+      <section className="w-full mx-auto px-3 sm:px-6 mt-4 sm:mt-6">
         <div className="bg-white dark:bg-[#101622] rounded-2xl shadow-sm border border-[#dbdfe6] dark:border-gray-800 overflow-hidden">
           {/* Tabs */}
-          <div className="border-b border-[#dbdfe6] dark:border-gray-800 px-6 flex gap-8">
+          <div className="border-b border-[#dbdfe6] dark:border-gray-800 px-4 sm:px-6 flex overflow-x-auto whitespace-nowrap custom-scrollbar gap-4 sm:gap-8">
             {Tabs.map((tab, index) => (
               <button
                 key={index}

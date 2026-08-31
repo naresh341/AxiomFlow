@@ -42,9 +42,9 @@ const Login = () => {
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col font-display transition-colors duration-200">
       {/* Header matching your HTML */}
-      <header className="w-full px-6 py-6 lg:px-12 flex justify-between items-center bg-transparent">
+      <header className="w-full px-4 sm:px-6 py-4 sm:py-6 lg:px-12 flex justify-between items-center bg-transparent">
         <div className="flex items-center gap-2 text-[#111418] dark:text-white">
-          <div className="size-8 text-blue-600">
+          <div className="size-7 sm:size-8 text-blue-600">
             <svg
               fill="none"
               viewBox="0 0 48 48"
@@ -62,14 +62,14 @@ const Login = () => {
               ></path>
             </svg>
           </div>
-          <h2 className="text-lg font-bold leading-tight tracking-tight">
+          <h2 className="text-base sm:text-lg font-bold leading-tight tracking-tight">
             Axiom Flow
           </h2>
         </div>
-        <div className="text-md text-slate-500 dark:text-slate-400">
+        <div className="text-sm sm:text-md text-slate-500 dark:text-slate-400">
           Don't have an account?{" "}
           <Link
-            className="text-blue-600 font-semibold text-md hover:underline"
+            className="text-blue-600 font-semibold text-sm sm:text-md hover:underline"
             to="/signup"
           >
             Sign Up
@@ -77,9 +77,9 @@ const Login = () => {
         </div>
       </header>
 
-      <main className="grow flex items-center justify-center p-4">
-        <div className="w-full max-w-137.5 bg-white dark:bg-[#1a2632] shadow-sm border border-[#dbe0e6] dark:border-slate-800 rounded">
-          <div className="px-8 pt-10 pb-4">
+      <main className="grow flex items-center justify-center p-3 sm:p-6">
+        <div className="w-full max-w-lg bg-white dark:bg-[#1a2632] shadow-sm border border-[#dbe0e6] dark:border-slate-800 rounded-xl">
+          <div className="px-4 sm:px-8 pt-6 sm:pt-10 pb-4">
             <div className="flex flex-col items-center mb-8">
               <div className="size-10 text-blue-600 mb-3">
                 <svg

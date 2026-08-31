@@ -8,7 +8,9 @@ import {
   YAxis,
 } from "recharts";
 
-const LineChart = ({ data }) => {
+import { memo } from "react";
+
+const LineChart = memo(({ data }) => {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <RechartsLineChart
@@ -55,6 +57,6 @@ const LineChart = ({ data }) => {
       </RechartsLineChart>
     </ResponsiveContainer>
   );
-};
+});
 
 export default LineChart;

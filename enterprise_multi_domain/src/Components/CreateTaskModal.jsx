@@ -168,28 +168,28 @@ const CreateTaskModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-[#101622] w-full max-w-[720px] h-[90vh] flex flex-col rounded-xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white dark:bg-[#101622] w-full max-w-[720px] max-h-[90vh] flex flex-col rounded-xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-200 my-auto">
         {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start shrink-0">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start shrink-0 gap-3">
           <div>
-            <h1 className="text-[#111318] dark:text-white text-2xl font-bold tracking-tight">
+            <h1 className="text-[#111318] dark:text-white text-xl sm:text-2xl font-bold tracking-tight">
               Create Task
             </h1>
-            <p className="text-[#616f89] dark:text-slate-400 text-sm">
+            <p className="text-[#616f89] dark:text-slate-400 text-xs sm:text-sm">
               Define a reusable task for workflows
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500 shrink-0"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-6 sm:space-y-8">
           {/* Section 1: Basics */}
           <section className="space-y-4">
             <h3 className="text-[#111318] dark:text-white text-lg font-bold">
@@ -501,16 +501,16 @@ const CreateTaskModal = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 bg-slate-50/50 dark:bg-[#101622] shrink-0">
+        <div className="px-4 sm:px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 bg-slate-50/50 dark:bg-[#101622] shrink-0 w-full">
           <button
             onClick={onClose}
-            className="px-5 py-2.5 rounded-lg text-slate-700 dark:text-white text-sm font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-lg text-slate-700 dark:text-white text-sm font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-100 text-center"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="px-5 py-2.5 rounded-lg bg-[#0f49bd] text-white text-sm font-bold hover:bg-[#0f49bd]/90 shadow-lg flex items-center gap-2"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#0f49bd] text-white text-sm font-bold hover:bg-[#0f49bd]/90 shadow-lg flex items-center justify-center gap-2"
           >
             <Save size={16} /> Create Task
           </button>

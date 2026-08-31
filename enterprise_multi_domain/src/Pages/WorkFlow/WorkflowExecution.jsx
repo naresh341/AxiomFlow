@@ -103,19 +103,32 @@ const WorkflowExecution = () => {
   const handleStartExecution = async () => {
     const payload = {
       workflow_id_str: workflowId,
-      workflow_version_id: 1,
+      workflow_version_id: null,
       task_key: null,
       approval_key: null,
       triggered_by: "system",
     };
 
     try {
-      await dispatch(add_Execution({ workflowId, payload }));
-      dispatch(get_Workflow_Executions(workflowId));
-      notify.success("Successful");
+      await dispatch(add_Execution({ workflowId, payload })).unwrap();
+      // Re-fetch with correct params object after starting execution
+      dispatch(
+        get_Workflow_Executions({
+          workflowId,
+          page,
+          limit: rows,
+          search: debouncedSearch,
+          status: filters.status,
+        }),
+      );
+      notify.success("Execution started successfully!");
     } catch (error) {
       console.error("Error starting execution", error);
-      notify.error(error.message || "Error while Execution");
+      const errMsg =
+        typeof error === "string"
+          ? error
+          : error?.message || "Error while starting execution";
+      notify.error(errMsg);
     }
   };
 

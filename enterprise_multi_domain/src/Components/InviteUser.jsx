@@ -54,7 +54,7 @@ const InviteUser = ({ isOpen, onClose, editData = null }) => {
     } catch (error) {
       notify(error.message || "Error fetching teams", "error");
     }
-  }, [editData, notify]);
+  }, [editData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

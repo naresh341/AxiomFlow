@@ -48,7 +48,7 @@ const Users = () => {
     } catch (error) {
       notify(error.message || "Error fetching users", "error");
     }
-  }, [dispatch, debouncedSearch, page, filters.status, notify]);
+  }, [dispatch, debouncedSearch, page, filters.status]);
 
   const onPageChange = (selectedPage) => {
     setPage(selectedPage + 1);

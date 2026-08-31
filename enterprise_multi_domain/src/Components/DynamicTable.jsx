@@ -8,9 +8,11 @@ const DynamicTable = ({
   tableData = [],
   tableHead = [],
   handleRowClick,
-  first,
+  first = 0,
   onDelete,
   onEdit,
+  handleApprove = () => {},
+  handleReject = () => {},
 }) => {
   const statuStyle = (status) => {
     const s = status?.toLowerCase();
@@ -61,7 +63,7 @@ const DynamicTable = ({
     }
 
     if (col.field == "srno") {
-      return <span>{first + opt.rowIndex + 1}</span>;
+      return <span>{(first || 0) + opt.rowIndex + 1}</span>;
     }
 
     if (col.type === "date") {
@@ -79,18 +81,18 @@ const DynamicTable = ({
 
     if (col.field == "action") {
       return (
-        <>
-          <div className="flex justify-center  gap-1  ">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRowClick({ data: rowData });
-              }}
-              className="p-2 rounded-lg cursor-pointer  dark:hover:bg-white/10 text-[#616f89] dark:text-gray-400 hover:text-blue-600 transition-colors shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
-            >
-              <Eye size={16} />
-            </button>
+        <div className="flex items-center justify-center flex-wrap gap-1">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRowClick && handleRowClick({ data: rowData });
+            }}
+            className="p-2 rounded-lg cursor-pointer dark:hover:bg-white/10 text-[#616f89] dark:text-gray-400 hover:text-blue-600 transition-colors shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+          >
+            <Eye size={16} />
+          </button>
+          {onEdit && (
             <button
               type="button"
               onClick={() => onEdit(rowData)}
@@ -98,9 +100,11 @@ const DynamicTable = ({
             >
               <Edit2 size={16} />
             </button>
-            <button className="p-2 rounded-lg hover:bg-white dark:hover:bg-white/10 text-[#616f89] dark:text-gray-400 hover:text-blue-600 transition-colors shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
-              <Copy size={16} />
-            </button>
+          )}
+          <button className="p-2 rounded-lg hover:bg-white dark:hover:bg-white/10 text-[#616f89] dark:text-gray-400 hover:text-blue-600 transition-colors shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+            <Copy size={16} />
+          </button>
+          {onDelete && (
             <button
               type="button"
               onClick={() => onDelete(rowData.id)}
@@ -108,48 +112,46 @@ const DynamicTable = ({
             >
               <Archive size={16} />
             </button>
-          </div>
-        </>
+          )}
+        </div>
       );
     }
     if (col.field == "approval") {
       return (
-        <>
-          <div className="flex justify-center  gap-1  ">
-            <button
-              onClick={() => handleApprove(rowData.id)}
-              title="Approve"
-              className="p-2 rounded-lg cursor-pointer  dark:hover:bg-white/10 text-green-600 dark:text-green-600 hover:bg-green-100 transition-colors shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
-            >
-              <CheckCircle size={18} />
-            </button>
-            <button
-              onClick={() => handleReject(rowData.id)}
-              className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-white/10 text-red-600  dark:text-red-600 hover:text-red-600 transition-colors shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
-            >
-              <XCircle size={18} />
-            </button>
-          </div>
-        </>
+        <div className="flex items-center justify-center flex-wrap gap-1">
+          <button
+            onClick={() => handleApprove(rowData.id)}
+            title="Approve"
+            className="p-2 rounded-lg cursor-pointer dark:hover:bg-white/10 text-green-600 dark:text-green-600 hover:bg-green-100 transition-colors shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+          >
+            <CheckCircle size={18} />
+          </button>
+          <button
+            onClick={() => handleReject(rowData.id)}
+            className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-white/10 text-red-600 dark:text-red-600 hover:text-red-600 transition-colors shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+          >
+            <XCircle size={18} />
+          </button>
+        </div>
       );
     }
 
     return value || "N/A";
   };
   return (
-    <div className="mx-auto w-full  ">
+    <div className="mx-auto w-full overflow-x-auto custom-scrollbar">
       {/* 1. Outside Border Container */}
-      <div className="overflow-hidden rounded-xl  shadow-sm dark:border-gray-700">
+      <div className="overflow-hidden rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 min-w-full">
         <DataTable
           value={Array.isArray(tableData) ? tableData : []}
           onRowClick={handleRowClick}
           emptyMessage={
-            <div className="flex whitespace-nowrap items-center justify-center py-10 text-2xl font-bold text-red-600">
+            <div className="flex whitespace-nowrap items-center justify-center py-10 text-xl sm:text-2xl font-bold text-red-600">
               No Data Found
             </div>
           }
           responsiveLayout="scroll"
-          className="w-full font-medium text-gray-950 cursor-pointer whitespace-nowrap "
+          className="w-full font-medium text-gray-950 cursor-pointer whitespace-nowrap"
           tableStyle={{ minWidth: "100%" }}
         >
           {tableHead.map((col) => (
@@ -161,8 +163,8 @@ const DynamicTable = ({
               sortable={col.field !== "srno" && col.field !== "action"}
               alignHeader="center"
               align="center"
-              headerClassName=" uppercase whitespace-nowrap border-b border-gray-300  dark:bg-gray-800 text-[15px] text-gray-700 dark:text-gray-200 font-bold p-4  dark:border-gray-600 "
-              bodyClassName="p-4  whitespace-nowrap dark:border-gray-700 last:border-r-0 text-gray-600 dark:text-gray-400"
+              headerClassName="uppercase whitespace-nowrap border-b border-gray-300 dark:bg-gray-800 text-xs sm:text-[15px] text-gray-700 dark:text-gray-200 font-bold p-3 sm:p-4 dark:border-gray-600"
+              bodyClassName="p-3 sm:p-4 whitespace-nowrap dark:border-gray-700 last:border-r-0 text-gray-600 dark:text-gray-400 text-xs sm:text-sm"
             />
           ))}
         </DataTable>

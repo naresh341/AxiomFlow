@@ -48,13 +48,13 @@ const WorkFlows = () => {
   return (
     <div className="w-full space-y-6">
       {/* Page Title & CTA Area */}
-      <main className="mx-auto w-full px-4 lg:px-10 py-8 space-y-8">
+      <main className="mx-auto w-full px-3 sm:px-4 lg:px-10 py-4 sm:py-8 space-y-6 sm:space-y-8">
         <div className="flex flex-wrap justify-between items-center gap-4">
           <div>
-            <h2 className="text-[#111318] dark:text-white text-4xl font-black tracking-tight">
+            <h2 className="text-[#111318] dark:text-white text-2xl sm:text-4xl font-black tracking-tight">
               Workflows
             </h2>
-            <p className="text-[#616f89] dark:text-gray-400 text-sm mt-1">
+            <p className="text-[#616f89] dark:text-gray-400 text-xs sm:text-sm mt-1">
               Manage and automate your enterprise operations logic.
             </p>
           </div>
@@ -91,7 +91,7 @@ const WorkFlows = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-[#dbdfe6] dark:border-[#2d3748] gap-8">
+        <div className="flex overflow-x-auto whitespace-nowrap custom-scrollbar border-b border-[#dbdfe6] dark:border-[#2d3748] gap-4 sm:gap-8">
           {["active", "draft", "archived"].map((tab) => (
             <button
               key={tab}

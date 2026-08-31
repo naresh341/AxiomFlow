@@ -244,21 +244,21 @@ const UpdgradePlan = () => {
   return (
     <div className="bg-[#f6f6f8] dark:bg-[#101622] font-sans text-[#111318] dark:text-white min-h-screen pb-32">
       <main className=" mx-auto px-6 py-8">
-        {/* Page Heading */}
-        <div className="flex flex-wrap justify-between items-end gap-4 mb-8">
+        {/* Page Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-black tracking-tight">
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
               Organization Plan & Billing
             </h1>
-            <p className="text-[#616f89] dark:text-gray-400 text-lg">
+            <p className="text-[#616f89] dark:text-gray-400 text-sm sm:text-lg">
               Manage subscription, tiers, and invoicing.
             </p>
           </div>
-          <div className="flex gap-5">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-5 w-full md:w-auto">
             <select
               value={billingCycle}
               onChange={(e) => setBillingCycle(e.target.value)}
-              className="h-10 px-4 rounded-xl border-[#dbe0e6]  border dark:border-gray-700 dark:bg-gray-800 text-lg outline-none focus:ring-2 focus:ring-blue-600 transition-all"
+              className="h-10 px-4 rounded-xl border-[#dbe0e6] border dark:border-gray-700 dark:bg-gray-800 text-sm sm:text-lg outline-none focus:ring-2 focus:ring-blue-600 transition-all"
             >
               <option value="" disabled>
                 Select Billing Cycle
@@ -266,7 +266,7 @@ const UpdgradePlan = () => {
               <option value="MONTHLY">Monthly</option>
               <option value="ANNUAL">Annual</option>
             </select>
-            <div className="flex items-center gap-2 px-4 py-2 bg-[#135bec]/10 text-[#135bec] rounded-full font-bold text-sm border border-[#135bec]/20">
+            <div className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-[#135bec]/10 text-[#135bec] rounded-full font-bold text-xs sm:text-sm border border-[#135bec]/20">
               <Award size={16} /> Premium Status
             </div>
           </div>

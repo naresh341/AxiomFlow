@@ -114,11 +114,11 @@ const Analytics = () => {
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#f6f7f8] dark:bg-[#101c22] font-sans">
-      <main className=" mx-auto px-6 lg:px-10 py-8">
+      <main className="mx-auto px-3 sm:px-6 lg:px-10 py-4 sm:py-8">
         {/* Header Section */}
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+        <div className="flex flex-wrap items-end justify-between gap-4 mb-6 sm:mb-8">
           <div className="flex flex-col gap-1">
-            <h1 className="text-[#111618] dark:text-white text-4xl lg:text-4xl font-black leading-tight tracking-tight">
+            <h1 className="text-[#111618] dark:text-white text-2xl sm:text-4xl font-black leading-tight tracking-tight">
               Analytics Overview
             </h1>
             <p className="text-[#617c89] dark:text-gray-400 text-base font-normal">
@@ -169,7 +169,7 @@ const Analytics = () => {
         </div>
 
         {/* KPI Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-12">
           {KPI_DATA.map((kpi, i) => (
             <div
               key={i}

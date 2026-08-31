@@ -72,11 +72,11 @@ except ImportError:
 
 
 async def lifespan(app: FastAPI):
-    print("🔥 Starting application... creating tables")
+    print("[AxiomFlow] Starting application... creating tables")
     Base.metadata.create_all(bind=engine)
     init_cloudinary()
     yield
-    print("🛑 Shutting down application")
+    print("[AxiomFlow] Shutting down application")
 
 
 app = FastAPI(title="Workflow Engine API", lifespan=lifespan)

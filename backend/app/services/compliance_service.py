@@ -28,7 +28,6 @@ LIKE_WEIGHTS = {"LOW": 1, "MEDIUM": 2, "HIGH": 3}
 
 
 class ComplianceService:
-    @staticmethod
     # def get_all_policies(db: Session, user_obj, page: int, limit: int):
     #     return (
     #         db.query(CompliancePolicy)
@@ -240,6 +239,7 @@ class ComplianceService:
         )
         return db_doc
 
+    @staticmethod
     def update_policy(db: Session, policy_id: int, payload: PolicyUpdate):
 
         db_policy = (
@@ -358,7 +358,7 @@ class ComplianceService:
             resource_id=db_evidence.id,
             description=f"Updated evidence record: {db_evidence.evidence_name}",
             user_obj=user_obj,
-            old_data=old_values,
+            old_values=old_values,
             meta_data=jsonable_encoder(db_evidence),
             service="compliance-service",
         )
@@ -428,8 +428,9 @@ class ComplianceService:
 
         try:
             AuditService(db).write_log(
+                actor_id=None,
                 actor_type=AuditActorType.USER,
-                action="CREATE",
+                action=AuditActionType.CREATE,
                 resource_type="COMPLIANCE_RISK",
                 resource_id=db_risk.id,
                 description=f"Identified Risk {db_risk.risk_code}. Score: {calculated_score}",

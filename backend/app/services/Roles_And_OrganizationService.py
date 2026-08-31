@@ -102,7 +102,7 @@ def update_role(db: Session, role_id: int, data: dict, user: User):
         return role
     except Exception as e:
         db.rollback()
-        raise AppException(500, "ROLE_CREATE_FAILED", "Failed to create role", str(e))
+        raise AppException(500, "ROLE_UPDATE_FAILED", "Failed to update role", str(e))
 
 
 def delete_role(db: Session, role_id: int, user: User):

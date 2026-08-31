@@ -30,6 +30,11 @@ const ConfirmPaymentModal = ({
   const billingCycle = subscription?.billing_cycle || "MONTHLY";
   const addons = subscription?.addons || [];
   const basePrice = subscription?.price || 0;
+  const seatCount = subscription?.users_limit || 10;
+  const pricePerSeat = basePrice ? Math.round(basePrice / seatCount) : 10;
+  const prorationCredit = subscription?.proration_credit || 0;
+  const subtotal = basePrice;
+  const taxAmount = subtotal * 0.08;
 
   // optional metadata
   const billingEmail = billing?.billing_email || "";
@@ -73,27 +78,27 @@ const ConfirmPaymentModal = ({
 
   if (!isOpen || !payload) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 lg:p-10 bg-slate-900/80 backdrop-blur-sm">
-      <div className="w-full max-w-6xl bg-white dark:bg-[#101622] rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-300">
-        <header className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-10 py-3 sticky top-0 bg-white dark:bg-[#101622] z-10">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 lg:p-10 bg-slate-900/80 backdrop-blur-sm overflow-y-auto">
+      <div className="w-full max-w-6xl bg-white dark:bg-[#101622] rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-300 my-auto">
+        <header className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-4 sm:px-8 lg:px-10 py-3 sm:py-4 sticky top-0 bg-white dark:bg-[#101622] z-10 gap-3">
           <div className="flex flex-col">
-            <h2 className="text-[#111318] dark:text-white text-2xl font-black leading-tight tracking-tight">
+            <h2 className="text-[#111318] dark:text-white text-lg sm:text-2xl font-black leading-tight tracking-tight">
               Enterprise Billing Confirmation
             </h2>
-            <p className="text-[#616f89] dark:text-slate-400 text-md font-normal">
+            <p className="text-[#616f89] dark:text-slate-400 text-xs sm:text-md font-normal">
               Finalize node allocation and corporate payment credentials
             </p>
           </div>
           <button
             onClick={onClose}
-            className="flex items-center justify-center rounded-xl h-12 w-12 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-slate-500 border border-slate-100 dark:border-slate-800"
+            className="flex items-center justify-center rounded-xl h-10 w-10 sm:h-12 sm:w-12 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-slate-500 border border-slate-100 dark:border-slate-800 shrink-0"
           >
             <X size={20} />
           </button>
         </header>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto pr-10 pl-10 pt-3 pb-10 space-y-10">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-8 lg:px-10 py-4 sm:py-6 lg:py-8 space-y-6 sm:space-y-10 custom-scrollbar">
           {/* Section 1: Dynamic Plan & Seat Breakdown */}
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 rounded-2xl p-8 flex justify-between items-center">
@@ -302,10 +307,10 @@ const ConfirmPaymentModal = ({
         </div>
 
         {/* Footer */}
-        <footer className="border-t border-slate-100 dark:border-slate-800 px-10 py-8 bg-white dark:bg-[#101622] flex flex-col sm:flex-row items-center justify-between gap-8">
-          <label className="flex items-start gap-4 cursor-pointer max-w-lg group">
+        <footer className="border-t border-slate-100 dark:border-slate-800 px-4 sm:px-8 lg:px-10 py-4 sm:py-6 bg-white dark:bg-[#101622] flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-8">
+          <label className="flex items-start gap-3 sm:gap-4 cursor-pointer max-w-lg group">
             <input
-              className="mt-1 h-5 w-5 rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500 bg-transparent cursor-pointer"
+              className="mt-1 h-5 w-5 rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500 bg-transparent cursor-pointer shrink-0"
               type="checkbox"
               onChange={(e) => setAgreed(e.target.checked)}
             />
@@ -314,17 +319,17 @@ const ConfirmPaymentModal = ({
               agree to the 12-month commitment starting today.
             </span>
           </label>
-          <div className="flex items-center gap-4 w-full sm:w-auto">
+          <div className="flex flex-col-reverse sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
             <button
               onClick={onClose}
-              className="flex-1 cursor-pointer sm:flex-none px-8 py-3 text-sm font-bold text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors uppercase tracking-widest"
+              className="w-full sm:w-auto px-6 py-3 text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors uppercase tracking-widest text-center"
             >
               Cancel
             </button>
             <button
               onClick={() => setSuccessModal(true)}
               disabled={!agreed}
-              className="flex-1 cursor-pointer sm:flex-none px-12 py-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white text-sm font-black rounded-xl shadow-xl shadow-blue-600/20 disabled:opacity-80 disabled:bg-blue-800 transition-all uppercase tracking-widest active:scale-95"
+              className="w-full sm:w-auto px-8 sm:px-12 py-3.5 sm:py-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white text-xs sm:text-sm font-black rounded-xl shadow-xl shadow-blue-600/20 disabled:opacity-80 disabled:bg-blue-800 transition-all uppercase tracking-widest active:scale-95 text-center"
             >
               Confirm & Pay
             </button>

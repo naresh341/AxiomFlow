@@ -93,20 +93,20 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6 text-gray-900 dark:text-gray-100">
-      <main className="mx-auto w-full px-4 lg:px-10 py-8 space-y-8">
+      <main className="mx-auto w-full px-2 sm:px-4 lg:px-8 py-4 sm:py-8 space-y-6 sm:space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
               Executive Dashboard
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">
               Real-time performance metrics across enterprise workflows.
             </p>
           </div>
           <ProtectedComponent>
-            <label className="flex items-center gap-2 text-md font-semibold">
+            <label className="flex items-center gap-2 text-sm sm:text-md font-semibold">
               Industry:
-              <select className="border rounded-md px-2 py-1 bg-white dark:bg-slate-900 border-gray-300 dark:border-slate-700 outline-none">
+              <select className="border rounded-md px-2 py-1 bg-white dark:bg-slate-900 border-gray-300 dark:border-slate-700 outline-none text-xs sm:text-sm">
                 <option>All Industries</option>
                 <option>Finance</option>
                 <option>Healthcare</option>
@@ -116,22 +116,22 @@ const Dashboard = () => {
             </label>
           </ProtectedComponent>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {DashboardData.map((item, index) => (
             <div
               key={index}
-              className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-300 dark:border-slate-800 shadow-md"
+              className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-300 dark:border-slate-800 shadow-md"
             >
-              <div className="flex justify-between items-start mb-4">
-                <span className="text-lg font-semibold text-slate-600 dark:text-white uppercase">
+              <div className="flex justify-between items-start mb-2 sm:mb-4">
+                <span className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-white uppercase">
                   {item.label}
                 </span>
               </div>
 
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-4xl font-bold">{item.value}</h3>
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <h3 className="text-2xl sm:text-4xl font-bold">{item.value}</h3>
                 <span
-                  className={`text-md font-medium ${
+                  className={`text-xs sm:text-md font-medium ${
                     item.icon === "up"
                       ? "text-emerald-500"
                       : item.icon === "down"
@@ -154,10 +154,10 @@ const Dashboard = () => {
             return (
               <div
                 key={index}
-                className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-300 dark:border-slate-800 shadow-md"
+                className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-300 dark:border-slate-800 shadow-md flex flex-col min-h-[320px] sm:min-h-[380px]"
               >
-                <div className="flex justify-between items-center mb-6">
-                  <h4 className="font-bold text-lg uppercase">{chart.title}</h4>
+                <div className="flex flex-wrap justify-between items-center mb-4 sm:mb-6 gap-2">
+                  <h4 className="font-bold text-sm sm:text-lg uppercase">{chart.title}</h4>
                   <ProtectedComponent>
                     <select className="text-md border border-gray-400 outline-0 bg-slate-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 rounded py-1 px-2">
                       {chart.options.map((opt) => (

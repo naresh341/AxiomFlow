@@ -35,12 +35,11 @@ const AuditLogsSystem = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#101922] text-slate-900 dark:text-slate-300 transition-colors">
-      <main className="mx-auto p-6 lg:p-10 flex flex-col gap-8">
+      <main className="mx-auto p-4 sm:p-6 lg:p-10 flex flex-col gap-6 sm:gap-8">
         {/* HEADER */}
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="space-y-1">
-            {/* font-extrabold maps to your 800 weight */}
-            <h1 className="text-4xl font-extrabold tracking-tight uppercase dark:text-white">
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight uppercase dark:text-white">
               {current.title}
             </h1>
             <p className="text-slate-500 dark:text-slate-400 font-medium">
@@ -66,7 +65,7 @@ const AuditLogsSystem = () => {
         </div>
 
         {/* TAB SWITCHER */}
-        <div className="flex gap-10 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex overflow-x-auto whitespace-nowrap custom-scrollbar gap-4 sm:gap-10 border-b border-slate-200 dark:border-slate-800">
           <TabButton
             active={activeTab === "USER"}
             onClick={() => setActiveTab("USER")}

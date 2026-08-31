@@ -152,7 +152,7 @@ const WorkflowSlice = createSlice({
       })
       .addCase(update_Version.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.currentWorkflowVersions.data.findIndex(
+        const index = state.currentWorkflowVersions.findIndex(
           (version) => version.id === action.payload.id,
         );
         if (index !== -1) {
@@ -190,4 +190,5 @@ const WorkflowSlice = createSlice({
   },
 });
 
+export const { clearCurrentWorkflow } = WorkflowSlice.actions;
 export default WorkflowSlice.reducer;

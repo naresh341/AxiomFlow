@@ -8,7 +8,9 @@ import {
   YAxis,
 } from "recharts";
 
-const BarChart = ({ data }) => {
+import { memo } from "react";
+
+const BarChart = memo(({ data }) => {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <RechartsBarChart data={data} barGap={-40}>
@@ -19,7 +21,7 @@ const BarChart = ({ data }) => {
           tickLine={false}
           tick={{ fill: "#94a3b8", fontWeight: 600 }}
           dy={15}
-          tickFormatter={(value) => value.toUpperCase()}
+          tickFormatter={(value) => value ? value.toUpperCase() : ""}
         />
 
         <YAxis hide={true} />
@@ -51,6 +53,6 @@ const BarChart = ({ data }) => {
       </RechartsBarChart>
     </ResponsiveContainer>
   );
-};
+});
 
 export default BarChart;

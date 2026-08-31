@@ -106,33 +106,33 @@ const AssessmentModal = ({
     ),
   );
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
       <div
         className="absolute inset-0 bg-slate-900/40 dark:bg-black/70 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      <div className="relative flex flex-col w-full max-w-4xl h-[90vh] bg-white dark:bg-[#111418] border border-slate-200 dark:border-[#283039] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="relative flex flex-col w-full max-w-4xl max-h-[90vh] bg-white dark:bg-[#111418] border border-slate-200 dark:border-[#283039] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 my-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-8 border-b border-slate-100 dark:border-[#283039]">
+        <div className="flex items-center justify-between p-4 sm:p-6 lg:p-8 border-b border-slate-100 dark:border-[#283039]">
           <div className="flex flex-col gap-1">
-            <h2 className="text-slate-900 dark:text-white text-2xl font-black tracking-tight">
+            <h2 className="text-slate-900 dark:text-white text-xl sm:text-2xl font-black tracking-tight">
               New Compliance Assessment
             </h2>
-            <p className="text-slate-500 dark:text-[#9dabb9] text-base font-medium">
+            <p className="text-slate-500 dark:text-[#9dabb9] text-xs sm:text-base font-medium">
               Quantify risk and map governance timeline.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#283039] transition-colors rounded-full"
+            className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#283039] transition-colors rounded-full shrink-0"
           >
-            <X size={24} />
+            <X size={22} />
           </button>
         </div>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-8 space-y-12 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-12 custom-scrollbar">
           <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex flex-col gap-3">
               <label className="text-slate-700 dark:text-white text-base font-bold">
@@ -331,18 +331,18 @@ const AssessmentModal = ({
           </section>
         </div>
 
-        <div className="p-8 border-t border-slate-100 dark:border-[#283039] bg-slate-50 dark:bg-[#111418] flex items-center justify-end gap-5">
+        <div className="p-4 sm:p-6 lg:p-8 border-t border-slate-100 dark:border-[#283039] bg-slate-50 dark:bg-[#111418] flex flex-col-reverse sm:flex-row items-center justify-end gap-3 sm:gap-5 w-full">
           <button
             type="button"
             onClick={onClose}
-            className="px-8 h-14 rounded-xl text-slate-500 font-bold hover:bg-slate-200 transition-all"
+            className="w-full sm:w-auto px-6 sm:px-8 h-12 sm:h-14 rounded-xl text-slate-500 font-bold hover:bg-slate-200 transition-all text-center"
           >
             Discard
           </button>
           <button
             type="button"
             onClick={handleFinalSubmit}
-            className="px-10 h-14 rounded-xl bg-[#137fec] text-white text-lg font-black shadow-xl hover:brightness-110 active:scale-95 transition-all"
+            className="w-full sm:w-auto px-6 sm:px-10 h-12 sm:h-14 rounded-xl bg-[#137fec] text-white text-base sm:text-lg font-black shadow-xl hover:brightness-110 active:scale-95 transition-all text-center"
           >
             Finalize Assessment
           </button>

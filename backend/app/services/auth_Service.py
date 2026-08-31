@@ -97,7 +97,6 @@ class AuthService:
             .filter((User.email == data.email) | (User.username == data.username))
             .first()
         )
-
         if existing_user:
             raise AppException(
                 400,
@@ -109,6 +108,24 @@ class AuthService:
         hashed_password = bcrypt.hashpw(
             data.password.encode(), bcrypt.gensalt()
         ).decode()
+
+        # Match domain from email, or fallback to first org
+        org_id = getattr(data, "organization_id", None)
+        if not org_id:
+            email_domain = data.email.split("@")[-1].lower() if "@" in data.email else ""
+            from app.model.Roles_And_OrganizationModel import Organization
+            matched_org = db.query(Organization).filter(Organization.domain == email_domain).first()
+            if matched_org:
+                org_id = matched_org.id
+            else:
+                first_org = db.query(Organization).first()
+                if first_org:
+                    org_id = first_org.id
+                else:
+                    new_org = Organization(name="Default Org", domain="default.com")
+                    db.add(new_org)
+                    db.flush()
+                    org_id = new_org.id
 
         # 3️⃣ Create user
         new_user = User(
@@ -123,7 +140,7 @@ class AuthService:
             is_active=True,
             provider="local",
             created_at=datetime.now(timezone.utc),
-            organization_id=data.organization_id,
+            organization_id=org_id,
         )
 
         db.add(new_user)
@@ -135,7 +152,7 @@ class AuthService:
     # --------------------------------------------
 
     @staticmethod
-    def refresh_access_token(refresh_token: str):
+    def refresh_access_token(refresh_token: str, db: Session):
         from app.core.security import decode_token
 
         if not refresh_token:
@@ -155,7 +172,21 @@ class AuthService:
                 "Invalid refresh token",
             )
 
-        new_access_token = create_access_token({"sub": str(user_id)})
+        user = db.query(User).filter(User.id == int(user_id)).first()
+        if not user:
+            raise AppException(
+                401,
+                "AUTH_USER_NOT_FOUND",
+                "User not found",
+            )
+
+        new_access_token = create_access_token(
+            {
+                "sub": str(user.id),
+                "role": user.role,
+                "organization_id": user.organization_id,
+            }
+        )
 
         return {"access_token": new_access_token}
 
